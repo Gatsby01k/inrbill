@@ -1,0 +1,315 @@
+// INRP2P — private INR liquidity network.
+// Coordination layer only: review, matching, qualified introductions.
+// No custody, no funds movement, no execution.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  COMPANY
+  PARTNER
+}
+
+enum Direction {
+  INR_TO_USDT
+  USDT_TO_INR
+  INR_PAYOUTS
+}
+
+enum RequestStatus {
+  SUBMITTED
+  IN_REVIEW
+  MATCHING
+  INTRODUCED
+  CLOSED
+  REJECTED
+}
+
+enum PartnerStatus {
+  APPLIED
+  UNDER_REVIEW
+  VERIFIED
+  LIMITED
+  REJECTED
+  SUSPENDED
+}
+
+enum MatchStatus {
+  SUGGESTED
+  SHORTLISTED
+  INTRODUCED
+  ACCEPTED
+  DECLINED
+}
+
+enum IntroductionStatus {
+  PENDING
+  SENT
+  RESPONDED
+  SUCCESSFUL
+  FAILED
+}
+
+enum RevenueStatus {
+  POTENTIAL
+  INVOICED
+  PAID
+  WAIVED
+}
+
+enum NoteVisibility {
+  INTERNAL // admin only
+  COMPANY  // admin + owning company
+  PARTNER  // admin + owning partner
+}
+
+enum IntroChannel {
+  EMAIL
+  TELEGRAM
+  CALL
+  OTHER
+}
+
+enum Currency {
+  INR
+  USDT
+  USD
+}
+
+// ── Identity & access ────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  sessions Session[]
+  company  CompanyProfile?
+  partner  PartnerProfile?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ── Companies & requests ─────────────────────────────────────────────────────
+
+model CompanyProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName  String
+  website      String?
+  jurisdiction String
+  contactName  String
+  contactRole  String?
+  telegram     String?
+  phone        String?
+  createdAt    DateTime @default(now())
+
+  requests LiquidityRequest[]
+}
+
+model LiquidityRequest {
+  id               String        @id @default(cuid())
+  reference        String        @unique // REQ-0001
+  companyId        String
+  company          CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  direction        Direction
+  dailyVolumeBand  String
+  monthlyVolumeBand String
+  banks            String[]
+  methods          String[]
+  requiredSpeed    String
+  jurisdiction     String
+  kycReadiness     String
+  kycNotes         String?
+  notes            String?
+  status           RequestStatus @default(SUBMITTED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  matches   Match[]
+  notesList Note[]
+  documents DocumentRecord[]
+  revenues  RevenueRecord[]
+
+  @@index([status])
+  @@index([companyId])
+}
+
+// ── Partners ─────────────────────────────────────────────────────────────────
+
+model PartnerProfile {
+  id                String        @id @default(cuid())
+  userId            String        @unique
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reference         String        @unique // PTR-0001
+  displayName       String
+  legalName         String?
+  contactName       String
+  telegram          String?
+  phone             String?
+  experienceBand    String
+  directions        Direction[]
+  banks             String[]
+  methods           String[]
+  dailyCapacityBand String
+  workingHours      String
+  reserveBand       String
+  jurisdictions     String
+  complianceFlags   String[]
+  complianceNotes   String?
+  status            PartnerStatus @default(APPLIED)
+  verifiedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  matches   Match[]
+  notesList Note[]
+  documents DocumentRecord[]
+
+  @@index([status])
+}
+
+// ── Matching & introductions ─────────────────────────────────────────────────
+
+model Match {
+  id                String      @id @default(cuid())
+  requestId         String
+  request           LiquidityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId         String
+  partner           PartnerProfile   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  status            MatchStatus @default(SUGGESTED)
+  adminNote         String?
+  releasedToCompany Boolean     @default(false)
+  releasedToPartner Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  introductions Introduction[]
+  revenues      RevenueRecord[]
+  notesList     Note[]
+
+  @@unique([requestId, partnerId])
+  @@index([status])
+}
+
+model Introduction {
+  id          String             @id @default(cuid())
+  matchId     String
+  match       Match              @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  status      IntroductionStatus @default(PENDING)
+  channel     IntroChannel       @default(EMAIL)
+  summary     String?
+  sentAt      DateTime?
+  respondedAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([matchId])
+}
+
+// ── Revenue ──────────────────────────────────────────────────────────────────
+
+model RevenueRecord {
+  id         String        @id @default(cuid())
+  requestId  String
+  request    LiquidityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  matchId    String?
+  match      Match?        @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  amount     Decimal       @db.Decimal(18, 2)
+  currency   Currency      @default(INR)
+  basis      String? // e.g. "25 bps on first month volume", "fixed introduction fee"
+  status     RevenueStatus @default(POTENTIAL)
+  invoicedAt DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([status])
+}
+
+// ── Notes & documents ────────────────────────────────────────────────────────
+
+model Note {
+  id          String         @id @default(cuid())
+  body        String
+  visibility  NoteVisibility @default(INTERNAL)
+  authorLabel String // denormalized: "Operator", company name, partner name
+  authorId    String?
+  requestId   String?
+  request     LiquidityRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId   String?
+  partner     PartnerProfile?   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  matchId     String?
+  match       Match?            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+
+  @@index([requestId])
+  @@index([partnerId])
+}
+
+model DocumentRecord {
+  id          String         @id @default(cuid())
+  title       String
+  url         String?
+  note        String?
+  visibility  NoteVisibility @default(INTERNAL)
+  authorLabel String
+  authorId    String?
+  requestId   String?
+  request     LiquidityRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId   String?
+  partner     PartnerProfile?   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+
+  @@index([requestId])
+  @@index([partnerId])
+}
+
+// ── Audit trail ──────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String // e.g. request.status_changed
+  entityType String
+  entityId   String
+  actorId    String?
+  actorLabel String
+  requestId  String?
+  partnerId  String?
+  matchId    String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([requestId])
+  @@index([partnerId])
+  @@index([createdAt])
+}
+
+// ── Utility ──────────────────────────────────────────────────────────────────
+
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}

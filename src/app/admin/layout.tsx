@@ -1,0 +1,27 @@
+import { WorkspaceShell } from "@/components/workspace/shell";
+import { requireRole } from "@/lib/auth";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = await requireRole("ADMIN");
+  return (
+    <WorkspaceShell
+      badge="Operations"
+      badgeTone="gold"
+      userLine={user.email}
+      nav={[
+        { href: "/admin", label: "Dashboard", exact: true },
+        { href: "/admin/requests", label: "Requests" },
+        { href: "/admin/partners", label: "Partners" },
+        { href: "/admin/matches", label: "Matches" },
+        { href: "/admin/revenue", label: "Revenue" },
+        { href: "/admin/audit", label: "Audit log" },
+      ]}
+    >
+      {children}
+    </WorkspaceShell>
+  );
+}

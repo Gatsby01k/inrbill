@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+    scrollbar-color: rgba(207, 168, 79, 0.25) transparent;
+  }
+  body {
+    @apply bg-night-950 font-sans text-slate-200;
+    background-image:
+      radial-gradient(1100px 560px at 82% -12%, rgba(207, 168, 79, 0.07), transparent 60%),
+      radial-gradient(900px 520px at -12% 28%, rgba(29, 45, 78, 0.38), transparent 62%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-gold-500/30 text-white;
+  }
+}
+
+@layer components {
+  /* Surfaces */
+  .card {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] shadow-card backdrop-blur-md;
+  }
+  .glass-nav {
+    @apply border-b border-white/10 bg-night-950/75 backdrop-blur-xl;
+  }
+
+  /* Typography helpers */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-400;
+  }
+  .lbl {
+    @apply mb-1.5 block text-[13px] font-medium text-slate-300;
+  }
+
+  /* Form controls */
+  .input {
+    @apply w-full rounded-lg border border-white/10 bg-night-900/80 px-3.5 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-gold-500/60 focus:ring-2 focus:ring-gold-500/20;
+  }
+  select.input {
+    @apply appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+    background-position: right 0.8rem center;
+    background-size: 10px 7px;
+  }
+  select.input option {
+    @apply bg-night-900 text-slate-100;
+  }
+
+  /* Buttons — combine: "btn btn-gold", "btn btn-ghost", "btn btn-danger" */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-gold {
+    @apply bg-gradient-to-b from-gold-400 to-gold-600 text-night-950 hover:from-gold-300 hover:to-gold-500;
+  }
+  .btn-ghost {
+    @apply border border-white/15 bg-white/[0.03] text-slate-200 hover:border-gold-500/40 hover:text-white;
+  }
+  .btn-danger {
+    @apply border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Tables */
+  .tbl {
+    @apply w-full border-collapse text-left text-sm;
+  }
+  .tbl thead th {
+    @apply whitespace-nowrap border-b border-white/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400;
+  }
+  .tbl tbody td {
+    @apply border-b border-white/5 px-3 py-3 align-top text-slate-300;
+  }
+  .tbl tbody tr {
+    @apply transition-colors;
+  }
+  .tbl tbody tr:hover {
+    @apply bg-white/[0.03];
+  }
+
+  /* Definition grids */
+  .kv dt {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-slate-500;
+  }
+  .kv dd {
+    @apply mt-0.5 text-sm text-slate-200;
+  }
+
+  /* Chips / badges */
+  .chip {
+    @apply inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide;
+  }
+
+  /* Filter pills */
+  .pill {
+    @apply inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-gold-500/40 hover:text-white;
+  }
+  .pill-active {
+    @apply border-gold-500/60 bg-gold-500/10 text-gold-300;
+  }
+}
