@@ -4,8 +4,7 @@
 
 /* ─────────────────────────────────────────────────────────────
    INRP2P design system — light
-   Warm ivory canvas (from the brand logo), white panels,
-   amber-gold brand accents.
+   Warm ivory canvas, white panels, amber-gold brand accents.
    Gold = brand · Emerald = verification · Blue = information ·
    Red = risk · Gray = structure
    ───────────────────────────────────────────────────────────── */
@@ -65,6 +64,48 @@
     @apply border-b border-black/[0.07] bg-[#FAF7F1]/85 backdrop-blur-xl;
   }
 
+  /* ── Section bands ────────────────────────────────────────── */
+  .band-white {
+    @apply border-t border-black/[0.06] bg-white;
+  }
+  .band-ink {
+    background-color: #0d1524;
+    background-image: radial-gradient(
+      60rem 30rem at 80% -20%,
+      rgba(238, 161, 47, 0.1),
+      transparent 60%
+    );
+  }
+
+  /* ── Layered marketing backdrop ──────────────────────────────
+     Warm light from above + organic paper grain. No geometry.  */
+  .hero-aurora {
+    position: relative;
+  }
+  .hero-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(56rem 28rem at 80% -8rem, rgba(244, 169, 55, 0.16), transparent 64%),
+      radial-gradient(44rem 24rem at 6% -12rem, rgba(233, 120, 32, 0.09), transparent 62%),
+      radial-gradient(64rem 32rem at 50% 118%, rgba(255, 255, 255, 0.9), transparent 64%);
+  }
+  .hero-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
+    -webkit-mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
+  }
+
   /* ── Typography helpers ───────────────────────────────────── */
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-700;
@@ -101,7 +142,7 @@
     @apply bg-white text-slate-900;
   }
 
-  /* ── Buttons — "physical" ─────────────────────────────────── */
+  /* ── Buttons ──────────────────────────────────────────────── */
   .btn {
     @apply inline-flex select-none items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold;
     transition:
@@ -144,7 +185,7 @@
     @apply rounded-md px-2.5 py-1.5 text-xs;
   }
 
-  /* ── Tables — dense, engineered ───────────────────────────── */
+  /* ── Tables ───────────────────────────────────────────────── */
   .tbl {
     @apply w-full border-collapse text-left text-[12.5px];
   }
@@ -191,114 +232,5 @@
   }
   .pill-active {
     @apply border-gold-600/50 bg-gold-500/[0.1] text-gold-700;
-  }
-
-  /* ── Section bands ────────────────────────────────────────── */
-  .band-white {
-    @apply border-t border-black/[0.06] bg-white;
-  }
-  .band-ink {
-    background-color: #0d1524;
-    background-image: radial-gradient(
-      60rem 30rem at 80% -20%,
-      rgba(238, 161, 47, 0.1),
-      transparent 60%
-    );
-  }
-
-  /* ── Layered marketing backdrop ──────────────────────────────
-     Warm light from above (aurora) + organic paper grain.
-     No geometry, no grid — it should feel like printed stock,
-     not like a wireframe.                                       */
-  .hero-aurora {
-    position: relative;
-  }
-  .hero-aurora::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-      radial-gradient(56rem 28rem at 80% -8rem, rgba(244, 169, 55, 0.16), transparent 64%),
-      radial-gradient(44rem 24rem at 6% -12rem, rgba(233, 120, 32, 0.09), transparent 62%),
-      radial-gradient(64rem 32rem at 50% 118%, rgba(255, 255, 255, 0.9), transparent 64%);
-  }
-  .hero-aurora::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
-    -webkit-mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
-  }
-}
-
-@keyframes reveal {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes floaty {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-7px);
-  }
-}
-
-/* Scroll-triggered reveal (see components/reveal.tsx) */
-.rv {
-  opacity: 0;
-  transform: translateY(18px);
-  transition:
-    opacity 0.7s cubic-bezier(0.2, 0.7, 0.3, 1),
-    transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
-  will-change: opacity, transform;
-}
-.rv-in {
-  opacity: 1;
-  transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rv {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .floaty {
-    animation: floaty 7s ease-in-out infinite;
-  }
-}
-
-@layer utilities {
-  /* ── Motion ───────────────────────────────────────────────── */
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal {
-      animation: reveal 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-    }
-    .reveal-1 {
-      animation-delay: 0.06s;
-    }
-    .reveal-2 {
-      animation-delay: 0.12s;
-    }
-    .reveal-3 {
-      animation-delay: 0.18s;
-    }
   }
 }
