@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ClearDraft } from "@/components/forms/clear-draft";
 import { FormShell } from "@/components/site/form-shell";
 import { CONTACT_EMAIL } from "@/lib/options";
 
@@ -33,6 +34,7 @@ export default async function RequestSubmittedPage({
       sub="A workspace account has been created for you — you are signed in and can track status, timeline and introductions there."
     >
       <div className="space-y-6">
+        <ClearDraft />
         {ref && ref !== "received" ? (
           <div className="card flex items-center justify-between gap-4 px-6 py-5">
             <div>

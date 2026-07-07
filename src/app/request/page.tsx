@@ -17,9 +17,10 @@ export default async function RequestPage() {
 
   return (
     <FormShell
+      wide
       eyebrow="Company request"
       title="Request an INR liquidity partner."
-      sub="Tell us exactly what you need. Every request is reviewed manually within 24–48 hours; if the network has a reviewed partner that fits, we shortlist and introduce. INRP2P never touches funds — introductions only."
+      sub="Four short steps, about three minutes. A person reviews every request within 24–48 hours and, if the network has a verified partner that fits, introduces you directly."
     >
       <RequestForm loggedInCompany={loggedInCompany} />
     </FormShell>

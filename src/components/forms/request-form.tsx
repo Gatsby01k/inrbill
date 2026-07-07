@@ -1,25 +1,80 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { submitCompanyRequest } from "@/app/actions/public";
 import { SubmitButton } from "@/components/submit-button";
-import {
-  CheckboxGrid,
-  Field,
-  FormError,
-  FormSection,
-  RadioCards,
-} from "@/components/ui";
+import { CheckboxGrid, Field, FormError, RadioCards } from "@/components/ui";
+import { cn, directionLabel } from "@/lib/format";
 import {
   BANK_OPTIONS,
   DAILY_VOLUME_BANDS,
-  DIRECTION_OPTIONS,
   KYC_READINESS_OPTIONS,
   METHOD_OPTIONS,
   MONTHLY_VOLUME_BANDS,
   SPEED_OPTIONS,
 } from "@/lib/options";
 import type { ActionState } from "@/lib/schemas";
+
+const DRAFT_KEY = "inrp2p-request-draft-v1";
+
+const DIRECTION_CHOICES = [
+  { value: "INR_TO_USDT", label: "INR → USDT", hint: "You hold INR and need USDT" },
+  { value: "USDT_TO_INR", label: "USDT → INR", hint: "You hold USDT and need INR" },
+  { value: "INR_PAYOUTS", label: "INR payouts", hint: "Recurring INR payouts in India" },
+];
+
+/** Field names validated on each step. */
+function stepFields(loggedIn: boolean): string[][] {
+  const steps = [
+    ["direction", "dailyVolumeBand", "monthlyVolumeBand", "requiredSpeed"],
+    ["banks", "methods", "jurisdiction"],
+    ["kycReadiness"],
+  ];
+  if (!loggedIn) {
+    steps.push(["companyName", "companyJurisdiction", "contactName", "email", "password"]);
+  }
+  return steps;
+}
+
+const STEP_LABELS_FULL = ["Requirement", "Coverage", "Compliance", "Company & access"];
+
+const REQUIRED_MESSAGES: Record<string, string> = {
+  direction: "Select a direction",
+  dailyVolumeBand: "Select daily volume",
+  monthlyVolumeBand: "Select monthly volume",
+  requiredSpeed: "Select settlement speed",
+  banks: "Select at least one bank",
+  methods: "Select at least one method",
+  jurisdiction: "Operating jurisdiction is required",
+  kycReadiness: "Select KYC/KYB readiness",
+  companyName: "Company name is required",
+  companyJurisdiction: "Registration jurisdiction is required",
+  contactName: "Contact name is required",
+  email: "A valid email is required",
+  password: "Use at least 10 characters",
+};
+
+function validateFields(fields: string[], fd: FormData): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const name of fields) {
+    if (name === "banks" || name === "methods") {
+      if (fd.getAll(name).length === 0) errors[name] = REQUIRED_MESSAGES[name];
+      continue;
+    }
+    const v = fd.get(name);
+    const s = typeof v === "string" ? v.trim() : "";
+    if (name === "email") {
+      if (!/^\S+@\S+\.\S+$/.test(s)) errors[name] = REQUIRED_MESSAGES[name];
+      continue;
+    }
+    if (name === "password") {
+      if (s.length < 10) errors[name] = REQUIRED_MESSAGES[name];
+      continue;
+    }
+    if (!s) errors[name] = REQUIRED_MESSAGES[name];
+  }
+  return errors;
+}
 
 function Select({
   name,
@@ -44,129 +99,483 @@ function Select({
   );
 }
 
-export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
-  const [state, formAction] = useActionState<ActionState, FormData>(
-    submitCompanyRequest,
-    {},
+type Snap = {
+  direction: string;
+  dailyVolumeBand: string;
+  monthlyVolumeBand: string;
+  requiredSpeed: string;
+  jurisdiction: string;
+  kycReadiness: string;
+  companyName: string;
+  banks: number;
+  methods: number;
+};
+
+const EMPTY_SNAP: Snap = {
+  direction: "",
+  dailyVolumeBand: "",
+  monthlyVolumeBand: "",
+  requiredSpeed: "",
+  jurisdiction: "",
+  kycReadiness: "",
+  companyName: "",
+  banks: 0,
+  methods: 0,
+};
+
+function readSnap(fd: FormData): Snap {
+  const s = (k: string) => {
+    const v = fd.get(k);
+    return typeof v === "string" ? v.trim() : "";
+  };
+  return {
+    direction: s("direction"),
+    dailyVolumeBand: s("dailyVolumeBand"),
+    monthlyVolumeBand: s("monthlyVolumeBand"),
+    requiredSpeed: s("requiredSpeed"),
+    jurisdiction: s("jurisdiction"),
+    kycReadiness: s("kycReadiness"),
+    companyName: s("companyName"),
+    banks: fd.getAll("banks").length,
+    methods: fd.getAll("methods").length,
+  };
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-black/[0.05] py-2 last:border-b-0">
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "text-right text-[12.5px]",
+          value ? "font-medium text-slate-800" : "text-slate-400",
+        )}
+      >
+        {value || "—"}
+      </span>
+    </div>
   );
-  const fe = state.fieldErrors ?? {};
+}
+
+export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
+  const loggedIn = Boolean(loggedInCompany);
+  const [state, formAction] = useActionState<ActionState, FormData>(submitCompanyRequest, {});
+  const formRef = useRef<HTMLFormElement>(null);
+  const [step, setStep] = useState(0);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [snap, setSnap] = useState<Snap>(EMPTY_SNAP);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  const fields = stepFields(loggedIn);
+  const labels = STEP_LABELS_FULL.slice(0, fields.length);
+  const lastStep = fields.length - 1;
+  const fe = { ...(state.fieldErrors ?? {}), ...localErrors };
+
+  /* Restore locally saved draft once. */
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Record<string, string | string[]>;
+      let touched = false;
+      for (const [name, value] of Object.entries(saved)) {
+        if (Array.isArray(value)) {
+          form
+            .querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)
+            .forEach((cb) => {
+              cb.checked = value.includes(cb.value);
+            });
+          touched = true;
+        } else {
+          const el = form.elements.namedItem(name);
+          if (el && "value" in el) {
+            (el as HTMLInputElement).value = value;
+            touched = true;
+          }
+        }
+      }
+      if (touched) {
+        setSnap(readSnap(new FormData(form)));
+        setDraftRestored(true);
+      }
+    } catch {
+      /* corrupt or unavailable storage — start clean */
+    }
+  }, []);
+
+  /* Jump to the first step that has a server-side error. */
+  useEffect(() => {
+    const errs = state.fieldErrors;
+    if (!errs || Object.keys(errs).length === 0) return;
+    const idx = fields.findIndex((names) => names.some((n) => errs[n]));
+    if (idx >= 0) setStep(idx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  function persistDraft(fd: FormData) {
+    try {
+      const obj: Record<string, string | string[]> = {};
+      for (const name of [
+        "direction",
+        "dailyVolumeBand",
+        "monthlyVolumeBand",
+        "requiredSpeed",
+        "jurisdiction",
+        "kycReadiness",
+        "kycNotes",
+        "notes",
+        "companyName",
+        "website",
+        "companyJurisdiction",
+        "contactName",
+        "contactRole",
+        "telegram",
+        "phone",
+        "email",
+      ]) {
+        const v = fd.get(name);
+        if (typeof v === "string" && v) obj[name] = v;
+      }
+      const banks = fd.getAll("banks").filter((b): b is string => typeof b === "string");
+      const methods = fd.getAll("methods").filter((m): m is string => typeof m === "string");
+      if (banks.length) obj.banks = banks;
+      if (methods.length) obj.methods = methods;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(obj));
+      setDraftSaved(true);
+    } catch {
+      /* storage unavailable — skip autosave */
+    }
+  }
+
+  function handleFormChange() {
+    const form = formRef.current;
+    if (!form) return;
+    const fd = new FormData(form);
+    setSnap(readSnap(fd));
+    if (Object.keys(localErrors).length) setLocalErrors({});
+    persistDraft(fd);
+  }
+
+  function goTo(next: number) {
+    setStep(next);
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function handleNext() {
+    const form = formRef.current;
+    if (!form) return;
+    const errors = validateFields(fields[step], new FormData(form));
+    if (Object.keys(errors).length) {
+      setLocalErrors(errors);
+      return;
+    }
+    setLocalErrors({});
+    goTo(step + 1);
+  }
 
   return (
-    <form action={formAction} className="space-y-6">
-      {/* Honeypot — humans never see or fill this */}
-      <input
-        type="text"
-        name="website_hp"
-        tabIndex={-1}
-        autoComplete="off"
-        className="hidden"
-        aria-hidden
-      />
-
-      {!loggedInCompany && (
-        <FormSection
-          title="Company & contact"
-          sub="Reviewed manually. Never shared until an introduction is released."
-        >
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Company name" error={fe.companyName}>
-              <input name="companyName" className="input" placeholder="Acme Payments Ltd" />
-            </Field>
-            <Field label="Website" error={fe.website} hint="Optional">
-              <input name="website" className="input" placeholder="https://" />
-            </Field>
-            <Field label="Registration jurisdiction" error={fe.companyJurisdiction}>
-              <input name="companyJurisdiction" className="input" placeholder="e.g. UAE, Singapore, UK" />
-            </Field>
-            <Field label="Contact name" error={fe.contactName}>
-              <input name="contactName" className="input" placeholder="Full name" />
-            </Field>
-            <Field label="Role" error={fe.contactRole} hint="Optional">
-              <input name="contactRole" className="input" placeholder="e.g. Head of Treasury" />
-            </Field>
-            <Field label="Telegram" error={fe.telegram} hint="Optional">
-              <input name="telegram" className="input" placeholder="@handle" />
-            </Field>
-            <Field label="Phone" error={fe.phone} hint="Optional" className="sm:col-span-2">
-              <input name="phone" className="input" placeholder="+971 …" />
-            </Field>
-          </div>
-        </FormSection>
-      )}
-
-      {!loggedInCompany && (
-        <FormSection
-          title="Workspace access"
-          sub="Creates your company workspace to track status, timeline and introductions."
-        >
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Work email" error={fe.email}>
-              <input name="email" type="email" className="input" placeholder="you@company.com" />
-            </Field>
-            <Field label="Password" error={fe.password} hint="Minimum 10 characters">
-              <input name="password" type="password" className="input" placeholder="••••••••••" />
-            </Field>
-          </div>
-        </FormSection>
-      )}
-
-      <FormSection
-        title="Liquidity requirement"
-        sub={
-          loggedInCompany
-            ? `Submitting as ${loggedInCompany}.`
-            : "Be precise — matching runs on these fields."
-        }
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+      <form
+        ref={formRef}
+        action={formAction}
+        onChange={handleFormChange}
+        onKeyDown={(e) => {
+          if (
+            e.key === "Enter" &&
+            step < lastStep &&
+            (e.target as HTMLElement).tagName !== "TEXTAREA"
+          ) {
+            e.preventDefault();
+            handleNext();
+          }
+        }}
+        className="card scroll-mt-24 overflow-hidden"
       >
-        <Field label="Direction" error={fe.direction}>
-          <RadioCards name="direction" options={DIRECTION_OPTIONS} />
-        </Field>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Daily volume" error={fe.dailyVolumeBand}>
-            <Select name="dailyVolumeBand" options={DAILY_VOLUME_BANDS} placeholder="Select daily volume" />
-          </Field>
-          <Field label="Monthly volume" error={fe.monthlyVolumeBand}>
-            <Select name="monthlyVolumeBand" options={MONTHLY_VOLUME_BANDS} placeholder="Select monthly volume" />
-          </Field>
-          <Field label="Required speed" error={fe.requiredSpeed}>
-            <Select name="requiredSpeed" options={SPEED_OPTIONS} placeholder="Select settlement speed" />
-          </Field>
-          <Field label="Operating jurisdiction(s)" error={fe.jurisdiction}>
-            <input name="jurisdiction" className="input" placeholder="e.g. India + UAE" />
-          </Field>
+        {/* Honeypot — humans never see or fill this */}
+        <input
+          type="text"
+          name="website_hp"
+          tabIndex={-1}
+          autoComplete="off"
+          className="hidden"
+          aria-hidden
+        />
+
+        {/* Progress */}
+        <div className="border-b border-black/[0.07] bg-black/[0.015] px-6 py-4 sm:px-7">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Step {step + 1} of {labels.length}
+              <span className="ml-2 normal-case tracking-normal text-slate-400">
+                · {labels[step]}
+              </span>
+            </p>
+            {loggedIn ? (
+              <p className="text-[11px] text-slate-400">Submitting as {loggedInCompany}</p>
+            ) : null}
+          </div>
+          <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-black/[0.06]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-600 transition-all duration-300"
+              style={{ width: `${((step + 1) / labels.length) * 100}%` }}
+            />
+          </div>
+          <div className="mt-2.5 hidden gap-1 sm:flex">
+            {labels.map((label, i) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => i < step && goTo(i)}
+                disabled={i > step}
+                className={cn(
+                  "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  i === step && "bg-gold-500/10 text-gold-700",
+                  i < step && "text-slate-500 hover:bg-black/[0.04] hover:text-slate-800",
+                  i > step && "cursor-default text-slate-300",
+                )}
+              >
+                {i < step ? "✓ " : ""}
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-        <Field label="Banks" error={fe.banks} hint="Where you need coverage">
-          <CheckboxGrid name="banks" options={BANK_OPTIONS} cols={3} />
-        </Field>
-        <Field label="Methods / rails" error={fe.methods}>
-          <CheckboxGrid name="methods" options={METHOD_OPTIONS} cols={3} />
-        </Field>
-      </FormSection>
 
-      <FormSection
-        title="Compliance"
-        sub="Your KYB posture determines how quickly an introduction can be released."
-      >
-        <Field label="KYC / KYB readiness" error={fe.kycReadiness}>
-          <Select name="kycReadiness" options={KYC_READINESS_OPTIONS} placeholder="Select readiness" />
-        </Field>
-        <Field label="KYC / KYB notes" error={fe.kycNotes} hint="Optional — licences, registrations, existing audits">
-          <textarea name="kycNotes" rows={3} className="input" placeholder="Anything that speeds up review" />
-        </Field>
-        <Field label="Anything else" error={fe.notes} hint="Optional">
-          <textarea name="notes" rows={3} className="input" placeholder="Context, constraints, timelines" />
-        </Field>
-      </FormSection>
+        <div className="space-y-5 p-6 sm:p-7">
+          {/* ── Step 1 — Requirement ── */}
+          <div className={step === 0 ? "space-y-5" : "hidden"}>
+            <Field label="Direction" error={fe.direction}>
+              <RadioCards name="direction" options={DIRECTION_CHOICES} />
+            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Daily volume" error={fe.dailyVolumeBand}>
+                <Select
+                  name="dailyVolumeBand"
+                  options={DAILY_VOLUME_BANDS}
+                  placeholder="Select daily volume"
+                />
+              </Field>
+              <Field label="Monthly volume" error={fe.monthlyVolumeBand}>
+                <Select
+                  name="monthlyVolumeBand"
+                  options={MONTHLY_VOLUME_BANDS}
+                  placeholder="Select monthly volume"
+                />
+              </Field>
+            </div>
+            <Field
+              label="Required settlement speed"
+              error={fe.requiredSpeed}
+              hint="How fast each leg needs to clear once terms are agreed"
+            >
+              <Select
+                name="requiredSpeed"
+                options={SPEED_OPTIONS}
+                placeholder="Select settlement speed"
+              />
+            </Field>
+          </div>
 
-      <FormError message={state.error} />
+          {/* ── Step 2 — Coverage ── */}
+          <div className={step === 1 ? "space-y-5" : "hidden"}>
+            <Field label="Banks where you need coverage" error={fe.banks}>
+              <CheckboxGrid name="banks" options={BANK_OPTIONS} cols={3} />
+            </Field>
+            <Field label="Methods / rails" error={fe.methods}>
+              <CheckboxGrid name="methods" options={METHOD_OPTIONS} cols={3} />
+            </Field>
+            <Field label="Operating jurisdiction(s)" error={fe.jurisdiction}>
+              <input
+                name="jurisdiction"
+                className="input"
+                placeholder="e.g. India + UAE"
+                autoComplete="off"
+              />
+            </Field>
+          </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <p className="max-w-sm text-xs leading-relaxed text-slate-400">
-          By submitting you confirm the information is accurate and that you act
-          for the company named above.
+          {/* ── Step 3 — Compliance ── */}
+          <div className={step === 2 ? "space-y-5" : "hidden"}>
+            <Field label="KYC / KYB readiness" error={fe.kycReadiness}>
+              <Select
+                name="kycReadiness"
+                options={KYC_READINESS_OPTIONS}
+                placeholder="Select readiness"
+              />
+            </Field>
+            <Field
+              label="KYC / KYB notes"
+              error={fe.kycNotes}
+              hint="Optional — licences, registrations, existing audits"
+            >
+              <textarea
+                name="kycNotes"
+                rows={3}
+                className="input"
+                placeholder="Anything that speeds up review"
+              />
+            </Field>
+            <Field label="Anything else" error={fe.notes} hint="Optional">
+              <textarea
+                name="notes"
+                rows={3}
+                className="input"
+                placeholder="Context, constraints, timelines"
+              />
+            </Field>
+          </div>
+
+          {/* ── Step 4 — Company & access (only when logged out) ── */}
+          {!loggedIn ? (
+            <div className={step === 3 ? "space-y-5" : "hidden"}>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Company name" error={fe.companyName}>
+                  <input
+                    name="companyName"
+                    className="input"
+                    placeholder="Acme Payments Ltd"
+                    autoComplete="organization"
+                  />
+                </Field>
+                <Field label="Website" error={fe.website} hint="Optional">
+                  <input name="website" className="input" placeholder="https://" autoComplete="url" />
+                </Field>
+                <Field label="Registration jurisdiction" error={fe.companyJurisdiction}>
+                  <input
+                    name="companyJurisdiction"
+                    className="input"
+                    placeholder="e.g. UAE, Singapore, UK"
+                  />
+                </Field>
+                <Field label="Contact name" error={fe.contactName}>
+                  <input
+                    name="contactName"
+                    className="input"
+                    placeholder="Full name"
+                    autoComplete="name"
+                  />
+                </Field>
+                <Field label="Role" error={fe.contactRole} hint="Optional">
+                  <input name="contactRole" className="input" placeholder="e.g. Head of Treasury" />
+                </Field>
+                <Field label="Telegram" error={fe.telegram} hint="Optional">
+                  <input name="telegram" className="input" placeholder="@handle" />
+                </Field>
+                <Field label="Phone" error={fe.phone} hint="Optional" className="sm:col-span-2">
+                  <input
+                    name="phone"
+                    className="input"
+                    placeholder="+971 …"
+                    autoComplete="tel"
+                    inputMode="tel"
+                  />
+                </Field>
+              </div>
+              <div className="rounded-lg border border-black/[0.07] bg-black/[0.015] p-4">
+                <p className="text-xs font-semibold text-slate-700">Workspace access</p>
+                <p className="mt-0.5 text-[11.5px] text-slate-500">
+                  Creates your company workspace to track status and introductions.
+                </p>
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <Field label="Work email" error={fe.email}>
+                    <input
+                      name="email"
+                      type="email"
+                      className="input"
+                      placeholder="you@company.com"
+                      autoComplete="email"
+                    />
+                  </Field>
+                  <Field label="Password" error={fe.password} hint="Minimum 10 characters">
+                    <input
+                      name="password"
+                      type="password"
+                      className="input"
+                      placeholder="••••••••••"
+                      autoComplete="new-password"
+                    />
+                  </Field>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <FormError message={state.error} />
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between gap-4 border-t border-black/[0.07] pt-5">
+            <div className="flex items-center gap-3">
+              {step > 0 ? (
+                <button type="button" onClick={() => goTo(step - 1)} className="btn btn-ghost">
+                  ← Back
+                </button>
+              ) : null}
+              <p className="hidden text-[11px] text-slate-400 sm:block">
+                {draftRestored && !draftSaved
+                  ? "Draft restored"
+                  : draftSaved
+                    ? "Draft saved on this device"
+                    : ""}
+              </p>
+            </div>
+            {step < lastStep ? (
+              <button type="button" onClick={handleNext} className="btn btn-gold px-6">
+                Continue →
+              </button>
+            ) : (
+              <SubmitButton className="btn btn-gold px-6" pendingLabel="Submitting…">
+                Submit request
+              </SubmitButton>
+            )}
+          </div>
+
+          {step === lastStep ? (
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              By submitting you confirm the information is accurate and that you act for the
+              company named above. Your details are visible to network operations only.
+            </p>
+          ) : null}
+        </div>
+      </form>
+
+      {/* ── Live summary rail ── */}
+      <aside className="sticky top-24 hidden lg:block">
+        <div className="card p-5">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Your request
+          </p>
+          <div className="mt-3">
+            <SummaryRow
+              label="Direction"
+              value={snap.direction ? directionLabel(snap.direction) : ""}
+            />
+            <SummaryRow label="Daily" value={snap.dailyVolumeBand} />
+            <SummaryRow label="Monthly" value={snap.monthlyVolumeBand} />
+            <SummaryRow label="Speed" value={snap.requiredSpeed} />
+            <SummaryRow label="Banks" value={snap.banks ? `${snap.banks} selected` : ""} />
+            <SummaryRow label="Methods" value={snap.methods ? `${snap.methods} selected` : ""} />
+            <SummaryRow label="Jurisdiction" value={snap.jurisdiction} />
+            <SummaryRow label="KYC / KYB" value={snap.kycReadiness} />
+            <SummaryRow label="Company" value={loggedInCompany ?? snap.companyName} />
+          </div>
+        </div>
+        <div className="mt-4 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
+          <p className="text-[12px] leading-relaxed text-emerald-800">
+            A person reviews every request. First response within 24–48 hours.
+          </p>
+        </div>
+        <p className="mt-3 px-1 text-[11px] leading-relaxed text-slate-400">
+          INRP2P never holds or moves funds. Introductions only — settlement is agreed directly
+          with the partner.
         </p>
-        <SubmitButton pendingLabel="Submitting…">Submit request</SubmitButton>
-      </div>
-    </form>
+      </aside>
+    </div>
   );
 }

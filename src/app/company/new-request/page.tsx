@@ -11,7 +11,7 @@ export default async function CompanyNewRequestPage() {
   if (!user.company) redirect("/login");
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Submit a new liquidity request"
         sub={`Submitting on behalf of ${user.company.companyName}. Your company profile is attached automatically.`}
