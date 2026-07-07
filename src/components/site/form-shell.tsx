@@ -15,7 +15,7 @@ export function FormShell({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteNav />
-      <main className="grid-bg flex-1 pb-24 pt-32">
+      <main className="hero-aurora grid-bg flex-1 pb-24 pt-32">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <p className="eyebrow reveal">{eyebrow}</p>
           <h1 className="reveal reveal-1 mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-900 sm:text-[2.5rem]">

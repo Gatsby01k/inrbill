@@ -46,7 +46,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <noscript>
+          <style>{`.rv{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
+        {children}
+      </body>
     </html>
   );
 }

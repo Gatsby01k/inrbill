@@ -193,6 +193,35 @@
     @apply border-gold-600/50 bg-gold-500/[0.1] text-gold-700;
   }
 
+  /* ── Section bands ────────────────────────────────────────── */
+  .band-white {
+    @apply border-t border-black/[0.06] bg-white;
+  }
+  .band-ink {
+    background-color: #0d1524;
+    background-image: radial-gradient(
+      60rem 30rem at 80% -20%,
+      rgba(238, 161, 47, 0.1),
+      transparent 60%
+    );
+  }
+
+  /* ── Layered marketing backdrop ───────────────────────────── */
+  .hero-aurora {
+    position: relative;
+  }
+  .hero-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(52rem 26rem at 82% -6rem, rgba(244, 169, 55, 0.17), transparent 62%),
+      radial-gradient(40rem 22rem at 8% -10rem, rgba(233, 120, 32, 0.1), transparent 60%),
+      radial-gradient(60rem 30rem at 50% 115%, rgba(255, 255, 255, 0.85), transparent 62%);
+  }
+
   /* ── Landing texture ──────────────────────────────────────────
      The mask lives on a ::before underlay so it fades ONLY the
      grid texture — never the section's actual content.          */
@@ -222,6 +251,42 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* Scroll-triggered reveal (see components/reveal.tsx) */
+.rv {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.3, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+  will-change: opacity, transform;
+}
+.rv-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .floaty {
+    animation: floaty 7s ease-in-out infinite;
   }
 }
 

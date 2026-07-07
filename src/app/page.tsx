@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
+import { Reveal } from "@/components/reveal";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { CONTACT_EMAIL, CONTACT_TELEGRAM } from "@/lib/options";
@@ -17,8 +18,14 @@ export const metadata: Metadata = {
 const PIPELINE = [
   { step: "Submitted", text: "Your requirements enter the queue with a reference number." },
   { step: "In Review", text: "We review the request and your KYB posture manually." },
-  { step: "Matching", text: "We shortlist reviewed partners against direction, volume, banks and speed." },
-  { step: "Introduced", text: "A qualified, direct introduction is made. You transact bilaterally." },
+  { step: "Matching", text: "Reviewed partners are shortlisted against direction, volume, banks and speed." },
+  { step: "Introduced", text: "A qualified, direct introduction. You transact bilaterally." },
+];
+
+const FACTS = [
+  { value: "24–48h", label: "Manual review of every request" },
+  { value: "0", label: "Funds held or moved by INRP2P — ever" },
+  { value: "3", label: "Corridors: INR→USDT · USDT→INR · payouts" },
 ];
 
 const COMPANY_POINTS = [
@@ -33,6 +40,29 @@ const PARTNER_POINTS = [
   "You set directions, capacity, banks, hours and reserve coverage",
   "Your identity is released only when an introduction is made",
   "No custody, no pooled funds, no platform execution",
+];
+
+const PROCESS = [
+  {
+    n: "01",
+    t: "Submit requirements",
+    d: "Direction, daily and monthly volume, banks and rails, required speed, jurisdiction and KYC/KYB posture. Ten minutes, once.",
+  },
+  {
+    n: "02",
+    t: "Manual review",
+    d: "Network operations reviews every request and every partner application by hand. No automated approvals, no pay-to-list.",
+  },
+  {
+    n: "03",
+    t: "Matching",
+    d: "We shortlist reviewed partners whose declared corridors, capacity, banking coverage and hours actually fit your requirements.",
+  },
+  {
+    n: "04",
+    t: "Qualified introduction",
+    d: "When both sides fit, we make a direct introduction. From there the relationship — and the settlement — is entirely yours.",
+  },
 ];
 
 const STANDARDS = [
@@ -107,12 +137,28 @@ export default function LandingPage() {
       />
       <SiteNav />
       <main className="flex-1">
-        {/* Hero */}
-        <section className="grid-bg relative overflow-hidden pb-24 pt-36">
+        {/* ── Hero ── */}
+        <section className="hero-aurora grid-bg relative overflow-hidden pb-20 pt-36">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
+          {/* Ring motif echoing the brand mark */}
+          <svg
+            className="pointer-events-none absolute -right-40 -top-32 -z-[1] hidden lg:block"
+            width="620"
+            height="620"
+            viewBox="0 0 620 620"
+            fill="none"
+            aria-hidden
+          >
+            <circle cx="310" cy="310" r="290" stroke="rgba(238,161,47,0.14)" strokeWidth="1.5" />
+            <circle cx="310" cy="310" r="214" stroke="rgba(238,161,47,0.09)" strokeWidth="1.5" />
+            <circle cx="310" cy="20" r="7" fill="rgba(238,161,47,0.35)" />
+            <circle cx="59" cy="455" r="7" fill="rgba(238,161,47,0.22)" />
+            <circle cx="561" cy="455" r="7" fill="rgba(238,161,47,0.22)" />
+          </svg>
+
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <div>
-              <p className="eyebrow reveal">Private INR liquidity network</p>
+              <p className="eyebrow reveal">Private INR liquidity network · by application</p>
               <h1 className="reveal reveal-1 mt-5 font-display text-[2.7rem] font-medium leading-[1.04] tracking-[-0.012em] text-slate-900 sm:text-[3.7rem]">
                 Reviewed INR liquidity partners.
                 <br />
@@ -149,160 +195,205 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="reveal reveal-2 card overflow-hidden shadow-glow">
-              <div className="flex items-center gap-2.5 border-b border-black/[0.07] bg-black/[0.02] px-5 py-3">
-                <BrandMark size={17} />
-                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500">
-                  Request pipeline
-                </p>
+            <div className="reveal reveal-2 floaty">
+              <div className="card overflow-hidden shadow-raised">
+                <div className="flex items-center justify-between border-b border-black/[0.07] bg-black/[0.02] px-5 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <BrandMark size={17} />
+                    <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500">
+                      Request pipeline
+                    </p>
+                  </div>
+                  <span className="rounded border border-black/[0.08] bg-white px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-slate-500">
+                    Operated manually
+                  </span>
+                </div>
+                <div className="p-5">
+                  <ol>
+                    {PIPELINE.map((p, i) => (
+                      <li key={p.step} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-700">
+                            {i + 1}
+                          </span>
+                          {i < PIPELINE.length - 1 ? (
+                            <span className="my-1 w-px flex-1 bg-black/[0.09]" />
+                          ) : null}
+                        </div>
+                        <div className={i < PIPELINE.length - 1 ? "pb-5" : ""}>
+                          <p className="text-[13px] font-semibold text-slate-900">{p.step}</p>
+                          <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
+                            {p.text}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <div className="flex items-center gap-2.5 border-t border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-3">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <p className="text-[12px] leading-relaxed text-emerald-800">
+                    Settlement is always bilateral. INRP2P is never in the flow of funds.
+                  </p>
+                </div>
               </div>
-              <div className="p-5">
-                <ol>
-                  {PIPELINE.map((p, i) => (
-                    <li key={p.step} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-700">
-                          {i + 1}
-                        </span>
-                        {i < PIPELINE.length - 1 ? (
-                          <span className="my-1 w-px flex-1 bg-black/[0.09]" />
-                        ) : null}
-                      </div>
-                      <div className={i < PIPELINE.length - 1 ? "pb-5" : ""}>
-                        <p className="text-[13px] font-semibold text-slate-900">{p.step}</p>
-                        <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-                          {p.text}
-                        </p>
-                      </div>
+            </div>
+          </div>
+
+          {/* Facts strip */}
+          <div className="mx-auto mt-20 max-w-6xl px-4 sm:px-6">
+            <Reveal>
+              <div className="grid overflow-hidden rounded-xl border border-black/[0.08] bg-white/70 backdrop-blur-sm sm:grid-cols-3">
+                {FACTS.map((f, i) => (
+                  <div
+                    key={f.value}
+                    className={
+                      i > 0
+                        ? "border-t border-black/[0.06] px-6 py-5 sm:border-l sm:border-t-0"
+                        : "px-6 py-5"
+                    }
+                  >
+                    <p className="tnum font-display text-[28px] font-medium text-slate-900">
+                      {f.value}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.label}</p>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── Two sides ── */}
+        <section className="band-white py-24">
+          <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
+            <Reveal>
+              <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                <p className="eyebrow">For companies</p>
+                <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
+                  Liquidity you can diligence, not a marketplace you gamble on.
+                </h2>
+                <ul className="mt-5 space-y-3">
+                  {COMPANY_POINTS.map((t) => (
+                    <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
+                      <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
+                      {t}
                     </li>
                   ))}
-                </ol>
+                </ul>
+                <Link href="/request" className="btn btn-ghost btn-sm mt-6">
+                  Submit a request →
+                </Link>
               </div>
-              <div className="flex items-center gap-2.5 border-t border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <p className="text-[12px] leading-relaxed text-emerald-800">
-                  Settlement is always bilateral. INRP2P is never in the flow of funds.
-                </p>
+            </Reveal>
+            <Reveal delay={90}>
+              <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                <p className="eyebrow text-emerald-600">For liquidity partners</p>
+                <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
+                  Serious counterparties, without exposing your book to the public.
+                </h2>
+                <ul className="mt-5 space-y-3">
+                  {PARTNER_POINTS.map((t) => (
+                    <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
+                      <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-emerald-500/70" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/apply" className="btn btn-ghost btn-sm mt-6">
+                  Apply to join →
+                </Link>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
-        {/* Two sides */}
-        <section className="border-t border-black/[0.06] py-24">
-          <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
-            <div className="card p-7">
-              <p className="eyebrow">For companies</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                Liquidity you can diligence, not a marketplace you gamble on.
-              </h2>
-              <ul className="mt-5 space-y-3">
-                {COMPANY_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
-                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/request" className="btn btn-ghost btn-sm mt-6">
-                Submit a request →
-              </Link>
-            </div>
-            <div className="card p-7">
-              <p className="eyebrow text-emerald-600">For liquidity partners</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                Serious counterparties, without exposing your book to the public.
-              </h2>
-              <ul className="mt-5 space-y-3">
-                {PARTNER_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
-                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-emerald-400/70" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/apply" className="btn btn-ghost btn-sm mt-6">
-                Apply to join →
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* How it works */}
+        {/* ── Process ── */}
         <section id="how-it-works" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="eyebrow">Process</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
-              Manual where it matters. Fast where it counts.
-            </h2>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  n: "01",
-                  t: "Submit requirements",
-                  d: "Direction, daily and monthly volume, banks and rails, required speed, jurisdiction and KYC/KYB posture. Ten minutes, once.",
-                },
-                {
-                  n: "02",
-                  t: "Manual review",
-                  d: "Network operations reviews every request and every partner application by hand. No automated approvals, no pay-to-list.",
-                },
-                {
-                  n: "03",
-                  t: "Matching",
-                  d: "We shortlist reviewed partners whose declared corridors, capacity, banking coverage and hours actually fit your requirements.",
-                },
-                {
-                  n: "04",
-                  t: "Qualified introduction",
-                  d: "When both sides fit, we make a direct introduction. From there the relationship — and the settlement — is entirely yours.",
-                },
-              ].map((s) => (
-                <div key={s.n} className="card p-6 transition-colors hover:border-black/[0.14]">
-                  <p className="font-mono text-[11px] tracking-wider text-gold-600">{s.n}</p>
-                  <p className="mt-3 text-[14.5px] font-semibold text-slate-900">{s.t}</p>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+            <Reveal>
+              <p className="eyebrow">Process</p>
+              <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+                Manual where it matters. Fast where it counts.
+              </h2>
+            </Reveal>
 
-        {/* Standards */}
-        <section id="standards" className="scroll-mt-20 border-t border-black/[0.06] py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="eyebrow text-emerald-600">Network standards</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
-              What we review before anyone is introduced.
-            </h2>
-            <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-              {STANDARDS.map((s) => (
-                <div key={s.title} className="flex gap-3.5">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-emerald-400/35 bg-emerald-400/10 text-[11px] text-emerald-700">
-                    ✓
-                  </span>
-                  <div>
-                    <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
+            {/* Connector rail (desktop) */}
+            <Reveal className="mt-12 hidden lg:block">
+              <div className="flex items-center px-10">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="flex flex-1 items-center last:flex-none">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-500/50 bg-gold-500/10 font-mono text-[11px] font-semibold text-gold-700">
+                      {i + 1}
+                    </span>
+                    {i < 3 ? (
+                      <span className="mx-2 h-px flex-1 bg-gradient-to-r from-gold-500/40 to-gold-500/10" />
+                    ) : null}
                   </div>
-                </div>
+                ))}
+              </div>
+            </Reveal>
+
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {PROCESS.map((s, i) => (
+                <Reveal key={s.n} delay={i * 70}>
+                  <div className="card h-full p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                    <p className="font-mono text-[11px] tracking-wider text-gold-600 lg:hidden">
+                      {s.n}
+                    </p>
+                    <p className="text-[14.5px] font-semibold text-slate-900 lg:mt-0">{s.t}</p>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* No custody */}
-        <section id="no-custody" className="scroll-mt-20 border-t border-black/[0.06] py-24">
+        {/* ── Standards ── */}
+        <section id="standards" className="band-white scroll-mt-20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="card relative overflow-hidden border-gold-500/20 p-8 sm:p-10">
-              <div className="pointer-events-none absolute -right-10 -top-10 opacity-[0.05]">
-                <BrandMark size={220} />
-              </div>
-              <p className="eyebrow">No custody. No execution. By design.</p>
-              <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-slate-900">
+            <Reveal>
+              <p className="eyebrow text-emerald-600">Network standards</p>
+              <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+                What we review before anyone is introduced.
+              </h2>
+            </Reveal>
+            <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+              {STANDARDS.map((s, i) => (
+                <Reveal key={s.title} delay={(i % 3) * 70}>
+                  <div className="flex gap-3.5">
+                    <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-emerald-400/50 bg-emerald-50 text-[11px] text-emerald-600">
+                      ✓
+                    </span>
+                    <div>
+                      <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
+                      <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── No custody — ink anchor ── */}
+        <section id="no-custody" className="band-ink scroll-mt-20 relative overflow-hidden py-24">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
+          <div className="pointer-events-none absolute -right-16 -top-16 opacity-[0.06]">
+            <BrandMark size={300} />
+          </div>
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <Reveal>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-400">
+                No custody. No execution. By design.
+              </p>
+              <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-white">
                 INRP2P is a coordination layer — never a counterparty.
               </h2>
-              <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-600 md:grid-cols-2">
+            </Reveal>
+            <Reveal delay={80}>
+              <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-400 md:grid-cols-2">
                 <p>
                   INRP2P does not move funds, does not custody funds, and does not
                   execute conversion. There are no wallets, no pooled balances, no
@@ -324,66 +415,73 @@ export default function LandingPage() {
                   operates in.
                 </p>
               </div>
-            </div>
+            </Reveal>
           </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
         </section>
 
-        {/* FAQ */}
-        <section className="border-t border-black/[0.06] py-24">
+        {/* ── FAQ ── */}
+        <section className="py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <p className="eyebrow">Questions</p>
-            <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
-              Asked before joining.
-            </h2>
+            <Reveal>
+              <p className="eyebrow">Questions</p>
+              <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
+                Asked before joining.
+              </h2>
+            </Reveal>
             <div className="mt-8 space-y-2.5">
-              {FAQ.map((f) => (
-                <details key={f.q} className="card group px-5 py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-800 transition-colors group-open:text-gold-700 [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <span
-                      aria-hidden
-                      className="text-slate-400 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-600"
-                    >
-                      +
-                    </span>
-                  </summary>
-                  <p className="mt-3 max-w-xl text-[12.5px] leading-relaxed text-slate-500">
-                    {f.a}
-                  </p>
-                </details>
+              {FAQ.map((f, i) => (
+                <Reveal key={f.q} delay={i * 50}>
+                  <details className="card group px-5 py-4">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-800 transition-colors group-open:text-gold-700 [&::-webkit-details-marker]:hidden">
+                      {f.q}
+                      <span
+                        aria-hidden
+                        className="text-slate-400 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-600"
+                      >
+                        +
+                      </span>
+                    </summary>
+                    <p className="mt-3 max-w-xl text-[12.5px] leading-relaxed text-slate-500">
+                      {f.a}
+                    </p>
+                  </details>
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Contact */}
-        <section id="contact" className="scroll-mt-20 border-t border-black/[0.06] py-24">
+        {/* ── Contact ── */}
+        <section id="contact" className="band-white scroll-mt-20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-              <div>
-                <p className="eyebrow">Contact</p>
-                <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
+            <Reveal>
+              <div className="hero-aurora card overflow-hidden p-10 text-center sm:p-14">
+                <div className="mx-auto flex justify-center">
+                  <BrandMark size={40} />
+                </div>
+                <h2 className="mx-auto mt-5 max-w-xl font-display text-[2rem] font-medium leading-tight text-slate-900">
                   Talk to network operations.
                 </h2>
-                <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-slate-500">
+                <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-slate-500">
                   For qualification questions, partner standards or anything that
                   doesn&apos;t fit the forms — reach out directly.
                 </p>
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-gold px-5 py-3">
+                    {CONTACT_EMAIL}
+                  </a>
+                  <a
+                    href={`https://t.me/${CONTACT_TELEGRAM}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-ghost px-5 py-3"
+                  >
+                    Telegram · @{CONTACT_TELEGRAM}
+                  </a>
+                </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-gold">
-                  {CONTACT_EMAIL}
-                </a>
-                <a
-                  href={`https://t.me/${CONTACT_TELEGRAM}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-ghost"
-                >
-                  Telegram · @{CONTACT_TELEGRAM}
-                </a>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </section>
       </main>
