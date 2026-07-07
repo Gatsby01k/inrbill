@@ -194,11 +194,21 @@
     @apply border-gold-500/50 bg-gold-500/[0.09] text-gold-300;
   }
 
-  /* ── Landing texture ──────────────────────────────────────── */
+  /* ── Landing texture ──────────────────────────────────────────
+     The mask lives on a ::before underlay so it fades ONLY the
+     grid texture — never the section's actual content.          */
   .grid-bg {
+    position: relative;
+  }
+  .grid-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
     -webkit-mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
