@@ -37,17 +37,8 @@ export default function OpengraphImage() {
               <circle cx="54.4" cy="45" r="4.6" />
               <circle cx="32" cy="32" r="12.8" />
             </g>
-            <text
-              x="32"
-              y="38.6"
-              textAnchor="middle"
-              fontFamily="serif"
-              fontWeight="700"
-              fontSize="18"
-              fill="#FAF7F1"
-            >
-              ₹
-            </text>
+            {/* inner ring detail instead of a text glyph — satori does not support <text> */}
+            <circle cx="32" cy="32" r="6.5" fill="none" stroke="#FAF7F1" strokeWidth="3" />
           </svg>
           <div style={{ display: "flex", fontSize: 56, fontWeight: 700, color: "#171B21" }}>
             INR
