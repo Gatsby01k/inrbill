@@ -21,12 +21,12 @@ export function NavLinks({ items }: { items: NavItem[] }) {
             className={cn(
               "relative flex items-center whitespace-nowrap rounded-md px-3 py-[7px] text-[13px] font-medium transition-colors duration-150",
               active
-                ? "bg-white/[0.06] text-slate-50"
-                : "text-slate-500 hover:bg-white/[0.03] hover:text-slate-200",
+                ? "bg-white text-slate-900 shadow-[0_1px_2px_rgba(35,28,12,0.06)]"
+                : "text-slate-500 hover:bg-black/[0.04] hover:text-slate-800",
             )}
           >
             {active ? (
-              <span className="absolute left-0 top-1/2 h-3.5 w-[2px] -translate-y-1/2 rounded-full bg-gold-400" />
+              <span className="absolute left-0 top-1/2 h-3.5 w-[2px] -translate-y-1/2 rounded-full bg-gold-600" />
             ) : null}
             {item.label}
           </Link>

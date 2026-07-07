@@ -92,12 +92,12 @@ export default async function AdminPartnersPage({
                     <td>
                       <Link
                         href={`/admin/partners/${p.id}`}
-                        className="font-mono text-xs text-emerald-300 hover:underline"
+                        className="font-mono text-xs text-emerald-700 hover:underline"
                       >
                         {p.reference}
                       </Link>
                     </td>
-                    <td className="font-medium text-slate-200">{p.displayName}</td>
+                    <td className="font-medium text-slate-800">{p.displayName}</td>
                     <td className="text-xs">
                       {p.directions.map((d) => directionLabel(d)).join(", ")}
                     </td>

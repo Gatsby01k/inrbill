@@ -51,7 +51,7 @@ export default async function CompanyHomePage() {
               <tbody>
                 {requests.map((r) => (
                   <tr key={r.id}>
-                    <td className="font-mono text-xs text-gold-300">{r.reference}</td>
+                    <td className="font-mono text-xs text-gold-700">{r.reference}</td>
                     <td className="whitespace-nowrap">{directionLabel(r.direction)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>
@@ -65,7 +65,7 @@ export default async function CompanyHomePage() {
                     <td>
                       <Link
                         href={`/company/requests/${r.id}`}
-                        className="text-xs font-medium text-gold-400 hover:underline"
+                        className="text-xs font-medium text-gold-600 hover:underline"
                       >
                         Open →
                       </Link>

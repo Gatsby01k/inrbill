@@ -100,8 +100,8 @@ export default async function AdminRequestDetailPage({
       <BackLink href="/admin/requests" label="All requests" />
 
       <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-sm text-gold-300">{request.reference}</span>
-        <h1 className="text-xl font-semibold text-slate-50">{request.company.companyName}</h1>
+        <span className="font-mono text-sm text-gold-700">{request.reference}</span>
+        <h1 className="text-xl font-semibold text-slate-900">{request.company.companyName}</h1>
         <StatusBadge status={request.status} />
         <span className="text-xs text-slate-500">
           {directionLabel(request.direction)} · submitted {fmtDate(request.createdAt)}
@@ -133,7 +133,7 @@ export default async function AdminRequestDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Banks</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {request.banks.map((b) => (
-                    <span key={b} className="chip border-white/10 bg-white/[0.03] text-slate-300">
+                    <span key={b} className="chip border-black/10 bg-black/[0.03] text-slate-700">
                       {b}
                     </span>
                   ))}
@@ -143,7 +143,7 @@ export default async function AdminRequestDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Methods</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {request.methods.map((m) => (
-                    <span key={m} className="chip border-white/10 bg-white/[0.03] text-slate-300">
+                    <span key={m} className="chip border-black/10 bg-black/[0.03] text-slate-700">
                       {m}
                     </span>
                   ))}
@@ -152,13 +152,13 @@ export default async function AdminRequestDetailPage({
               {request.kycNotes ? (
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">KYC notes</p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{request.kycNotes}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{request.kycNotes}</p>
                 </div>
               ) : null}
               {request.notes ? (
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Company notes</p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{request.notes}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{request.notes}</p>
                 </div>
               ) : null}
             </div>
@@ -170,23 +170,23 @@ export default async function AdminRequestDetailPage({
 
             <div className="space-y-4">
               {request.matches.map((m) => (
-                <div key={m.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <div key={m.id} className="rounded-xl border border-black/10 bg-black/[0.02] p-4">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                     <Link
                       href={`/admin/partners/${m.partnerId}`}
-                      className="text-sm font-semibold text-slate-100 hover:text-gold-300"
+                      className="text-sm font-semibold text-slate-900 hover:text-gold-700"
                     >
                       {m.partner.displayName}
                     </Link>
-                    <span className="font-mono text-[11px] text-emerald-300/80">{m.partner.reference}</span>
+                    <span className="font-mono text-[11px] text-emerald-700">{m.partner.reference}</span>
                     <StatusBadge status={m.status} />
-                    <span className="ml-auto text-[11px] text-slate-600">{fmtDate(m.createdAt)}</span>
+                    <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
                     {m.partner.dailyCapacityBand} · {m.partner.workingHours}
                   </p>
                   {m.adminNote ? (
-                    <p className="mt-2 rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-400">
+                    <p className="mt-2 rounded-lg bg-black/[0.03] px-3 py-2 text-xs text-slate-600">
                       {m.adminNote}
                     </p>
                   ) : null}
@@ -233,7 +233,7 @@ export default async function AdminRequestDetailPage({
                   </div>
 
                   {/* Introductions */}
-                  <div className="mt-4 border-t border-white/5 pt-3">
+                  <div className="mt-4 border-t border-black/5 pt-3">
                     <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       Introductions
                     </p>
@@ -242,10 +242,10 @@ export default async function AdminRequestDetailPage({
                         {m.introductions.map((intro) => (
                           <li
                             key={intro.id}
-                            className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-white/[0.03] px-3 py-2.5"
+                            className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-black/[0.03] px-3 py-2.5"
                           >
                             <StatusBadge status={intro.status} />
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-slate-600">
                               {statusLabel(intro.channel)}
                               {intro.sentAt ? ` · sent ${fmtDateTime(intro.sentAt)}` : ""}
                               {intro.respondedAt ? ` · responded ${fmtDateTime(intro.respondedAt)}` : ""}
@@ -275,7 +275,7 @@ export default async function AdminRequestDetailPage({
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-slate-600">No introduction recorded yet.</p>
+                      <p className="text-xs text-slate-400">No introduction recorded yet.</p>
                     )}
 
                     <form action={createIntroduction} className="mt-3 flex flex-wrap items-center gap-2">
@@ -303,7 +303,7 @@ export default async function AdminRequestDetailPage({
             </div>
 
             {/* Add match */}
-            <div className="mt-5 border-t border-white/10 pt-5">
+            <div className="mt-5 border-t border-black/10 pt-5">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Add partner match
               </p>
@@ -348,17 +348,17 @@ export default async function AdminRequestDetailPage({
                 {request.revenues.map((r) => (
                   <li
                     key={r.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-white/10 bg-white/[0.02] px-3.5 py-3"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-black/10 bg-black/[0.02] px-3.5 py-3"
                   >
-                    <span className="text-sm font-semibold tabular-nums text-slate-100">
+                    <span className="text-sm font-semibold tabular-nums text-slate-900">
                       {money(r.amount.toString(), r.currency)}
                     </span>
                     <StatusBadge status={r.status} />
                     {r.basis ? <span className="text-xs text-slate-500">{r.basis}</span> : null}
                     {r.match ? (
-                      <span className="text-xs text-slate-600">via {r.match.partner.displayName}</span>
+                      <span className="text-xs text-slate-400">via {r.match.partner.displayName}</span>
                     ) : null}
-                    <span className="text-[11px] text-slate-600">
+                    <span className="text-[11px] text-slate-400">
                       {r.invoicedAt ? `invoiced ${fmtDate(r.invoicedAt)} · ` : ""}
                       {r.paidAt ? `paid ${fmtDate(r.paidAt)} · ` : ""}
                       created {fmtDate(r.createdAt)}
@@ -389,7 +389,7 @@ export default async function AdminRequestDetailPage({
               </div>
             )}
 
-            <form action={addRevenue} className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+            <form action={addRevenue} className="flex flex-wrap items-center gap-2 border-t border-black/10 pt-4">
               <input type="hidden" name="requestId" value={request.id} />
               <input type="hidden" name="back" value={back} />
               <input
@@ -473,7 +473,7 @@ export default async function AdminRequestDetailPage({
                 Update
               </SubmitButton>
             </form>
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-600">
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
               Submitted → In Review → Matching → Introduced → Closed. Every change is
               recorded in the timeline and visible to the company.
             </p>
@@ -490,7 +490,7 @@ export default async function AdminRequestDetailPage({
                     href={request.company.website}
                     target="_blank"
                     rel="noreferrer"
-                    className="break-all text-gold-400 hover:underline"
+                    className="break-all text-gold-600 hover:underline"
                   >
                     {request.company.website}
                   </a>
@@ -501,7 +501,7 @@ export default async function AdminRequestDetailPage({
                 {request.company.contactRole ? ` — ${request.company.contactRole}` : ""}
               </KV>
               <KV label="Email">
-                <a href={`mailto:${request.company.user.email}`} className="text-gold-400 hover:underline">
+                <a href={`mailto:${request.company.user.email}`} className="text-gold-600 hover:underline">
                   {request.company.user.email}
                 </a>
               </KV>

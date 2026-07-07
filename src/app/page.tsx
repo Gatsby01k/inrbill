@@ -68,14 +68,14 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <div>
               <p className="eyebrow reveal">Private INR liquidity network</p>
-              <h1 className="reveal reveal-1 mt-5 font-display text-[2.6rem] font-medium leading-[1.06] tracking-[-0.01em] text-slate-50 sm:text-[3.3rem]">
+              <h1 className="reveal reveal-1 mt-5 font-display text-[2.6rem] font-medium leading-[1.06] tracking-[-0.01em] text-slate-900 sm:text-[3.3rem]">
                 Reviewed INR liquidity partners.
                 <br />
-                <span className="text-gold-300">Qualified introductions.</span>
+                <span className="text-gold-700">Qualified introductions.</span>
                 <br />
                 Nothing else.
               </h1>
-              <p className="reveal reveal-2 mt-6 max-w-xl text-[15px] leading-relaxed text-slate-400">
+              <p className="reveal reveal-2 mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
                 INRP2P connects qualified companies with manually reviewed INR
                 liquidity partners across INR → USDT, USDT → INR and INR payout
                 corridors. We review both sides, match on real requirements and
@@ -89,13 +89,13 @@ export default function LandingPage() {
                   Apply as a liquidity partner
                 </Link>
               </div>
-              <p className="reveal reveal-3 mt-7 font-mono text-[11px] uppercase tracking-[0.14em] text-slate-600">
+              <p className="reveal reveal-3 mt-7 font-mono text-[11px] uppercase tracking-[0.14em] text-slate-400">
                 Manual review · 24–48h first response · No custody, ever
               </p>
             </div>
 
             <div className="reveal reveal-2 card overflow-hidden shadow-glow">
-              <div className="flex items-center gap-2.5 border-b border-white/[0.07] bg-white/[0.02] px-5 py-3">
+              <div className="flex items-center gap-2.5 border-b border-black/[0.07] bg-black/[0.02] px-5 py-3">
                 <BrandMark size={17} />
                 <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500">
                   Request pipeline
@@ -106,15 +106,15 @@ export default function LandingPage() {
                   {PIPELINE.map((p, i) => (
                     <li key={p.step} className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-300">
+                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-700">
                           {i + 1}
                         </span>
                         {i < PIPELINE.length - 1 ? (
-                          <span className="my-1 w-px flex-1 bg-white/[0.09]" />
+                          <span className="my-1 w-px flex-1 bg-black/[0.09]" />
                         ) : null}
                       </div>
                       <div className={i < PIPELINE.length - 1 ? "pb-5" : ""}>
-                        <p className="text-[13px] font-semibold text-slate-100">{p.step}</p>
+                        <p className="text-[13px] font-semibold text-slate-900">{p.step}</p>
                         <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
                           {p.text}
                         </p>
@@ -123,9 +123,9 @@ export default function LandingPage() {
                   ))}
                 </ol>
               </div>
-              <div className="flex items-center gap-2.5 border-t border-emerald-400/15 bg-emerald-400/[0.05] px-5 py-3">
+              <div className="flex items-center gap-2.5 border-t border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-3">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <p className="text-[12px] leading-relaxed text-emerald-200/90">
+                <p className="text-[12px] leading-relaxed text-emerald-800">
                   Settlement is always bilateral. INRP2P is never in the flow of funds.
                 </p>
               </div>
@@ -134,16 +134,16 @@ export default function LandingPage() {
         </section>
 
         {/* Two sides */}
-        <section className="border-t border-white/[0.06] py-24">
+        <section className="border-t border-black/[0.06] py-24">
           <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
             <div className="card p-7">
               <p className="eyebrow">For companies</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-50">
+              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Liquidity you can diligence, not a marketplace you gamble on.
               </h2>
               <ul className="mt-5 space-y-3">
                 {COMPANY_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-400">
+                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
                     <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
                     {t}
                   </li>
@@ -154,13 +154,13 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="card p-7">
-              <p className="eyebrow text-emerald-400">For liquidity partners</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-50">
+              <p className="eyebrow text-emerald-600">For liquidity partners</p>
+              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Serious counterparties, without exposing your book to the public.
               </h2>
               <ul className="mt-5 space-y-3">
                 {PARTNER_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-400">
+                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
                     <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-emerald-400/70" />
                     {t}
                   </li>
@@ -174,10 +174,10 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section id="how-it-works" className="scroll-mt-20 border-t border-white/[0.06] py-24">
+        <section id="how-it-works" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="eyebrow">Process</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               Manual where it matters. Fast where it counts.
             </h2>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -203,9 +203,9 @@ export default function LandingPage() {
                   d: "When both sides fit, we make a direct introduction. From there the relationship — and the settlement — is entirely yours.",
                 },
               ].map((s) => (
-                <div key={s.n} className="card p-6 transition-colors hover:border-white/[0.14]">
-                  <p className="font-mono text-[11px] tracking-wider text-gold-500">{s.n}</p>
-                  <p className="mt-3 text-[14.5px] font-semibold text-slate-100">{s.t}</p>
+                <div key={s.n} className="card p-6 transition-colors hover:border-black/[0.14]">
+                  <p className="font-mono text-[11px] tracking-wider text-gold-600">{s.n}</p>
+                  <p className="mt-3 text-[14.5px] font-semibold text-slate-900">{s.t}</p>
                   <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
                 </div>
               ))}
@@ -214,20 +214,20 @@ export default function LandingPage() {
         </section>
 
         {/* Standards */}
-        <section id="standards" className="scroll-mt-20 border-t border-white/[0.06] py-24">
+        <section id="standards" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="eyebrow text-emerald-400">Network standards</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <p className="eyebrow text-emerald-600">Network standards</p>
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               What we review before anyone is introduced.
             </h2>
             <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {STANDARDS.map((s) => (
                 <div key={s.title} className="flex gap-3.5">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-emerald-400/35 bg-emerald-400/10 text-[11px] text-emerald-300">
+                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-emerald-400/35 bg-emerald-400/10 text-[11px] text-emerald-700">
                     ✓
                   </span>
                   <div>
-                    <p className="text-[13.5px] font-semibold text-slate-100">{s.title}</p>
+                    <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
                   </div>
                 </div>
@@ -237,17 +237,17 @@ export default function LandingPage() {
         </section>
 
         {/* No custody */}
-        <section id="no-custody" className="scroll-mt-20 border-t border-white/[0.06] py-24">
+        <section id="no-custody" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="card relative overflow-hidden border-gold-500/20 p-8 sm:p-10">
               <div className="pointer-events-none absolute -right-10 -top-10 opacity-[0.05]">
                 <BrandMark size={220} />
               </div>
               <p className="eyebrow">No custody. No execution. By design.</p>
-              <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-slate-50">
+              <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-slate-900">
                 INRP2P is a coordination layer — never a counterparty.
               </h2>
-              <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-400 md:grid-cols-2">
+              <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-600 md:grid-cols-2">
                 <p>
                   INRP2P does not move funds, does not custody funds, and does not
                   execute conversion. There are no wallets, no pooled balances, no
@@ -274,20 +274,20 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="border-t border-white/[0.06] py-24">
+        <section className="border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <p className="eyebrow">Questions</p>
-            <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
               Asked before joining.
             </h2>
             <div className="mt-8 space-y-2.5">
               {FAQ.map((f) => (
                 <details key={f.q} className="card group px-5 py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-200 transition-colors group-open:text-gold-300 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-800 transition-colors group-open:text-gold-700 [&::-webkit-details-marker]:hidden">
                     {f.q}
                     <span
                       aria-hidden
-                      className="text-slate-600 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-400"
+                      className="text-slate-400 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-600"
                     >
                       +
                     </span>
@@ -302,12 +302,12 @@ export default function LandingPage() {
         </section>
 
         {/* Contact */}
-        <section id="contact" className="scroll-mt-20 border-t border-white/[0.06] py-24">
+        <section id="contact" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
               <div>
                 <p className="eyebrow">Contact</p>
-                <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-50">
+                <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
                   Talk to network operations.
                 </h2>
                 <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-slate-500">

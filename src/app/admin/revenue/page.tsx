@@ -83,21 +83,21 @@ export default async function AdminRevenuePage({
                     <td>
                       <Link
                         href={`/admin/requests/${r.requestId}`}
-                        className="font-mono text-xs text-gold-300 hover:underline"
+                        className="font-mono text-xs text-gold-700 hover:underline"
                       >
                         {r.request.reference}
                       </Link>
                     </td>
-                    <td className="font-medium text-slate-200">{r.request.company.companyName}</td>
+                    <td className="font-medium text-slate-800">{r.request.company.companyName}</td>
                     <td className="text-xs">{r.match ? r.match.partner.displayName : "—"}</td>
-                    <td className="whitespace-nowrap font-semibold tabular-nums text-slate-100">
+                    <td className="whitespace-nowrap font-semibold tabular-nums text-slate-900">
                       {money(r.amount.toString(), r.currency)}
                     </td>
                     <td className="max-w-56 text-xs">{r.basis ?? "—"}</td>
                     <td>
                       <StatusBadge status={r.status} />
                     </td>
-                    <td className="whitespace-nowrap text-[11px] text-slate-600">
+                    <td className="whitespace-nowrap text-[11px] text-slate-400">
                       {r.invoicedAt ? `inv ${fmtDate(r.invoicedAt)}` : ""}
                       {r.invoicedAt && r.paidAt ? " · " : ""}
                       {r.paidAt ? `paid ${fmtDate(r.paidAt)}` : ""}

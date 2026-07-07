@@ -74,8 +74,8 @@ export default async function CompanyRequestDetailPage({
       <BackLink href="/company" label="My requests" />
 
       <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-sm text-gold-300">{request.reference}</span>
-        <h1 className="text-xl font-semibold text-slate-50">{directionLabel(request.direction)}</h1>
+        <span className="font-mono text-sm text-gold-700">{request.reference}</span>
+        <h1 className="text-xl font-semibold text-slate-900">{directionLabel(request.direction)}</h1>
         <StatusBadge status={request.status} />
         <span className="text-xs text-slate-500">submitted {fmtDate(request.createdAt)}</span>
       </div>
@@ -89,7 +89,7 @@ export default async function CompanyRequestDetailPage({
       {/* Progress */}
       <div className="card mb-5 p-5">
         {request.status === "REJECTED" ? (
-          <p className="text-sm leading-relaxed text-rose-300">
+          <p className="text-sm leading-relaxed text-rose-600">
             This request was not accepted into matching. Check the notes below —
             operations usually explains what would need to change for a resubmission.
           </p>
@@ -104,8 +104,8 @@ export default async function CompanyRequestDetailPage({
                     className={cn(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-mono text-xs",
                       reached
-                        ? "border-gold-500/60 bg-gold-500/15 text-gold-300"
-                        : "border-white/10 bg-white/[0.02] text-slate-600",
+                        ? "border-gold-500/60 bg-gold-500/15 text-gold-700"
+                        : "border-black/10 bg-black/[0.02] text-slate-400",
                     )}
                   >
                     {i + 1}
@@ -113,7 +113,7 @@ export default async function CompanyRequestDetailPage({
                   <span
                     className={cn(
                       "ml-2.5 text-xs font-medium",
-                      current ? "text-gold-300" : reached ? "text-slate-300" : "text-slate-600",
+                      current ? "text-gold-700" : reached ? "text-slate-700" : "text-slate-400",
                     )}
                   >
                     {statusLabel(s)}
@@ -122,7 +122,7 @@ export default async function CompanyRequestDetailPage({
                     <span
                       className={cn(
                         "mx-3 hidden h-px flex-1 sm:block",
-                        i < stepIndex ? "bg-gold-500/40" : "bg-white/10",
+                        i < stepIndex ? "bg-gold-500/40" : "bg-black/10",
                       )}
                     />
                   ) : null}
@@ -143,7 +143,7 @@ export default async function CompanyRequestDetailPage({
                 {request.matches.map((m) => (
                   <div key={m.id} className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <p className="text-sm font-semibold text-slate-100">{m.partner.displayName}</p>
+                      <p className="text-sm font-semibold text-slate-900">{m.partner.displayName}</p>
                       <StatusBadge status={m.status} />
                       {m.introductions[0] ? <StatusBadge status={m.introductions[0].status} /> : null}
                     </div>
@@ -157,7 +157,7 @@ export default async function CompanyRequestDetailPage({
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {m.partner.banks.map((b) => (
-                        <span key={b} className="chip border-white/10 bg-white/[0.03] text-slate-300">
+                        <span key={b} className="chip border-black/10 bg-black/[0.03] text-slate-700">
                           {b}
                         </span>
                       ))}
@@ -191,7 +191,7 @@ export default async function CompanyRequestDetailPage({
             </dl>
             <div className="mt-4 flex flex-wrap gap-1.5">
               {[...request.banks, ...request.methods].map((x) => (
-                <span key={x} className="chip border-white/10 bg-white/[0.03] text-slate-300">
+                <span key={x} className="chip border-black/10 bg-black/[0.03] text-slate-700">
                   {x}
                 </span>
               ))}

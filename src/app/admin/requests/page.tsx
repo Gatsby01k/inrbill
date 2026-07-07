@@ -92,12 +92,12 @@ export default async function AdminRequestsPage({
                     <td>
                       <Link
                         href={`/admin/requests/${r.id}`}
-                        className="font-mono text-xs text-gold-300 hover:underline"
+                        className="font-mono text-xs text-gold-700 hover:underline"
                       >
                         {r.reference}
                       </Link>
                     </td>
-                    <td className="font-medium text-slate-200">{r.company.companyName}</td>
+                    <td className="font-medium text-slate-800">{r.company.companyName}</td>
                     <td className="whitespace-nowrap">{directionLabel(r.direction)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>

@@ -21,7 +21,30 @@ function HiddenFields({ fields }: { fields: Record<string, string> }) {
   );
 }
 
-/* ── Notes ────────────────────────────────────────────────────────────────── */
+function Meta({
+  author,
+  when,
+  visibility,
+  showVisibility,
+}: {
+  author: string;
+  when: Date;
+  visibility: string;
+  showVisibility: boolean;
+}) {
+  return (
+    <p className="mt-2 text-[11px] text-slate-400">
+      {author} · {fmtDateTime(when)}
+      {showVisibility ? (
+        <span className="ml-2 rounded border border-black/[0.09] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+          {VIS_LABEL[visibility] ?? visibility}
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
+/* ── Notes ────────────────────────────────────────────────────── */
 
 export function NoteList({
   notes,
@@ -31,21 +54,21 @@ export function NoteList({
   showVisibility?: boolean;
 }) {
   if (!notes.length) {
-    return <EmptyState title="No notes yet" body="Notes keep the full working history in one place." />;
+    return (
+      <EmptyState title="No notes yet" body="Notes keep the full working history in one place." />
+    );
   }
   return (
     <ul className="space-y-3">
       {notes.map((n) => (
-        <li key={n.id} className="rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">{n.body}</p>
-          <p className="mt-2 text-[11px] text-slate-600">
-            {n.authorLabel} · {fmtDateTime(n.createdAt)}
-            {showVisibility ? (
-              <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
-                {VIS_LABEL[n.visibility] ?? n.visibility}
-              </span>
-            ) : null}
-          </p>
+        <li key={n.id} className="rounded-lg border border-black/[0.08] bg-[#FCFAF5] px-4 py-3">
+          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-slate-700">{n.body}</p>
+          <Meta
+            author={n.authorLabel}
+            when={n.createdAt}
+            visibility={n.visibility}
+            showVisibility={showVisibility}
+          />
         </li>
       ))}
     </ul>
@@ -60,7 +83,6 @@ export function NoteComposer({
 }: {
   action: ServerAction;
   hidden: Record<string, string>;
-  /** When omitted, include a hidden `visibility` in `hidden`. */
   visibilityOptions?: { value: string; label: string }[];
   placeholder?: string;
 }) {
@@ -70,7 +92,11 @@ export function NoteComposer({
       <textarea name="body" rows={3} className="input" placeholder={placeholder} />
       <div className="flex items-center justify-end gap-2">
         {visibilityOptions ? (
-          <select name="visibility" className="input h-9 w-auto py-0 text-xs" defaultValue={visibilityOptions[0]?.value}>
+          <select
+            name="visibility"
+            className="input h-9 w-auto py-0 text-xs"
+            defaultValue={visibilityOptions[0]?.value}
+          >
             {visibilityOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -86,7 +112,7 @@ export function NoteComposer({
   );
 }
 
-/* ── Documents ────────────────────────────────────────────────────────────── */
+/* ── Documents ────────────────────────────────────────────────── */
 
 export function DocumentList({
   documents,
@@ -106,31 +132,25 @@ export function DocumentList({
   return (
     <ul className="space-y-3">
       {documents.map((d) => (
-        <li key={d.id} className="rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-slate-200">{d.title}</p>
-              {d.url ? (
-                <a
-                  href={d.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-0.5 block break-all text-xs text-gold-400 hover:underline"
-                >
-                  {d.url}
-                </a>
-              ) : null}
-              {d.note ? <p className="mt-1 text-xs text-slate-500">{d.note}</p> : null}
-            </div>
-          </div>
-          <p className="mt-2 text-[11px] text-slate-600">
-            {d.authorLabel} · {fmtDateTime(d.createdAt)}
-            {showVisibility ? (
-              <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
-                {VIS_LABEL[d.visibility] ?? d.visibility}
-              </span>
-            ) : null}
-          </p>
+        <li key={d.id} className="rounded-lg border border-black/[0.08] bg-[#FCFAF5] px-4 py-3">
+          <p className="text-[13px] font-medium text-slate-800">{d.title}</p>
+          {d.url ? (
+            <a
+              href={d.url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-0.5 block break-all text-xs text-gold-700 hover:underline"
+            >
+              {d.url}
+            </a>
+          ) : null}
+          {d.note ? <p className="mt-1 text-xs text-slate-500">{d.note}</p> : null}
+          <Meta
+            author={d.authorLabel}
+            when={d.createdAt}
+            visibility={d.visibility}
+            showVisibility={showVisibility}
+          />
         </li>
       ))}
     </ul>
@@ -156,7 +176,11 @@ export function DocumentComposer({
       <input name="note" className="input" placeholder="Short note — optional" />
       <div className="flex items-center justify-end gap-2">
         {visibilityOptions ? (
-          <select name="visibility" className="input h-9 w-auto py-0 text-xs" defaultValue={visibilityOptions[0]?.value}>
+          <select
+            name="visibility"
+            className="input h-9 w-auto py-0 text-xs"
+            defaultValue={visibilityOptions[0]?.value}
+          >
             {visibilityOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}

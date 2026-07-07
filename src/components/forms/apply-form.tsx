@@ -142,7 +142,7 @@ export function ApplyForm() {
       <FormError message={state.error} />
 
       <div className="flex items-center justify-between gap-4">
-        <p className="max-w-sm text-xs leading-relaxed text-slate-600">
+        <p className="max-w-sm text-xs leading-relaxed text-slate-400">
           Applications are reviewed manually. Verification may require documents
           and a call before any introduction is made.
         </p>

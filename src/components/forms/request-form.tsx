@@ -161,7 +161,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
       <FormError message={state.error} />
 
       <div className="flex items-center justify-between gap-4">
-        <p className="max-w-sm text-xs leading-relaxed text-slate-600">
+        <p className="max-w-sm text-xs leading-relaxed text-slate-400">
           By submitting you confirm the information is accurate and that you act
           for the company named above.
         </p>

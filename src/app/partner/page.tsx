@@ -93,7 +93,7 @@ export default async function PartnerOverviewPage({
             <span className="text-xs text-slate-500">verified {fmtDate(partner.verifiedAt)}</span>
           ) : null}
         </div>
-        <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-slate-400">
+        <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-slate-600">
           {STATUS_EXPLAINER[partner.status]}
         </p>
       </div>
@@ -108,13 +108,13 @@ export default async function PartnerOverviewPage({
                 {partner.matches.map((m) => (
                   <div key={m.id} className="rounded-xl border border-gold-500/20 bg-gold-500/[0.03] p-4">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <span className="font-mono text-xs text-gold-300">{m.request.reference}</span>
-                      <p className="text-sm font-semibold text-slate-100">
+                      <span className="font-mono text-xs text-gold-700">{m.request.reference}</span>
+                      <p className="text-sm font-semibold text-slate-900">
                         {directionLabel(m.request.direction)}
                       </p>
                       <StatusBadge status={m.status} />
                       {m.introductions[0] ? <StatusBadge status={m.introductions[0].status} /> : null}
-                      <span className="ml-auto text-[11px] text-slate-600">{fmtDate(m.createdAt)}</span>
+                      <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
                     </div>
                     <dl className="kv mt-3 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
                       <KV label="Daily volume">{m.request.dailyVolumeBand}</KV>
@@ -124,7 +124,7 @@ export default async function PartnerOverviewPage({
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {[...m.request.banks, ...m.request.methods].map((x) => (
-                        <span key={x} className="chip border-white/10 bg-white/[0.03] text-slate-300">
+                        <span key={x} className="chip border-black/10 bg-black/[0.03] text-slate-700">
                           {x}
                         </span>
                       ))}

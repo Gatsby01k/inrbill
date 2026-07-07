@@ -84,7 +84,7 @@ export default async function PartnerProfilePage({
                 />
               </Field>
               <div className="flex items-center justify-between gap-4">
-                <p className="max-w-sm text-xs leading-relaxed text-slate-600">
+                <p className="max-w-sm text-xs leading-relaxed text-slate-400">
                   Changes are recorded in the audit trail and visible to operations.
                   Material changes can trigger a re-review of your verification.
                 </p>
@@ -101,7 +101,7 @@ export default async function PartnerProfilePage({
               <KV label="Operating name">{partner.displayName}</KV>
               <KV label="Legal entity">{partner.legalName ?? "Not provided"}</KV>
               <KV label="Reference">
-                <span className="font-mono text-emerald-300">{partner.reference}</span>
+                <span className="font-mono text-emerald-700">{partner.reference}</span>
               </KV>
               <KV label="Status">
                 <StatusBadge status={partner.status} />
@@ -113,7 +113,7 @@ export default async function PartnerProfilePage({
               <KV label="Coverage">{partner.jurisdictions}</KV>
               <KV label="Applied">{fmtDate(partner.createdAt)}</KV>
             </dl>
-            <p className="mt-4 text-[11px] leading-relaxed text-slate-600">
+            <p className="mt-4 text-[11px] leading-relaxed text-slate-400">
               To change identity fields (name, legal entity, directions, coverage),
               message operations from your overview — identity changes require re-verification.
             </p>

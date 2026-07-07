@@ -73,16 +73,16 @@ export default async function AdminMatchesPage({
                     <td>
                       <Link
                         href={`/admin/requests/${m.requestId}`}
-                        className="font-mono text-xs text-gold-300 hover:underline"
+                        className="font-mono text-xs text-gold-700 hover:underline"
                       >
                         {m.request.reference}
                       </Link>
                     </td>
-                    <td className="font-medium text-slate-200">{m.request.company.companyName}</td>
+                    <td className="font-medium text-slate-800">{m.request.company.companyName}</td>
                     <td>
                       <Link
                         href={`/admin/partners/${m.partnerId}`}
-                        className="font-medium text-slate-200 hover:text-emerald-300"
+                        className="font-medium text-slate-800 hover:text-emerald-800"
                       >
                         {m.partner.displayName}
                       </Link>
@@ -92,11 +92,11 @@ export default async function AdminMatchesPage({
                       <StatusBadge status={m.status} />
                     </td>
                     <td className="text-xs">
-                      <span className={m.releasedToCompany ? "text-emerald-300" : "text-slate-600"}>
+                      <span className={m.releasedToCompany ? "text-emerald-700" : "text-slate-400"}>
                         C{m.releasedToCompany ? " ✓" : " —"}
                       </span>
-                      <span className="mx-1 text-slate-700">/</span>
-                      <span className={m.releasedToPartner ? "text-emerald-300" : "text-slate-600"}>
+                      <span className="mx-1 text-slate-300">/</span>
+                      <span className={m.releasedToPartner ? "text-emerald-700" : "text-slate-400"}>
                         P{m.releasedToPartner ? " ✓" : " —"}
                       </span>
                     </td>
