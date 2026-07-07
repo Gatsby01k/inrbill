@@ -456,7 +456,7 @@ export default async function AdminRequestDetailPage({
         </div>
 
         {/* ── Right rail ── */}
-        <div className="space-y-5">
+        <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
           <div className="card p-5">
             <SectionTitle title="Request status" />
             <form action={updateRequestStatus} className="flex items-center gap-2">

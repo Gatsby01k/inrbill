@@ -1,49 +1,66 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/brand";
 import { cn, statusLabel } from "@/lib/format";
 
-/* ── Status badge ─────────────────────────────────────────────────────────── */
+/* ── Status badge ─────────────────────────────────────────────
+   Gold = brand · Emerald = verification · Blue = information ·
+   Red = risk · Gray = structure                                */
 
-const TONES: Record<string, string> = {
+const TONE_CLASS = {
+  sky: { chip: "border-sky-400/25 bg-sky-400/[0.08] text-sky-200", dot: "bg-sky-400" },
+  blue: { chip: "border-blue-400/25 bg-blue-400/[0.08] text-blue-200", dot: "bg-blue-400" },
+  gold: { chip: "border-gold-500/30 bg-gold-500/[0.08] text-gold-300", dot: "bg-gold-400" },
+  emerald: {
+    chip: "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-200",
+    dot: "bg-emerald-400",
+  },
+  rose: { chip: "border-rose-400/25 bg-rose-400/[0.08] text-rose-200", dot: "bg-rose-400" },
+  slate: { chip: "border-white/[0.12] bg-white/[0.04] text-slate-400", dot: "bg-slate-500" },
+} as const;
+
+const STATUS_TONE: Record<string, keyof typeof TONE_CLASS> = {
   // Request
-  SUBMITTED: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  IN_REVIEW: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-  MATCHING: "border-violet-400/30 bg-violet-400/10 text-violet-300",
-  INTRODUCED: "border-gold-500/40 bg-gold-500/10 text-gold-300",
-  CLOSED: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  REJECTED: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+  SUBMITTED: "sky",
+  IN_REVIEW: "blue",
+  MATCHING: "gold",
+  INTRODUCED: "gold",
+  CLOSED: "emerald",
+  REJECTED: "rose",
   // Partner
-  APPLIED: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  UNDER_REVIEW: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-  VERIFIED: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
-  LIMITED: "border-orange-400/30 bg-orange-400/10 text-orange-300",
-  SUSPENDED: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+  APPLIED: "sky",
+  UNDER_REVIEW: "blue",
+  VERIFIED: "emerald",
+  LIMITED: "gold",
+  SUSPENDED: "rose",
   // Match
-  SUGGESTED: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  SHORTLISTED: "border-violet-400/30 bg-violet-400/10 text-violet-300",
-  ACCEPTED: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  DECLINED: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+  SUGGESTED: "sky",
+  SHORTLISTED: "blue",
+  ACCEPTED: "emerald",
+  DECLINED: "rose",
   // Introduction
-  PENDING: "border-slate-400/30 bg-slate-400/10 text-slate-300",
-  SENT: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  RESPONDED: "border-violet-400/30 bg-violet-400/10 text-violet-300",
-  SUCCESSFUL: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  FAILED: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+  PENDING: "slate",
+  SENT: "sky",
+  RESPONDED: "blue",
+  SUCCESSFUL: "emerald",
+  FAILED: "rose",
   // Revenue
-  POTENTIAL: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  INVOICED: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-  PAID: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  WAIVED: "border-slate-400/30 bg-slate-400/10 text-slate-400",
+  POTENTIAL: "sky",
+  INVOICED: "gold",
+  PAID: "emerald",
+  WAIVED: "slate",
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {
+  const tone = TONE_CLASS[STATUS_TONE[status] ?? "slate"];
   return (
-    <span className={cn("chip", TONES[status] ?? "border-white/15 bg-white/5 text-slate-300", className)}>
+    <span className={cn("chip", tone.chip, className)}>
+      <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
       {statusLabel(status)}
     </span>
   );
 }
 
-/* ── Layout primitives ────────────────────────────────────────────────────── */
+/* ── Layout primitives ────────────────────────────────────────── */
 
 export function PageHeader({
   title,
@@ -57,8 +74,8 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-50">{title}</h1>
-        {sub ? <p className="mt-1 text-[13px] text-slate-500">{sub}</p> : null}
+        <h1 className="text-lg font-semibold tracking-[-0.01em] text-slate-50">{title}</h1>
+        {sub ? <p className="mt-1 max-w-2xl text-[13px] text-slate-500">{sub}</p> : null}
       </div>
       {actions}
     </div>
@@ -76,7 +93,7 @@ export function SectionTitle({
 }) {
   return (
     <div className={cn("mb-3 flex items-center justify-between gap-3", className)}>
-      <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">
+      <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         {title}
       </h2>
       {action}
@@ -86,9 +103,10 @@ export function SectionTitle({
 
 export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-5 py-8 text-center">
-      <p className="text-sm font-medium text-slate-300">{title}</p>
-      {body ? <p className="mt-1 text-xs text-slate-500">{body}</p> : null}
+    <div className="flex flex-col items-center rounded-lg border border-white/[0.06] bg-white/[0.015] px-6 py-10 text-center">
+      <BrandMark size={26} className="opacity-30 saturate-[0.6]" />
+      <p className="mt-3 text-[13px] font-medium text-slate-300">{title}</p>
+      {body ? <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-600">{body}</p> : null}
     </div>
   );
 }
@@ -105,11 +123,13 @@ export function Stat({
   tone?: "default" | "gold" | "emerald";
 }) {
   return (
-    <div className="card px-4 py-3.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+    <div className="card px-4 py-3 transition-colors hover:border-white/[0.14]">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+        {label}
+      </p>
       <p
         className={cn(
-          "mt-1 text-2xl font-semibold tabular-nums",
+          "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
           tone === "gold" && "text-gold-300",
           tone === "emerald" && "text-emerald-300",
           tone === "default" && "text-slate-100",
@@ -117,7 +137,7 @@ export function Stat({
       >
         {value}
       </p>
-      {sub ? <p className="mt-0.5 text-xs text-slate-500">{sub}</p> : null}
+      {sub ? <p className="mt-1.5 text-[11px] text-slate-600">{sub}</p> : null}
     </div>
   );
 }
@@ -125,8 +145,10 @@ export function Stat({
 export function KV({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm text-slate-200">{children}</dd>
+      <dt className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        {label}
+      </dt>
+      <dd className="mt-1 text-[13px] leading-snug text-slate-200">{children}</dd>
     </div>
   );
 }
@@ -135,14 +157,17 @@ export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-gold-300"
+      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-gold-300"
     >
-      <span aria-hidden>←</span> {label}
+      <span aria-hidden className="text-[13px] leading-none">
+        ←
+      </span>
+      {label}
     </Link>
   );
 }
 
-/* ── Form primitives ──────────────────────────────────────────────────────── */
+/* ── Form primitives ──────────────────────────────────────────── */
 
 export function Field({
   label,
@@ -161,8 +186,10 @@ export function Field({
     <label className={cn("block", className)}>
       <span className="lbl">{label}</span>
       {children}
-      {hint && !error ? <span className="mt-1.5 block text-xs text-slate-500">{hint}</span> : null}
-      {error ? <span className="mt-1.5 block text-xs text-rose-400">{error}</span> : null}
+      {hint && !error ? (
+        <span className="mt-1.5 block text-[11.5px] text-slate-600">{hint}</span>
+      ) : null}
+      {error ? <span className="mt-1.5 block text-[11.5px] text-rose-400">{error}</span> : null}
     </label>
   );
 }
@@ -182,18 +209,23 @@ export function CheckboxGrid({
     typeof o === "string" ? { value: o, label: o } : { value: o.value, label: o.label },
   );
   return (
-    <div className={cn("grid gap-2", cols === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2")}>
+    <div
+      className={cn(
+        "grid gap-2",
+        cols === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2",
+      )}
+    >
       {items.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 text-sm text-slate-300 transition hover:border-gold-500/30 has-[:checked]:border-gold-500/50 has-[:checked]:bg-gold-500/[0.07] has-[:checked]:text-white"
+          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-white/[0.09] bg-white/[0.015] px-3 py-2 text-[13px] text-slate-300 transition-colors duration-150 hover:border-white/20 hover:bg-white/[0.03] has-[:checked]:border-gold-500/45 has-[:checked]:bg-gold-500/[0.06] has-[:checked]:text-white"
         >
           <input
             type="checkbox"
             name={name}
             value={o.value}
             defaultChecked={defaultChecked.includes(o.value)}
-            className="h-4 w-4 accent-[#CFA84F]"
+            className="h-3.5 w-3.5 accent-[#EFA12F]"
           />
           <span>{o.label}</span>
         </label>
@@ -216,7 +248,7 @@ export function RadioCards({
       {options.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-white/10 bg-white/[0.02] px-3.5 py-3 transition hover:border-gold-500/30 has-[:checked]:border-gold-500/50 has-[:checked]:bg-gold-500/[0.07]"
+          className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-white/[0.09] bg-white/[0.015] px-3.5 py-3 transition-colors duration-150 hover:border-white/20 hover:bg-white/[0.03] has-[:checked]:border-gold-500/45 has-[:checked]:bg-gold-500/[0.06]"
         >
           <span className="flex items-center gap-2.5">
             <input
@@ -224,9 +256,9 @@ export function RadioCards({
               name={name}
               value={o.value}
               defaultChecked={defaultValue === o.value}
-              className="h-4 w-4 accent-[#CFA84F]"
+              className="h-3.5 w-3.5 accent-[#EFA12F]"
             />
-            <span className="text-sm font-semibold text-slate-200">{o.label}</span>
+            <span className="text-[13px] font-semibold text-slate-200">{o.label}</span>
           </span>
           {o.hint ? <span className="ml-6 text-xs text-slate-500">{o.hint}</span> : null}
         </label>
@@ -246,8 +278,10 @@ export function FormSection({
 }) {
   return (
     <section className="card p-6 sm:p-7">
-      <h2 className="text-[15px] font-semibold text-slate-100">{title}</h2>
-      {sub ? <p className="mt-1 text-[13px] text-slate-500">{sub}</p> : null}
+      <div className="border-b border-white/[0.06] pb-4">
+        <h2 className="text-sm font-semibold tracking-[-0.01em] text-slate-100">{title}</h2>
+        {sub ? <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p> : null}
+      </div>
       <div className="mt-5 space-y-5">{children}</div>
     </section>
   );
@@ -256,7 +290,8 @@ export function FormSection({
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+    <div className="flex items-start gap-2.5 rounded-lg border border-rose-500/30 bg-rose-500/[0.08] px-4 py-3 text-[13px] text-rose-200">
+      <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-rose-400" />
       {message}
     </div>
   );

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EmptyState, PageHeader, SectionTitle, Stat, StatusBadge } from "@/components/ui";
+import { EmptyState, PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
 import { Timeline } from "@/components/workspace/timeline";
 import { db } from "@/lib/db";
-import { auditLabel, directionLabel, fmtDate, money } from "@/lib/format";
+import { auditLabel, cn, directionLabel, fmtDate, money, statusLabel } from "@/lib/format";
 import {
   INTRODUCTION_STATUSES,
   MATCH_STATUSES,
@@ -72,29 +72,57 @@ export default async function AdminDashboard() {
       />
 
       <SectionTitle title={`Requests · ${totalRequests}`} />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {REQUEST_STATUSES.map((s) => (
-          <Link key={s} href={`/admin/requests?status=${s}`}>
-            <Stat
-              label={s === "IN_REVIEW" ? "In Review" : s.charAt(0) + s.slice(1).toLowerCase()}
-              value={countOf(reqGroups, s)}
-              tone={s === "INTRODUCED" ? "gold" : s === "CLOSED" ? "emerald" : "default"}
-            />
-          </Link>
-        ))}
+      <div className="card overflow-hidden">
+        <div className="grid grid-cols-2 gap-px bg-white/[0.06] sm:grid-cols-3 xl:grid-cols-6">
+          {REQUEST_STATUSES.map((s) => (
+            <Link
+              key={s}
+              href={`/admin/requests?status=${s}`}
+              className="bg-night-850/95 px-4 py-3.5 transition-colors hover:bg-night-800/80"
+            >
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                {statusLabel(s)}
+              </p>
+              <p
+                className={cn(
+                  "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
+                  s === "INTRODUCED"
+                    ? "text-gold-300"
+                    : s === "CLOSED"
+                      ? "text-emerald-300"
+                      : "text-slate-100",
+                )}
+              >
+                {countOf(reqGroups, s)}
+              </p>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <SectionTitle title={`Partners · ${totalPartners}`} className="mt-8" />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {PARTNER_STATUSES.map((s) => (
-          <Link key={s} href={`/admin/partners?status=${s}`}>
-            <Stat
-              label={s === "UNDER_REVIEW" ? "Under Review" : s.charAt(0) + s.slice(1).toLowerCase()}
-              value={countOf(ptrGroups, s)}
-              tone={s === "VERIFIED" ? "emerald" : "default"}
-            />
-          </Link>
-        ))}
+      <div className="card overflow-hidden">
+        <div className="grid grid-cols-2 gap-px bg-white/[0.06] sm:grid-cols-3 xl:grid-cols-6">
+          {PARTNER_STATUSES.map((s) => (
+            <Link
+              key={s}
+              href={`/admin/partners?status=${s}`}
+              className="bg-night-850/95 px-4 py-3.5 transition-colors hover:bg-night-800/80"
+            >
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                {statusLabel(s)}
+              </p>
+              <p
+                className={cn(
+                  "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
+                  s === "VERIFIED" ? "text-emerald-300" : "text-slate-100",
+                )}
+              >
+                {countOf(ptrGroups, s)}
+              </p>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">

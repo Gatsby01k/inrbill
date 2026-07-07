@@ -222,7 +222,7 @@ export default async function CompanyRequestDetailPage({
         </div>
 
         {/* Rail */}
-        <div className="space-y-5">
+        <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
           <div className="card p-5">
             <SectionTitle title="Timeline" />
             <Timeline

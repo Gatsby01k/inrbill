@@ -19,12 +19,15 @@ export function NavLinks({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "whitespace-nowrap rounded-lg border px-3 py-2 text-[13px] font-medium transition",
+              "relative flex items-center whitespace-nowrap rounded-md px-3 py-[7px] text-[13px] font-medium transition-colors duration-150",
               active
-                ? "border-gold-500/25 bg-gold-500/10 text-gold-300"
-                : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white",
+                ? "bg-white/[0.06] text-slate-50"
+                : "text-slate-500 hover:bg-white/[0.03] hover:text-slate-200",
             )}
           >
+            {active ? (
+              <span className="absolute left-0 top-1/2 h-3.5 w-[2px] -translate-y-1/2 rounded-full bg-gold-400" />
+            ) : null}
             {item.label}
           </Link>
         );

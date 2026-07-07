@@ -2,106 +2,234 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   INRP2P design system
+   Gold = brand · Emerald = verification · Blue = information ·
+   Red = risk · Gray = structure
+   ───────────────────────────────────────────────────────────── */
+
 @layer base {
   html {
     @apply antialiased;
-    scrollbar-color: rgba(207, 168, 79, 0.25) transparent;
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.18) transparent;
   }
   body {
-    @apply bg-night-950 font-sans text-slate-200;
-    background-image:
-      radial-gradient(1100px 560px at 82% -12%, rgba(207, 168, 79, 0.07), transparent 60%),
-      radial-gradient(900px 520px at -12% 28%, rgba(29, 45, 78, 0.38), transparent 62%);
-    background-attachment: fixed;
+    @apply bg-night-950 font-sans text-[13.5px] leading-relaxed text-slate-300;
+    font-feature-settings: "cv11", "ss01";
+    background-image: radial-gradient(
+      900px 480px at 78% -160px,
+      rgba(239, 161, 47, 0.055),
+      transparent 65%
+    );
   }
   ::selection {
-    @apply bg-gold-500/30 text-white;
+    @apply bg-gold-500/25 text-white;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.28);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  :where(a, button, [role="button"], input, select, textarea, summary):focus-visible {
+    outline: 2px solid rgba(244, 185, 90, 0.55);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
   }
 }
 
 @layer components {
-  /* Surfaces */
+  /* ── Surfaces ─────────────────────────────────────────────── */
   .card {
-    @apply rounded-2xl border border-white/10 bg-white/[0.04] shadow-card backdrop-blur-md;
+    @apply rounded-xl border border-white/[0.08] bg-night-850/90 shadow-card;
   }
   .glass-nav {
-    @apply border-b border-white/10 bg-night-950/75 backdrop-blur-xl;
+    @apply border-b border-white/[0.07] bg-night-950/80 backdrop-blur-xl;
+  }
+  .hairline-b {
+    @apply border-b border-white/[0.06];
   }
 
-  /* Typography helpers */
+  /* ── Typography helpers ───────────────────────────────────── */
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-400;
+    @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-400;
   }
   .lbl {
-    @apply mb-1.5 block text-[13px] font-medium text-slate-300;
+    @apply mb-1.5 block text-xs font-medium tracking-wide text-slate-400;
+  }
+  .tnum {
+    font-feature-settings: "tnum";
   }
 
-  /* Form controls */
+  /* ── Form controls ────────────────────────────────────────── */
   .input {
-    @apply w-full rounded-lg border border-white/10 bg-night-900/80 px-3.5 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-gold-500/60 focus:ring-2 focus:ring-gold-500/20;
+    @apply w-full rounded-lg border border-white/10 bg-night-900 px-3 py-2.5 text-[13px] text-slate-100 placeholder:text-slate-600;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .input:hover {
+    @apply border-white/[0.16];
+  }
+  .input:focus {
+    @apply border-gold-500/50 outline-none;
+    box-shadow: 0 0 0 3px rgba(239, 161, 47, 0.12);
   }
   select.input {
     @apply appearance-none bg-no-repeat pr-9;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
     background-position: right 0.8rem center;
-    background-size: 10px 7px;
+    background-size: 9px 6px;
   }
   select.input option {
     @apply bg-night-900 text-slate-100;
   }
 
-  /* Buttons — combine: "btn btn-gold", "btn btn-ghost", "btn btn-danger" */
+  /* ── Buttons — "physical" ─────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold;
+    transition:
+      transform 0.1s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease,
+      filter 0.15s ease;
+  }
+  .btn:active {
+    transform: translateY(0.5px) scale(0.995);
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-50;
   }
   .btn-gold {
-    @apply bg-gradient-to-b from-gold-400 to-gold-600 text-night-950 hover:from-gold-300 hover:to-gold-500;
+    @apply border border-gold-700/70 bg-gradient-to-b from-gold-400 to-gold-600 text-night-950;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+  .btn-gold:hover {
+    filter: brightness(1.06);
   }
   .btn-ghost {
-    @apply border border-white/15 bg-white/[0.03] text-slate-200 hover:border-gold-500/40 hover:text-white;
+    @apply border border-white/[0.12] bg-white/[0.02] text-slate-200;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .btn-ghost:hover {
+    @apply border-white/25 bg-white/[0.05] text-white;
   }
   .btn-danger {
-    @apply border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
+    @apply border border-rose-500/30 bg-rose-500/10 text-rose-300;
+  }
+  .btn-danger:hover {
+    @apply border-rose-500/50 bg-rose-500/[0.18];
   }
   .btn-sm {
-    @apply px-3 py-1.5 text-xs;
+    @apply rounded-md px-2.5 py-1.5 text-xs;
   }
 
-  /* Tables */
+  /* ── Tables — dense, engineered ───────────────────────────── */
   .tbl {
-    @apply w-full border-collapse text-left text-sm;
+    @apply w-full border-collapse text-left text-[12.5px];
   }
   .tbl thead th {
-    @apply whitespace-nowrap border-b border-white/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400;
+    @apply whitespace-nowrap border-b border-white/[0.08] bg-white/[0.02] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500;
   }
   .tbl tbody td {
-    @apply border-b border-white/5 px-3 py-3 align-top text-slate-300;
+    @apply border-b border-white/[0.05] px-3 py-2.5 align-middle text-slate-300;
+    font-feature-settings: "tnum";
   }
   .tbl tbody tr {
-    @apply transition-colors;
+    transition: background-color 0.12s ease;
   }
   .tbl tbody tr:hover {
-    @apply bg-white/[0.03];
+    @apply bg-white/[0.025];
+  }
+  .tbl tbody tr:last-child td {
+    @apply border-b-0;
   }
 
-  /* Definition grids */
+  /* ── Key-value grids ──────────────────────────────────────── */
   .kv dt {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-slate-500;
+    @apply text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500;
   }
   .kv dd {
-    @apply mt-0.5 text-sm text-slate-200;
+    @apply mt-1 text-[13px] leading-snug text-slate-200;
   }
 
-  /* Chips / badges */
+  /* ── Chips / status ───────────────────────────────────────── */
   .chip {
-    @apply inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide;
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-[3px] text-[11px] font-medium tracking-wide;
   }
 
-  /* Filter pills */
+  /* ── Filter pills ─────────────────────────────────────────── */
   .pill {
-    @apply inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-gold-500/40 hover:text-white;
+    @apply inline-flex items-center rounded-md border border-white/[0.09] bg-white/[0.02] px-2.5 py-1.5 text-xs font-medium text-slate-400;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .pill:hover {
+    @apply border-white/20 text-slate-200;
   }
   .pill-active {
-    @apply border-gold-500/60 bg-gold-500/10 text-gold-300;
+    @apply border-gold-500/50 bg-gold-500/[0.09] text-gold-300;
+  }
+
+  /* ── Landing texture ──────────────────────────────────────── */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
+    -webkit-mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer utilities {
+  /* ── Motion ───────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    }
+    .reveal-1 {
+      animation-delay: 0.06s;
+    }
+    .reveal-2 {
+      animation-delay: 0.12s;
+    }
+    .reveal-3 {
+      animation-delay: 0.18s;
+    }
   }
 }
