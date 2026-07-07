@@ -206,7 +206,10 @@
     );
   }
 
-  /* ── Layered marketing backdrop ───────────────────────────── */
+  /* ── Layered marketing backdrop ──────────────────────────────
+     Warm light from above (aurora) + organic paper grain.
+     No geometry, no grid — it should feel like printed stock,
+     not like a wireframe.                                       */
   .hero-aurora {
     position: relative;
   }
@@ -217,29 +220,21 @@
     z-index: -2;
     pointer-events: none;
     background:
-      radial-gradient(52rem 26rem at 82% -6rem, rgba(244, 169, 55, 0.17), transparent 62%),
-      radial-gradient(40rem 22rem at 8% -10rem, rgba(233, 120, 32, 0.1), transparent 60%),
-      radial-gradient(60rem 30rem at 50% 115%, rgba(255, 255, 255, 0.85), transparent 62%);
+      radial-gradient(56rem 28rem at 80% -8rem, rgba(244, 169, 55, 0.16), transparent 64%),
+      radial-gradient(44rem 24rem at 6% -12rem, rgba(233, 120, 32, 0.09), transparent 62%),
+      radial-gradient(64rem 32rem at 50% 118%, rgba(255, 255, 255, 0.9), transparent 64%);
   }
-
-  /* ── Landing texture ──────────────────────────────────────────
-     The mask lives on a ::before underlay so it fades ONLY the
-     grid texture — never the section's actual content.          */
-  .grid-bg {
-    position: relative;
-  }
-  .grid-bg::before {
+  .hero-aurora::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(40, 32, 16, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(40, 32, 16, 0.045) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
-    -webkit-mask-image: radial-gradient(72% 64% at 50% 0%, black 30%, transparent 82%);
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
+    -webkit-mask-image: radial-gradient(80% 70% at 50% 0%, black 30%, transparent 90%);
   }
 }
 

@@ -20,7 +20,7 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <div className="hero-aurora grid-bg flex min-h-screen items-center justify-center px-4">
+    <div className="hero-aurora flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-[380px]">
         <div className="mb-7 flex flex-col items-center gap-3">
           <BrandMark size={42} />

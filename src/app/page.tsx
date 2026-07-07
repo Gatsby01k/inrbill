@@ -138,7 +138,7 @@ export default function LandingPage() {
       <SiteNav />
       <main className="flex-1">
         {/* ── Hero ── */}
-        <section className="hero-aurora grid-bg relative overflow-hidden pb-20 pt-36">
+        <section className="hero-aurora relative overflow-hidden pb-20 pt-36">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
           {/* Ring motif echoing the brand mark */}
           <svg
