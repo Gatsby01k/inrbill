@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { CONTACT_EMAIL, CONTACT_TELEGRAM } from "@/lib/options";
+import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "INRP2P — Reviewed INR Liquidity Partners | INR ⇄ USDT & INR Payouts",
+  },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+};
 
 const PIPELINE = [
   { step: "Submitted", text: "Your requirements enter the queue with a reference number." },
@@ -57,9 +67,44 @@ const FAQ = [
   },
 ];
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#org`,
+      name: "INRP2P",
+      url: SITE_URL,
+      logo: `${SITE_URL}/icon.svg`,
+      email: CONTACT_EMAIL,
+      sameAs: [`https://t.me/${CONTACT_TELEGRAM}`],
+      description: SITE_DESCRIPTION,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "INRP2P — Private INR Liquidity Network",
+      publisher: { "@id": `${SITE_URL}/#org` },
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQ.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ],
+};
+
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <SiteNav />
       <main className="flex-1">
         {/* Hero */}
@@ -68,24 +113,34 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <div>
               <p className="eyebrow reveal">Private INR liquidity network</p>
-              <h1 className="reveal reveal-1 mt-5 font-display text-[2.6rem] font-medium leading-[1.06] tracking-[-0.01em] text-slate-900 sm:text-[3.3rem]">
+              <h1 className="reveal reveal-1 mt-5 font-display text-[2.7rem] font-medium leading-[1.04] tracking-[-0.012em] text-slate-900 sm:text-[3.7rem]">
                 Reviewed INR liquidity partners.
                 <br />
                 <span className="text-gold-700">Qualified introductions.</span>
                 <br />
                 Nothing else.
               </h1>
-              <p className="reveal reveal-2 mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
-                INRP2P connects qualified companies with manually reviewed INR
-                liquidity partners across INR → USDT, USDT → INR and INR payout
-                corridors. We review both sides, match on real requirements and
-                make direct introductions. We never touch funds.
+              <p className="reveal reveal-2 mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-600">
+                A private network for companies that move real INR volume. Every
+                partner is reviewed by hand — entity, banks, capacity, reserves,
+                compliance — before a single introduction is made. You get a
+                vetted counterparty, not a listing. Funds never pass through us.
               </p>
+              <div className="reveal reveal-2 mt-5 flex flex-wrap gap-2">
+                {["INR → USDT", "USDT → INR", "INR payouts"].map((c) => (
+                  <span
+                    key={c}
+                    className="rounded-md border border-black/[0.1] bg-white px-2.5 py-1 font-mono text-[11px] font-medium tracking-wide text-slate-600"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
               <div className="reveal reveal-2 mt-8 flex flex-wrap items-center gap-3">
-                <Link href="/request" className="btn btn-gold">
+                <Link href="/request" className="btn btn-gold px-5 py-3">
                   Request a liquidity partner
                 </Link>
-                <Link href="/apply" className="btn btn-ghost">
+                <Link href="/apply" className="btn btn-ghost px-5 py-3">
                   Apply as a liquidity partner
                 </Link>
               </div>

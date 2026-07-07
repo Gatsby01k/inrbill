@@ -5,7 +5,10 @@ import { BrandMark, Wordmark } from "@/components/brand";
 import { LoginForm } from "@/components/forms/login-form";
 import { getSession, roleHome } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "Log in" };
+export const metadata: Metadata = {
+  title: "Log in",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({
   searchParams,

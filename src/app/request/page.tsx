@@ -4,7 +4,10 @@ import { RequestForm } from "@/components/forms/request-form";
 import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Request a liquidity partner",
+  title: "Request an INR liquidity partner",
+  description:
+    "Submit your INR liquidity requirement — direction, daily and monthly volume, banks, rails, speed and jurisdiction. Reviewed manually within 24–48 hours. Introductions only, never custody.",
+  alternates: { canonical: "/request" },
 };
 
 export default async function RequestPage() {
