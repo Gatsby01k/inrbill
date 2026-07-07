@@ -194,7 +194,9 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
         } else {
           const el = form.elements.namedItem(name);
           if (el && "value" in el) {
-            (el as HTMLInputElement).value = value;
+            // HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement or RadioNodeList —
+            // all expose a writable string `value`.
+            (el as unknown as { value: string }).value = value;
             touched = true;
           }
         }
