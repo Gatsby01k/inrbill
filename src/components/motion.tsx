@@ -12,16 +12,18 @@ export function Reveal({
   children,
   index = 0,
   className,
-  as: Tag = "div",
+  as = "div",
   threshold = 0.15,
 }: {
   children: React.ReactNode;
   index?: number;
   className?: string;
-  as?: keyof React.JSX.IntrinsicElements;
+  /** Only the tags this component is actually used with — kept narrow so
+      TS doesn't have to resolve the full JSX.IntrinsicElements union. */
+  as?: "div" | "details";
   threshold?: number;
 }) {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement & HTMLDetailsElement>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
@@ -46,16 +48,17 @@ export function Reveal({
     return () => io.disconnect();
   }, [threshold]);
 
-  return (
-    <Tag
-      ref={ref as never}
-      data-reveal={inView ? "in" : undefined}
-      style={{ "--reveal-i": index } as React.CSSProperties}
-      className={cn(!inView && "opacity-0", className)}
-    >
-      {children}
-    </Tag>
-  );
+  const revealProps = {
+    ref,
+    "data-reveal": inView ? ("in" as const) : undefined,
+    style: { "--reveal-i": index } as React.CSSProperties,
+    className: cn(!inView && "opacity-0", className),
+  };
+
+  if (as === "details") {
+    return <details {...revealProps}>{children}</details>;
+  }
+  return <div {...revealProps}>{children}</div>;
 }
 
 /* ── Counter ───────────────────────────────────────────────────
