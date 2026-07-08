@@ -33,7 +33,7 @@ export function WorkspaceShell({
             {badge}
           </span>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 py-2.5 lg:flex-col lg:overflow-visible lg:py-4">
+        <nav className="px-3 py-2.5 lg:py-4">
           <p className="hidden px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 lg:block">
             Workspace
           </p>

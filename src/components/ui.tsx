@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
+import { Counter } from "@/components/motion";
 import { cn, statusLabel } from "@/lib/format";
 
 /* ── Status badge ─────────────────────────────────────────────
@@ -80,7 +81,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 animate-reveal">
       <div>
         <h1 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">{title}</h1>
         {sub ? <p className="mt-1 max-w-2xl text-[13px] text-slate-500">{sub}</p> : null}
@@ -111,8 +112,8 @@ export function SectionTitle({
 
 export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-black/[0.07] bg-black/[0.015] px-6 py-10 text-center">
-      <BrandMark size={26} className="opacity-50" />
+    <div className="flex flex-col items-center rounded-lg border border-black/[0.07] bg-black/[0.015] px-6 py-10 text-center animate-reveal">
+      <BrandMark size={26} className="animate-float opacity-50" />
       <p className="mt-3 text-[13px] font-medium text-slate-700">{title}</p>
       {body ? <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">{body}</p> : null}
     </div>
@@ -131,7 +132,7 @@ export function Stat({
   tone?: "default" | "gold" | "emerald";
 }) {
   return (
-    <div className="card px-4 py-3 transition-colors hover:border-black/[0.16]">
+    <div className="card px-4 py-3" data-hoverable="true">
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
         {label}
       </p>
@@ -143,7 +144,7 @@ export function Stat({
           tone === "default" && "text-slate-900",
         )}
       >
-        {value}
+        {typeof value === "number" ? <Counter value={value} /> : value}
       </p>
       {sub ? <p className="mt-1.5 text-[11px] text-slate-500">{sub}</p> : null}
     </div>

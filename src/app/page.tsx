@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
+import { Reveal } from "@/components/motion";
+import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { CONTACT_EMAIL, CONTACT_TELEGRAM } from "@/lib/options";
@@ -134,24 +136,11 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* ── Hero ── */}
         <section className="hero-aurora relative overflow-hidden pb-20 pt-36">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/60 to-transparent" />
-          <svg
-            className="pointer-events-none absolute -right-40 -top-32 -z-[1] hidden lg:block"
-            width="620"
-            height="620"
-            viewBox="0 0 620 620"
-            fill="none"
-            aria-hidden
-          >
-            <circle cx="310" cy="310" r="290" stroke="rgba(255,153,51,0.18)" strokeWidth="1.5" />
-            <circle cx="310" cy="310" r="214" stroke="rgba(255,153,51,0.11)" strokeWidth="1.5" />
-            <circle cx="310" cy="20" r="7" fill="rgba(255,153,51,0.4)" />
-            <circle cx="59" cy="455" r="7" fill="rgba(23,138,56,0.3)" />
-            <circle cx="561" cy="455" r="7" fill="rgba(255,153,51,0.28)" />
-          </svg>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px animate-gradient-shift bg-gradient-to-r from-gold-500/10 via-gold-500/70 to-leaf-500/20 bg-[length:200%_200%]" />
+          <HeroRing />
 
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
-            <div>
+            <Reveal>
               <p className="eyebrow">Private reviewed network</p>
               <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-900 sm:text-[3.15rem]">
                 Stop searching for INR payout
@@ -183,9 +172,9 @@ export default function LandingPage() {
                   Apply as partner
                 </Link>
               </div>
-            </div>
+            </Reveal>
 
-            <div className="card overflow-hidden shadow-raised">
+            <Reveal index={2} className="card overflow-hidden shadow-raised">
               <div className="flex items-center gap-2.5 border-b border-black/[0.07] bg-black/[0.02] px-5 py-3.5">
                 <BrandMark size={18} />
                 <p className="text-[13px] font-semibold text-slate-800">How your request moves</p>
@@ -218,12 +207,15 @@ export default function LandingPage() {
                   Settlement happens directly between you and the partner.
                 </p>
               </div>
-            </div>
+            </Reveal>
           </div>
 
           {/* Facts */}
           <div className="mx-auto mt-20 max-w-6xl px-4 sm:px-6">
-            <div className="grid overflow-hidden rounded-xl border border-black/[0.08] bg-white/70 backdrop-blur-sm sm:grid-cols-3">
+            <Reveal
+              index={3}
+              className="grid overflow-hidden rounded-xl border border-black/[0.08] bg-white/70 backdrop-blur-sm sm:grid-cols-3"
+            >
               {FACTS.map((f, i) => (
                 <div
                   key={f.value}
@@ -239,7 +231,7 @@ export default function LandingPage() {
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.label}</p>
                 </div>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -262,12 +254,12 @@ export default function LandingPage() {
                 { t: "Unknown counterparties", d: "No entity checks, no KYB, no way to size real risk before you engage." },
                 { t: "No review trail", d: "Nothing documented — if a deal goes wrong, there is no record of who vetted whom." },
                 { t: "Poor follow-up", d: "Interest goes cold. No one owns the introduction through to a real conversation." },
-              ].map((p) => (
-                <div key={p.t} className="card h-full p-5">
+              ].map((p, i) => (
+                <Reveal key={p.t} index={i} className="card h-full p-5">
                   <span className="mb-2 block h-1 w-6 rounded-full bg-rose-400/70" />
                   <p className="text-[13px] font-semibold text-slate-900">{p.t}</p>
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{p.d}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -276,7 +268,10 @@ export default function LandingPage() {
         {/* ── Two sides ── */}
         <section className="band-white py-24">
           <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
-            <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+            <Reveal
+              index={0}
+              className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
+            >
               <p className="eyebrow">For companies</p>
               <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Get INR liquidity from verified partners.
@@ -292,8 +287,11 @@ export default function LandingPage() {
               <Link href="/request" className="btn btn-ghost btn-sm mt-6">
                 Submit a request →
               </Link>
-            </div>
-            <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+            </Reveal>
+            <Reveal
+              index={1}
+              className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
+            >
               <p className="eyebrow text-leaf-600">For liquidity partners</p>
               <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Receive qualified demand without going public.
@@ -309,7 +307,7 @@ export default function LandingPage() {
               <Link href="/apply" className="btn btn-ghost btn-sm mt-6">
                 Apply to join →
               </Link>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -340,8 +338,9 @@ export default function LandingPage() {
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {PROCESS.map((s, i) => (
-                <div
+                <Reveal
                   key={s.t}
+                  index={i}
                   className="card h-full p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
                 >
                   <p className="font-mono text-[11px] tracking-wider text-gold-600 lg:hidden">
@@ -349,7 +348,7 @@ export default function LandingPage() {
                   </p>
                   <p className="text-[14.5px] font-semibold text-slate-900">{s.t}</p>
                   <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -363,7 +362,7 @@ export default function LandingPage() {
               Company flow &amp; partner flow
             </h2>
             <div className="mt-10 grid gap-5 lg:grid-cols-2">
-              <div className="card p-6 sm:p-7">
+              <Reveal index={0} className="card p-6 sm:p-7">
                 <p className="eyebrow">Company</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {["Submit request", "Manual review", "Matching", "Qualified introduction"].map((step, i, arr) => (
@@ -386,8 +385,8 @@ export default function LandingPage() {
                 <Link href="/request" className="btn btn-ghost btn-sm mt-5">
                   Submit company request →
                 </Link>
-              </div>
-              <div className="card p-6 sm:p-7">
+              </Reveal>
+              <Reveal index={1} className="card p-6 sm:p-7">
                 <p className="eyebrow text-leaf-600">Partner</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {["Apply", "Manual review", "Verification", "Matched demand"].map((step, i, arr) => (
@@ -411,7 +410,7 @@ export default function LandingPage() {
                 <Link href="/apply" className="btn btn-ghost btn-sm mt-5">
                   Apply as partner →
                 </Link>
-              </div>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -431,16 +430,16 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-              {STANDARDS.map((s) => (
-                <div key={s.title} className="flex gap-3.5">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[11px] text-leaf-600">
+              {STANDARDS.map((s, i) => (
+                <Reveal key={s.title} index={i} className="flex gap-3.5">
+                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[11px] text-leaf-600 animate-pop-in">
                     ✓
                   </span>
                   <div>
                     <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
                   </div>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -465,16 +464,17 @@ export default function LandingPage() {
                 "No execution of payments or payouts",
                 "No exchange or trading venue",
                 "No guaranteed liquidity or completion",
-              ].map((t) => (
-                <div
+              ].map((t, i) => (
+                <Reveal
                   key={t}
-                  className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3"
+                  index={i}
+                  className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-rose-400/30"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-400/40 text-[10px] text-rose-300">
                     ✕
                   </span>
                   <span className="text-[12.5px] font-medium text-slate-200">{t}</span>
-                </div>
+                </Reveal>
               ))}
             </div>
             <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-400 md:grid-cols-2">
@@ -518,8 +518,8 @@ export default function LandingPage() {
               Frequently asked questions
             </h2>
             <div className="mt-8 space-y-2.5">
-              {FAQ.map((f) => (
-                <details key={f.q} className="card group px-5 py-4">
+              {FAQ.map((f, i) => (
+                <Reveal key={f.q} as="details" index={i} className="card group px-5 py-4">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-800 transition-colors group-open:text-gold-700 [&::-webkit-details-marker]:hidden">
                     {f.q}
                     <span
@@ -532,7 +532,7 @@ export default function LandingPage() {
                   <p className="mt-3 max-w-xl text-[12.5px] leading-relaxed text-slate-500">
                     {f.a}
                   </p>
-                </details>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -541,7 +541,7 @@ export default function LandingPage() {
         {/* ── Private beta ── */}
         <section className="band-white py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="card flex flex-col items-start gap-5 overflow-hidden p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+            <Reveal className="card flex flex-col items-start gap-5 overflow-hidden p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
               <div>
                 <p className="eyebrow">Private beta</p>
                 <h2 className="mt-3 max-w-xl font-display text-[1.7rem] font-medium leading-snug text-slate-900">
@@ -561,14 +561,14 @@ export default function LandingPage() {
                   Apply as partner
                 </Link>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
         {/* ── Contact ── */}
         <section id="contact" className="band-white scroll-mt-20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="hero-aurora card overflow-hidden p-10 text-center sm:p-14">
+            <Reveal className="hero-aurora card overflow-hidden p-10 text-center sm:p-14">
               <div className="mx-auto flex justify-center">
                 <BrandMark size={40} />
               </div>
@@ -592,7 +592,7 @@ export default function LandingPage() {
                   Telegram · @{CONTACT_TELEGRAM}
                 </a>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
       </main>
