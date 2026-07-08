@@ -33,7 +33,7 @@ export function SiteFooter() {
                   Request a partner
                 </Link>
                 <Link href="/apply" className="transition-colors hover:text-white">
-                  Apply as partner
+                  Apply for Trader Review
                 </Link>
                 <Link href="/how-it-works" className="transition-colors hover:text-white">
                   How it works

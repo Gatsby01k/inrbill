@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
 import { Reveal } from "@/components/motion";
+import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
@@ -177,9 +178,7 @@ export default function LandingPage() {
                 <Link href="/request" className="btn btn-gold px-5 py-3">
                   Submit company request
                 </Link>
-                <Link href="/apply" className="btn btn-ghost px-5 py-3">
-                  Apply as partner
-                </Link>
+                <ApplyTraderCta />
               </div>
             </Reveal>
 
@@ -417,7 +416,7 @@ export default function LandingPage() {
                   listing, no cold inbound.
                 </p>
                 <Link href="/apply" className="btn btn-ghost btn-sm mt-5">
-                  Apply as partner →
+                  Apply for Trader Review →
                 </Link>
               </Reveal>
             </div>
@@ -550,7 +549,7 @@ export default function LandingPage() {
         {/* ── Private beta ── */}
         <section className="band-white py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <Reveal className="card flex flex-col items-start gap-5 overflow-hidden p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+            <Reveal className="card flex flex-col items-start gap-5 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
               <div>
                 <p className="eyebrow">Private beta</p>
                 <h2 className="mt-3 max-w-xl font-display text-[1.7rem] font-medium leading-snug text-slate-900">
@@ -566,9 +565,7 @@ export default function LandingPage() {
                 <Link href="/request" className="btn btn-gold px-5 py-3">
                   Submit company request
                 </Link>
-                <Link href="/apply" className="btn btn-ghost px-5 py-3">
-                  Apply as partner
-                </Link>
+                <ApplyTraderCta />
               </div>
             </Reveal>
           </div>
