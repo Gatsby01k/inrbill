@@ -9,7 +9,9 @@ import {
   documentSchema,
   introductionCreateSchema,
   introductionStatusSchema,
+  introOutcomeSchema,
   matchCreateSchema,
+  matchDecisionSchema,
   matchStatusSchema,
   noteSchema,
   partnerStatusSchema,
@@ -179,6 +181,40 @@ export async function updateMatchStatus(fd: FormData) {
   done(fd, `/admin/requests/${existing.requestId}`);
 }
 
+/** Decision-support fields only — never used to automate a financial decision. */
+export async function updateMatchDecision(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const matchId = s(fd, "matchId");
+  const parsed = matchDecisionSchema.safeParse({
+    confidenceScore: s(fd, "confidenceScore") || undefined,
+    nextAction: s(fd, "nextAction"),
+  });
+  if (!matchId || !parsed.success) fail(fd, "/admin/matches", "Invalid match update.");
+
+  const existing = await db.match.findUnique({ where: { id: matchId } });
+  if (!existing) fail(fd, "/admin/matches", "Match not found.");
+
+  await db.match.update({
+    where: { id: matchId },
+    data: {
+      confidenceScore: parsed.data.confidenceScore ?? null,
+      nextAction: parsed.data.nextAction,
+    },
+  });
+  await audit({
+    action: "match.decision_updated",
+    entityType: "Match",
+    entityId: matchId,
+    actorId: user.id,
+    actorLabel: "Operator",
+    requestId: existing.requestId,
+    partnerId: existing.partnerId,
+    matchId,
+    meta: { confidenceScore: parsed.data.confidenceScore, nextAction: parsed.data.nextAction },
+  });
+  done(fd, `/admin/requests/${existing.requestId}`);
+}
+
 export async function toggleMatchRelease(fd: FormData) {
   const user = await requireRole("ADMIN");
   const matchId = s(fd, "matchId");
@@ -290,6 +326,42 @@ export async function updateIntroductionStatus(fd: FormData) {
   done(fd, `/admin/requests/${existing.match.requestId}`);
 }
 
+export async function updateIntroductionOutcome(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const introId = s(fd, "introductionId");
+  const parsed = introOutcomeSchema.safeParse({
+    outcome: s(fd, "outcome"),
+    followUpDate: s(fd, "followUpDate"),
+  });
+  if (!introId || !parsed.success) fail(fd, "/admin/matches", "Invalid introduction update.");
+
+  const existing = await db.introduction.findUnique({
+    where: { id: introId },
+    include: { match: true },
+  });
+  if (!existing) fail(fd, "/admin/matches", "Introduction not found.");
+
+  await db.introduction.update({
+    where: { id: introId },
+    data: {
+      outcome: parsed.data.outcome,
+      followUpDate: parsed.data.followUpDate ? new Date(parsed.data.followUpDate) : null,
+    },
+  });
+  await audit({
+    action: "introduction.outcome_updated",
+    entityType: "Introduction",
+    entityId: introId,
+    actorId: user.id,
+    actorLabel: "Operator",
+    requestId: existing.match.requestId,
+    partnerId: existing.match.partnerId,
+    matchId: existing.matchId,
+    meta: { outcome: parsed.data.outcome, followUpDate: parsed.data.followUpDate },
+  });
+  done(fd, `/admin/requests/${existing.match.requestId}`);
+}
+
 /* ── Revenue ──────────────────────────────────────────────────────────────── */
 
 export async function addRevenue(fd: FormData) {
@@ -299,8 +371,12 @@ export async function addRevenue(fd: FormData) {
   const parsed = revenueSchema.safeParse({
     amount: s(fd, "amount"),
     currency: s(fd, "currency"),
+    type: s(fd, "type") || "CUSTOM",
+    payerType: s(fd, "payerType"),
+    payerName: s(fd, "payerName"),
     basis: s(fd, "basis"),
     matchId: s(fd, "matchId"),
+    dueDate: s(fd, "dueDate"),
   });
   if (!requestId || !parsed.success) fail(fd, fallback, "Enter a valid amount and currency.");
 
@@ -319,7 +395,11 @@ export async function addRevenue(fd: FormData) {
       matchId,
       amount: parsed.data.amount,
       currency: parsed.data.currency,
+      type: parsed.data.type,
+      payerType: parsed.data.payerType,
+      payerName: parsed.data.payerName,
       basis: parsed.data.basis,
+      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
     },
   });
   await audit({
@@ -330,7 +410,7 @@ export async function addRevenue(fd: FormData) {
     actorLabel: "Operator",
     requestId,
     matchId,
-    meta: { amount: parsed.data.amount, currency: parsed.data.currency },
+    meta: { amount: parsed.data.amount, currency: parsed.data.currency, type: parsed.data.type },
   });
   done(fd, fallback);
 }

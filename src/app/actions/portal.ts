@@ -177,6 +177,10 @@ export async function updatePartnerOps(fd: FormData) {
 
   const parsed = partnerOpsSchema.safeParse({
     dailyCapacityBand: s(fd, "dailyCapacityBand"),
+    monthlyCapacityBand: s(fd, "monthlyCapacityBand"),
+    minTicket: s(fd, "minTicket"),
+    maxTicket: s(fd, "maxTicket"),
+    settlementPreference: s(fd, "settlementPreference"),
     workingHours: s(fd, "workingHours"),
     reserveBand: s(fd, "reserveBand"),
     banks: arr(fd, "banks"),
@@ -192,12 +196,20 @@ export async function updatePartnerOps(fd: FormData) {
   if (parsed.data.reserveBand !== partner.reserveBand) changed.push("reserve");
   if (JSON.stringify(parsed.data.banks) !== JSON.stringify(partner.banks)) changed.push("banks");
   if (JSON.stringify(parsed.data.methods) !== JSON.stringify(partner.methods)) changed.push("methods");
+  if (parsed.data.monthlyCapacityBand !== partner.monthlyCapacityBand) changed.push("monthly capacity");
+  if (parsed.data.minTicket !== partner.minTicket) changed.push("min ticket");
+  if (parsed.data.maxTicket !== partner.maxTicket) changed.push("max ticket");
+  if (parsed.data.settlementPreference !== partner.settlementPreference) changed.push("settlement preference");
 
   if (changed.length) {
     await db.partnerProfile.update({
       where: { id: partner.id },
       data: {
         dailyCapacityBand: parsed.data.dailyCapacityBand,
+        monthlyCapacityBand: parsed.data.monthlyCapacityBand,
+        minTicket: parsed.data.minTicket,
+        maxTicket: parsed.data.maxTicket,
+        settlementPreference: parsed.data.settlementPreference,
         workingHours: parsed.data.workingHours,
         reserveBand: parsed.data.reserveBand,
         banks: parsed.data.banks,

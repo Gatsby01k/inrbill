@@ -11,7 +11,7 @@ import {
   partnerApplicationSchema,
   type ActionState,
 } from "@/lib/schemas";
-import type { Direction } from "@prisma/client";
+import type { Direction, RequestType, Urgency } from "@prisma/client";
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
@@ -20,6 +20,20 @@ function str(formData: FormData, key: string) {
 
 function arr(formData: FormData, key: string) {
   return formData.getAll(key).filter((v): v is string => typeof v === "string");
+}
+
+/**
+ * Direction still drives partner-matching eligibility, so every request needs
+ * one even when the broader "request type" isn't a clean corridor (partner
+ * sourcing, other, generic liquidity). We map to the closest corridor and let
+ * admins match manually for the non-corridor types.
+ */
+function deriveDirection(requestType: string): string {
+  if (requestType === "INR_TO_USDT" || requestType === "USDT_TO_INR" || requestType === "INR_PAYOUTS") {
+    return requestType;
+  }
+  if (requestType === "INR_LIQUIDITY") return "INR_TO_USDT";
+  return "INR_PAYOUTS"; // PARTNER_SOURCING, OTHER, or unset
 }
 
 /** Company submits an INR liquidity request (public form or company workspace). */
@@ -46,15 +60,20 @@ export async function submitCompanyRequest(
     contactRole: loggedInCompany ? (loggedInCompany.contactRole ?? "") : str(formData, "contactRole"),
     telegram: loggedInCompany ? (loggedInCompany.telegram ?? "") : str(formData, "telegram"),
     phone: loggedInCompany ? (loggedInCompany.phone ?? "") : str(formData, "phone"),
-    direction: str(formData, "direction"),
+    direction: deriveDirection(str(formData, "requestType")),
+    requestType: str(formData, "requestType"),
     dailyVolumeBand: str(formData, "dailyVolumeBand"),
     monthlyVolumeBand: str(formData, "monthlyVolumeBand"),
+    ticketSize: str(formData, "ticketSize"),
+    urgency: str(formData, "urgency") || "STANDARD",
+    countriesInvolved: str(formData, "countriesInvolved"),
     banks: arr(formData, "banks"),
     methods: arr(formData, "methods"),
     requiredSpeed: str(formData, "requiredSpeed"),
     jurisdiction: str(formData, "jurisdiction"),
     kycReadiness: str(formData, "kycReadiness"),
     kycNotes: str(formData, "kycNotes"),
+    partnerRequirements: str(formData, "partnerRequirements"),
     notes: str(formData, "notes"),
   };
 
@@ -122,14 +141,19 @@ export async function submitCompanyRequest(
       reference,
       companyId,
       direction: data.direction as Direction,
+      requestType: data.requestType as RequestType,
       dailyVolumeBand: data.dailyVolumeBand,
       monthlyVolumeBand: data.monthlyVolumeBand,
+      ticketSize: data.ticketSize,
+      urgency: data.urgency as Urgency,
+      countriesInvolved: data.countriesInvolved,
       banks: data.banks,
       methods: data.methods,
       requiredSpeed: data.requiredSpeed,
       jurisdiction: data.jurisdiction,
       kycReadiness: data.kycReadiness,
       kycNotes: data.kycNotes,
+      partnerRequirements: data.partnerRequirements,
       notes: data.notes,
     },
   });
@@ -141,7 +165,7 @@ export async function submitCompanyRequest(
     actorId: userId,
     actorLabel: actor,
     requestId: request.id,
-    meta: { reference, direction: data.direction },
+    meta: { reference, requestType: data.requestType },
   });
 
   if (!loggedInCompany && userId) await createSession(userId);
@@ -169,11 +193,19 @@ export async function submitPartnerApplication(
     banks: arr(formData, "banks"),
     methods: arr(formData, "methods"),
     dailyCapacityBand: str(formData, "dailyCapacityBand"),
+    monthlyCapacityBand: str(formData, "monthlyCapacityBand"),
+    minTicket: str(formData, "minTicket"),
+    maxTicket: str(formData, "maxTicket"),
+    settlementPreference: str(formData, "settlementPreference"),
     workingHours: str(formData, "workingHours"),
     reserveBand: str(formData, "reserveBand"),
     jurisdictions: str(formData, "jurisdictions"),
+    operatingCountry: str(formData, "operatingCountry"),
     complianceFlags: arr(formData, "complianceFlags"),
     complianceNotes: str(formData, "complianceNotes"),
+    references: str(formData, "references"),
+    riskNotes: str(formData, "riskNotes"),
+    additionalComments: str(formData, "additionalComments"),
   };
 
   const parsed = partnerApplicationSchema.safeParse(input);
@@ -220,11 +252,19 @@ export async function submitPartnerApplication(
           banks: data.banks,
           methods: data.methods,
           dailyCapacityBand: data.dailyCapacityBand,
+          monthlyCapacityBand: data.monthlyCapacityBand,
+          minTicket: data.minTicket,
+          maxTicket: data.maxTicket,
+          settlementPreference: data.settlementPreference,
           workingHours: data.workingHours,
           reserveBand: data.reserveBand,
           jurisdictions: data.jurisdictions,
+          operatingCountry: data.operatingCountry,
           complianceFlags: data.complianceFlags,
           complianceNotes: data.complianceNotes,
+          references: data.references,
+          riskNotes: data.riskNotes,
+          additionalComments: data.additionalComments,
         },
       },
     },

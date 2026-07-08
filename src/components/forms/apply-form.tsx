@@ -102,7 +102,7 @@ export function ApplyForm() {
       </FormSection>
 
       <FormSection title="Coverage & capacity" sub="Declare what you can actually run, day in, day out.">
-        <Field label="Supported directions" error={fe.directions}>
+        <Field label="Supported directions" error={fe.directions} hint="Select all that apply — both directions is fine">
           <CheckboxGrid name="directions" options={DIRECTION_OPTIONS} cols={3} />
         </Field>
         <Field label="Supported banks" error={fe.banks}>
@@ -115,14 +115,38 @@ export function ApplyForm() {
           <Field label="Daily capacity" error={fe.dailyCapacityBand}>
             <Select name="dailyCapacityBand" options={CAPACITY_BANDS} placeholder="Select daily capacity" />
           </Field>
+          <Field label="Monthly capacity" error={fe.monthlyCapacityBand} hint="Optional">
+            <input name="monthlyCapacityBand" className="input" placeholder="e.g. ₹50–200 crore / month" />
+          </Field>
+          <Field label="Minimum ticket" error={fe.minTicket} hint="Optional">
+            <input name="minTicket" className="input" placeholder="e.g. ₹5 lakh" />
+          </Field>
+          <Field label="Maximum ticket" error={fe.maxTicket} hint="Optional">
+            <input name="maxTicket" className="input" placeholder="e.g. ₹5 crore" />
+          </Field>
           <Field label="Reserve available" error={fe.reserveBand}>
             <Select name="reserveBand" options={RESERVE_BANDS} placeholder="Select reserve band" />
           </Field>
           <Field label="Working hours" error={fe.workingHours} hint="e.g. 09:00–23:00 IST, 7 days">
             <input name="workingHours" className="input" placeholder="Hours + days + timezone" />
           </Field>
+          <Field label="Operating country" error={fe.operatingCountry} hint="Optional">
+            <input name="operatingCountry" className="input" placeholder="e.g. India" />
+          </Field>
           <Field label="Jurisdictions covered" error={fe.jurisdictions}>
             <input name="jurisdictions" className="input" placeholder="e.g. India nationwide" />
+          </Field>
+          <Field
+            label="Settlement preference"
+            error={fe.settlementPreference}
+            hint="Optional — how you prefer to settle"
+            className="sm:col-span-2"
+          >
+            <input
+              name="settlementPreference"
+              className="input"
+              placeholder="e.g. same-day bank transfer after confirmation"
+            />
           </Field>
         </div>
       </FormSection>
@@ -136,6 +160,15 @@ export function ApplyForm() {
         </Field>
         <Field label="Compliance notes" error={fe.complianceNotes} hint="Optional — structure, policies, references">
           <textarea name="complianceNotes" rows={3} className="input" placeholder="Anything relevant to verification" />
+        </Field>
+        <Field label="References" error={fe.references} hint="Optional — companies or partners who can vouch for you">
+          <textarea name="references" rows={2} className="input" placeholder="Name, company, contact (optional)" />
+        </Field>
+        <Field label="Risk notes" error={fe.riskNotes} hint="Optional — anything we should know upfront">
+          <textarea name="riskNotes" rows={2} className="input" placeholder="Prior issues, limitations, disclosures" />
+        </Field>
+        <Field label="Additional comments" error={fe.additionalComments} hint="Optional">
+          <textarea name="additionalComments" rows={2} className="input" placeholder="Anything else" />
         </Field>
       </FormSection>
 

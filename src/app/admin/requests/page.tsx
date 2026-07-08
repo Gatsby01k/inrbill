@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Prisma, RequestStatus } from "@prisma/client";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
 import { db } from "@/lib/db";
-import { cn, directionLabel, fmtDate, statusLabel } from "@/lib/format";
+import { cn, fmtDate, requestTypeLabel, statusLabel } from "@/lib/format";
 import { REQUEST_STATUSES } from "@/lib/options";
 
 export const metadata: Metadata = { title: "Requests" };
@@ -77,9 +77,10 @@ export default async function AdminRequestsPage({
                 <tr>
                   <th>Ref</th>
                   <th>Company</th>
-                  <th>Direction</th>
+                  <th>Type</th>
                   <th>Daily volume</th>
                   <th>Speed</th>
+                  <th>Urgency</th>
                   <th>Jurisdiction</th>
                   <th>Matches</th>
                   <th>Status</th>
@@ -98,9 +99,12 @@ export default async function AdminRequestsPage({
                       </Link>
                     </td>
                     <td className="font-medium text-slate-800">{r.company.companyName}</td>
-                    <td className="whitespace-nowrap">{directionLabel(r.direction)}</td>
+                    <td className="whitespace-nowrap">{requestTypeLabel(r.requestType)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>
+                    <td>
+                      <StatusBadge status={r.urgency} className="text-[10px]" />
+                    </td>
                     <td className="text-xs">{r.jurisdiction}</td>
                     <td className="tabular-nums">{r._count.matches}</td>
                     <td>

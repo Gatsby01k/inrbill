@@ -18,7 +18,7 @@ export function SiteFooter() {
               partners.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-10 text-[13px]">
+          <div className="grid grid-cols-2 gap-10 text-[13px] sm:grid-cols-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-400">
                 Network
@@ -30,8 +30,36 @@ export function SiteFooter() {
                 <Link href="/apply" className="transition-colors hover:text-white">
                   Apply as partner
                 </Link>
+                <Link href="/how-it-works" className="transition-colors hover:text-white">
+                  How it works
+                </Link>
                 <Link href="/login" className="transition-colors hover:text-white">
                   Log in
+                </Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-400">
+                Legal &amp; trust
+              </p>
+              <div className="mt-3 flex flex-col gap-2 text-slate-400">
+                <Link href="/partner-review" className="transition-colors hover:text-white">
+                  Partner review
+                </Link>
+                <Link href="/fees" className="transition-colors hover:text-white">
+                  Fees
+                </Link>
+                <Link href="/disclaimer" className="transition-colors hover:text-white">
+                  Disclaimer
+                </Link>
+                <Link href="/prohibited-use" className="transition-colors hover:text-white">
+                  Prohibited use
+                </Link>
+                <Link href="/privacy" className="transition-colors hover:text-white">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="transition-colors hover:text-white">
+                  Terms
                 </Link>
               </div>
             </div>
@@ -59,9 +87,12 @@ export function SiteFooter() {
           <p className="text-xs leading-relaxed text-slate-500">
             INRP2P does not hold, transmit, convert, exchange or custody funds and is
             not a party to any transaction. INRP2P is not an exchange, OTC desk,
-            wallet or payment gateway. INRP2P provides review, matching and
-            introduction services only. Counterparties transact directly, under their
-            own agreements and their own regulatory and compliance obligations.
+            wallet or payment gateway, and does not guarantee liquidity or transaction
+            completion. INRP2P provides review, matching and introduction services
+            only; introductions are subject to manual review and are not guaranteed.
+            Counterparties transact directly, under their own agreements, and are
+            solely responsible for their own licensing, KYC, AML, tax and legal
+            obligations.
           </p>
           <p className="mt-3 text-xs text-slate-600">© 2026 INRP2P. All rights reserved.</p>
         </div>

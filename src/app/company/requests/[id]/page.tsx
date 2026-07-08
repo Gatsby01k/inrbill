@@ -11,7 +11,7 @@ import {
 import { Timeline } from "@/components/workspace/timeline";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { auditLabel, cn, directionLabel, fmtDate, statusLabel } from "@/lib/format";
+import { auditLabel, cn, directionLabel, fmtDate, requestTypeLabel, statusLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Request" };
 
@@ -75,8 +75,9 @@ export default async function CompanyRequestDetailPage({
 
       <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <span className="font-mono text-sm text-gold-700">{request.reference}</span>
-        <h1 className="text-xl font-semibold text-slate-900">{directionLabel(request.direction)}</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{requestTypeLabel(request.requestType)}</h1>
         <StatusBadge status={request.status} />
+        <StatusBadge status={request.urgency} />
         <span className="text-xs text-slate-500">submitted {fmtDate(request.createdAt)}</span>
       </div>
 
@@ -182,11 +183,13 @@ export default async function CompanyRequestDetailPage({
           <div className="card p-5 sm:p-6">
             <SectionTitle title="Your requirement" />
             <dl className="kv grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
-              <KV label="Direction">{directionLabel(request.direction)}</KV>
+              <KV label="Request type">{requestTypeLabel(request.requestType)}</KV>
               <KV label="Daily volume">{request.dailyVolumeBand}</KV>
               <KV label="Monthly volume">{request.monthlyVolumeBand}</KV>
+              <KV label="Ticket size">{request.ticketSize ?? "Not provided"}</KV>
               <KV label="Required speed">{request.requiredSpeed}</KV>
               <KV label="Jurisdiction">{request.jurisdiction}</KV>
+              <KV label="Countries involved">{request.countriesInvolved ?? "Not provided"}</KV>
               <KV label="KYC / KYB">{request.kycReadiness}</KV>
             </dl>
             <div className="mt-4 flex flex-wrap gap-1.5">

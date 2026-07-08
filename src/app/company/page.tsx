@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { directionLabel, fmtDate } from "@/lib/format";
+import { fmtDate, requestTypeLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "My requests" };
 
@@ -39,7 +39,7 @@ export default async function CompanyHomePage() {
               <thead>
                 <tr>
                   <th>Ref</th>
-                  <th>Direction</th>
+                  <th>Type</th>
                   <th>Daily volume</th>
                   <th>Speed</th>
                   <th>Introductions</th>
@@ -52,7 +52,7 @@ export default async function CompanyHomePage() {
                 {requests.map((r) => (
                   <tr key={r.id}>
                     <td className="font-mono text-xs text-gold-700">{r.reference}</td>
-                    <td className="whitespace-nowrap">{directionLabel(r.direction)}</td>
+                    <td className="whitespace-nowrap">{requestTypeLabel(r.requestType)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>
                     <td className="tabular-nums">{r.matches.length || "—"}</td>
@@ -88,6 +88,20 @@ export default async function CompanyHomePage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="card mt-6 p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+          What INRP2P does — and does not do
+        </p>
+        <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-slate-500">
+          INRP2P reviews your request and, if it fits the network, introduces you to a
+          verified partner. INRP2P does not custody funds, does not execute payments or
+          payouts, does not operate an exchange, and does not guarantee liquidity, a match,
+          or that any transaction completes. Once introduced, you deal with the partner
+          directly, and remain responsible for your own KYC, AML, tax and legal obligations.
+          Full detail: <Link href="/disclaimer" className="text-gold-600 hover:underline">Disclaimer</Link>.
+        </p>
       </div>
     </>
   );

@@ -4,7 +4,7 @@ import { updateRevenueStatus } from "@/app/actions/admin";
 import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, FormError, PageHeader, Stat, StatusBadge } from "@/components/ui";
 import { db } from "@/lib/db";
-import { fmtDate, money, statusLabel } from "@/lib/format";
+import { fmtDate, money, revenueTypeLabel, statusLabel } from "@/lib/format";
 import { REVENUE_STATUSES } from "@/lib/options";
 
 export const metadata: Metadata = { title: "Revenue" };
@@ -69,6 +69,8 @@ export default async function AdminRevenuePage({
                   <th>Request</th>
                   <th>Company</th>
                   <th>Via partner</th>
+                  <th>Type</th>
+                  <th>Payer</th>
                   <th>Amount</th>
                   <th>Basis</th>
                   <th>Status</th>
@@ -90,6 +92,10 @@ export default async function AdminRevenuePage({
                     </td>
                     <td className="font-medium text-slate-800">{r.request.company.companyName}</td>
                     <td className="text-xs">{r.match ? r.match.partner.displayName : "—"}</td>
+                    <td className="text-xs">{revenueTypeLabel(r.type)}</td>
+                    <td className="max-w-40 text-xs">
+                      {r.payerName ? `${r.payerType ? `${r.payerType} · ` : ""}${r.payerName}` : "—"}
+                    </td>
                     <td className="whitespace-nowrap font-semibold tabular-nums text-slate-900">
                       {money(r.amount.toString(), r.currency)}
                     </td>
@@ -98,9 +104,13 @@ export default async function AdminRevenuePage({
                       <StatusBadge status={r.status} />
                     </td>
                     <td className="whitespace-nowrap text-[11px] text-slate-400">
-                      {r.invoicedAt ? `inv ${fmtDate(r.invoicedAt)}` : ""}
-                      {r.invoicedAt && r.paidAt ? " · " : ""}
-                      {r.paidAt ? `paid ${fmtDate(r.paidAt)}` : ""}
+                      {[
+                        r.dueDate ? `due ${fmtDate(r.dueDate)}` : null,
+                        r.invoicedAt ? `inv ${fmtDate(r.invoicedAt)}` : null,
+                        r.paidAt ? `paid ${fmtDate(r.paidAt)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </td>
                     <td>
                       <form action={updateRevenueStatus} className="flex items-center gap-1.5">
@@ -127,7 +137,7 @@ export default async function AdminRevenuePage({
           <div className="p-6">
             <EmptyState
               title="No revenue records yet"
-              body="Record potential fees on a request as soon as matching starts — the ledger tracks them to paid."
+              body="Revenue is tracked only after a review, access, intro, retainer or success fee is discussed. Record one from a request's detail page and the ledger will track it from potential through to paid."
             />
           </div>
         )}

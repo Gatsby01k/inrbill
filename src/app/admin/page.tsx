@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EmptyState, PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
+import { EmptyState, PageHeader, SectionTitle, Stat, StatusBadge } from "@/components/ui";
 import { Timeline } from "@/components/workspace/timeline";
 import { db } from "@/lib/db";
 import { auditLabel, cn, directionLabel, fmtDate, money, statusLabel } from "@/lib/format";
@@ -12,6 +12,8 @@ import {
   REVENUE_STATUSES,
 } from "@/lib/options";
 
+const PIPELINE_REVENUE_STATUSES = ["POTENTIAL", "QUOTED", "AGREED", "INVOICED"] as const;
+
 export const metadata: Metadata = { title: "Operations dashboard" };
 
 type CountGroup = { status: string; _count: { _all: number } };
@@ -20,6 +22,7 @@ const countOf = (groups: CountGroup[], status: string) =>
   groups.find((g) => g.status === status)?._count._all ?? 0;
 
 export default async function AdminDashboard() {
+  const now = new Date();
   const [
     reqGroups,
     ptrGroups,
@@ -29,6 +32,13 @@ export default async function AdminDashboard() {
     recentRequests,
     recentPartners,
     recentAudit,
+    pendingMatches,
+    followUpsDue,
+    successfulIntros,
+    riskyPartners,
+    criticalRequests,
+    pipelineTotal,
+    paidTotal,
   ] = await Promise.all([
     db.liquidityRequest.groupBy({ by: ["status"], _count: { _all: true } }),
     db.partnerProfile.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -42,10 +52,40 @@ export default async function AdminDashboard() {
     }),
     db.partnerProfile.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
+    db.match.count({ where: { status: { in: ["SUGGESTED", "SHORTLISTED"] } } }),
+    db.introduction.findMany({
+      where: { followUpDate: { lte: now }, status: { notIn: ["SUCCESSFUL", "FAILED"] } },
+      include: { match: { include: { request: { include: { company: true } }, partner: true } } },
+      orderBy: { followUpDate: "asc" },
+      take: 8,
+    }),
+    db.introduction.count({ where: { status: "SUCCESSFUL" } }),
+    db.partnerProfile.findMany({
+      where: { riskNotes: { not: null }, status: { notIn: ["REJECTED", "SUSPENDED"] } },
+      orderBy: { updatedAt: "desc" },
+      take: 8,
+    }),
+    db.liquidityRequest.findMany({
+      where: { urgency: "CRITICAL", status: { notIn: ["CLOSED", "REJECTED"] } },
+      include: { company: true },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+    db.revenueRecord.groupBy({
+      by: ["currency"],
+      where: { status: { in: [...PIPELINE_REVENUE_STATUSES] } },
+      _sum: { amount: true },
+    }),
+    db.revenueRecord.groupBy({
+      by: ["currency"],
+      where: { status: "PAID" },
+      _sum: { amount: true },
+    }),
   ]);
 
   const totalRequests = reqGroups.reduce((n, g) => n + g._count._all, 0);
   const totalPartners = ptrGroups.reduce((n, g) => n + g._count._all, 0);
+  const highRiskCount = riskyPartners.length + criticalRequests.length;
 
   const revenueLines = REVENUE_STATUSES.map((status) => ({
     status,
@@ -53,6 +93,13 @@ export default async function AdminDashboard() {
       .filter((g) => g.status === status && g._sum.amount !== null)
       .map((g) => money(g._sum.amount!.toString(), g.currency)),
   }));
+
+  const pipelineParts = pipelineTotal
+    .filter((g) => g._sum.amount !== null)
+    .map((g) => money(g._sum.amount!.toString(), g.currency));
+  const paidParts = paidTotal
+    .filter((g) => g._sum.amount !== null)
+    .map((g) => money(g._sum.amount!.toString(), g.currency));
 
   return (
     <>
@@ -70,6 +117,90 @@ export default async function AdminDashboard() {
           </div>
         }
       />
+
+      <SectionTitle title="Operator queue" />
+      <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <Link href="/admin/matches?status=SUGGESTED" className="block">
+          <Stat label="Pending matches" value={pendingMatches} sub="Suggested + shortlisted" />
+        </Link>
+        <Stat
+          label="Follow-ups due"
+          value={followUpsDue.length}
+          sub="Introductions past their follow-up date"
+          tone={followUpsDue.length ? "gold" : "default"}
+        />
+        <Stat label="Successful intros" value={successfulIntros} tone="emerald" />
+        <Stat
+          label="High-risk items"
+          value={highRiskCount}
+          sub="Flagged partners + critical requests"
+          tone={highRiskCount ? "gold" : "default"}
+        />
+        <Stat
+          label="Revenue pipeline"
+          value={pipelineParts.length ? pipelineParts.join(" + ") : "—"}
+          sub="Potential → invoiced"
+        />
+        <Stat
+          label="Revenue paid"
+          value={paidParts.length ? paidParts.join(" + ") : "—"}
+          tone="emerald"
+        />
+      </div>
+
+      {(followUpsDue.length > 0 || highRiskCount > 0) && (
+        <div className="mb-8 grid gap-4 lg:grid-cols-2">
+          {followUpsDue.length ? (
+            <div className="card p-5">
+              <SectionTitle title="Follow-ups due" />
+              <ul className="space-y-2.5">
+                {followUpsDue.map((intro) => (
+                  <li key={intro.id} className="flex items-center justify-between gap-3 text-[13px]">
+                    <Link
+                      href={`/admin/requests/${intro.match.requestId}`}
+                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                    >
+                      {intro.match.request.company.companyName} ↔ {intro.match.partner.displayName}
+                    </Link>
+                    <span className="shrink-0 text-xs text-gold-700">
+                      {intro.followUpDate ? fmtDate(intro.followUpDate) : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {highRiskCount ? (
+            <div className="card p-5">
+              <SectionTitle title="High-risk items" />
+              <ul className="space-y-2.5">
+                {criticalRequests.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-3 text-[13px]">
+                    <Link
+                      href={`/admin/requests/${r.id}`}
+                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                    >
+                      {r.reference} — {r.company.companyName}
+                    </Link>
+                    <StatusBadge status="CRITICAL" />
+                  </li>
+                ))}
+                {riskyPartners.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3 text-[13px]">
+                    <Link
+                      href={`/admin/partners/${p.id}`}
+                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                    >
+                      {p.reference} — {p.displayName}
+                    </Link>
+                    <span className="shrink-0 text-xs text-rose-600">Risk notes on file</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       <SectionTitle title={`Requests · ${totalRequests}`} />
       <div className="card overflow-hidden">

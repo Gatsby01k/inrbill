@@ -8,7 +8,9 @@ import {
   createIntroduction,
   createMatch,
   toggleMatchRelease,
+  updateIntroductionOutcome,
   updateIntroductionStatus,
+  updateMatchDecision,
   updateMatchStatus,
   updateRequestStatus,
   updateRevenueStatus,
@@ -30,13 +32,24 @@ import {
 } from "@/components/workspace/records";
 import { Timeline } from "@/components/workspace/timeline";
 import { db } from "@/lib/db";
-import { auditLabel, directionLabel, fmtDate, fmtDateTime, money, statusLabel } from "@/lib/format";
+import {
+  auditLabel,
+  directionLabel,
+  fmtDate,
+  fmtDateTime,
+  money,
+  requestTypeLabel,
+  revenueTypeLabel,
+  statusLabel,
+} from "@/lib/format";
 import {
   CURRENCIES,
   INTRO_CHANNELS,
   INTRODUCTION_STATUSES,
   MATCH_STATUSES,
   REQUEST_STATUSES,
+  REVENUE_STATUSES,
+  REVENUE_TYPE_OPTIONS,
 } from "@/lib/options";
 
 export const metadata: Metadata = { title: "Request detail" };
@@ -121,11 +134,17 @@ export default async function AdminRequestDetailPage({
           <div className="card p-5 sm:p-6">
             <SectionTitle title="Requirement" />
             <dl className="kv grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
-              <KV label="Direction">{directionLabel(request.direction)}</KV>
+              <KV label="Request type">{requestTypeLabel(request.requestType)}</KV>
+              <KV label="Direction (matching)">{directionLabel(request.direction)}</KV>
               <KV label="Daily volume">{request.dailyVolumeBand}</KV>
               <KV label="Monthly volume">{request.monthlyVolumeBand}</KV>
+              <KV label="Ticket size">{request.ticketSize ?? "Not provided"}</KV>
+              <KV label="Urgency">
+                <StatusBadge status={request.urgency} />
+              </KV>
               <KV label="Required speed">{request.requiredSpeed}</KV>
               <KV label="Operating jurisdiction">{request.jurisdiction}</KV>
+              <KV label="Countries involved">{request.countriesInvolved ?? "Not provided"}</KV>
               <KV label="KYC / KYB readiness">{request.kycReadiness}</KV>
             </dl>
             <div className="mt-5 space-y-3">
@@ -151,8 +170,20 @@ export default async function AdminRequestDetailPage({
               </div>
               {request.kycNotes ? (
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">KYC notes</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Compliance / licensing notes
+                  </p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{request.kycNotes}</p>
+                </div>
+              ) : null}
+              {request.partnerRequirements ? (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Preferred partner requirements
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                    {request.partnerRequirements}
+                  </p>
                 </div>
               ) : null}
               {request.notes ? (
@@ -190,6 +221,45 @@ export default async function AdminRequestDetailPage({
                       {m.adminNote}
                     </p>
                   ) : null}
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <span>
+                      Confidence:{" "}
+                      <strong className="text-slate-800">
+                        {m.confidenceScore != null ? `${m.confidenceScore}/100` : "not set"}
+                      </strong>
+                    </span>
+                    {m.nextAction ? (
+                      <span>
+                        Next action: <strong className="text-slate-800">{m.nextAction}</strong>
+                      </span>
+                    ) : null}
+                  </div>
+                  <form
+                    action={updateMatchDecision}
+                    className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-black/[0.02] p-2"
+                  >
+                    <input type="hidden" name="matchId" value={m.id} />
+                    <input type="hidden" name="back" value={back} />
+                    <input
+                      name="confidenceScore"
+                      type="number"
+                      min="0"
+                      max="100"
+                      defaultValue={m.confidenceScore ?? ""}
+                      className="input h-8 w-20 py-0 text-xs"
+                      placeholder="0–100"
+                    />
+                    <input
+                      name="nextAction"
+                      defaultValue={m.nextAction ?? ""}
+                      className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                      placeholder="Next action — decision support only"
+                    />
+                    <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
+                      Save
+                    </SubmitButton>
+                  </form>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <form action={updateMatchStatus} className="flex items-center gap-2">
@@ -253,6 +323,14 @@ export default async function AdminRequestDetailPage({
                             {intro.summary ? (
                               <span className="w-full text-xs text-slate-500">{intro.summary}</span>
                             ) : null}
+                            {intro.followUpDate ? (
+                              <span className="text-xs text-gold-700">
+                                Follow up {fmtDate(intro.followUpDate)}
+                              </span>
+                            ) : null}
+                            {intro.outcome ? (
+                              <span className="w-full text-xs text-slate-500">Outcome: {intro.outcome}</span>
+                            ) : null}
                             <form action={updateIntroductionStatus} className="ml-auto flex items-center gap-2">
                               <input type="hidden" name="introductionId" value={intro.id} />
                               <input type="hidden" name="back" value={back} />
@@ -269,6 +347,32 @@ export default async function AdminRequestDetailPage({
                               </select>
                               <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
                                 Set
+                              </SubmitButton>
+                            </form>
+                            <form
+                              action={updateIntroductionOutcome}
+                              className="flex w-full flex-wrap items-center gap-2 border-t border-black/5 pt-2"
+                            >
+                              <input type="hidden" name="introductionId" value={intro.id} />
+                              <input type="hidden" name="back" value={back} />
+                              <input
+                                type="date"
+                                name="followUpDate"
+                                defaultValue={
+                                  intro.followUpDate
+                                    ? intro.followUpDate.toISOString().slice(0, 10)
+                                    : ""
+                                }
+                                className="input h-8 w-auto py-0 text-xs"
+                              />
+                              <input
+                                name="outcome"
+                                defaultValue={intro.outcome ?? ""}
+                                className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                                placeholder="Outcome notes"
+                              />
+                              <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
+                                Save follow-up
                               </SubmitButton>
                             </form>
                           </li>
@@ -353,21 +457,35 @@ export default async function AdminRequestDetailPage({
                     <span className="text-sm font-semibold tabular-nums text-slate-900">
                       {money(r.amount.toString(), r.currency)}
                     </span>
+                    <span className="chip border-black/10 bg-black/[0.03] text-slate-600">
+                      {revenueTypeLabel(r.type)}
+                    </span>
                     <StatusBadge status={r.status} />
+                    {r.payerName ? (
+                      <span className="text-xs text-slate-500">
+                        {r.payerType ? `${r.payerType} — ` : ""}
+                        {r.payerName}
+                      </span>
+                    ) : null}
                     {r.basis ? <span className="text-xs text-slate-500">{r.basis}</span> : null}
                     {r.match ? (
                       <span className="text-xs text-slate-400">via {r.match.partner.displayName}</span>
                     ) : null}
                     <span className="text-[11px] text-slate-400">
-                      {r.invoicedAt ? `invoiced ${fmtDate(r.invoicedAt)} · ` : ""}
-                      {r.paidAt ? `paid ${fmtDate(r.paidAt)} · ` : ""}
-                      created {fmtDate(r.createdAt)}
+                      {[
+                        r.dueDate ? `due ${fmtDate(r.dueDate)}` : null,
+                        r.invoicedAt ? `invoiced ${fmtDate(r.invoicedAt)}` : null,
+                        r.paidAt ? `paid ${fmtDate(r.paidAt)}` : null,
+                        `created ${fmtDate(r.createdAt)}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                     <form action={updateRevenueStatus} className="ml-auto flex items-center gap-2">
                       <input type="hidden" name="revenueId" value={r.id} />
                       <input type="hidden" name="back" value={back} />
                       <select name="status" defaultValue={r.status} className="input h-8 w-auto py-0 text-xs">
-                        {["POTENTIAL", "INVOICED", "PAID", "WAIVED"].map((s) => (
+                        {REVENUE_STATUSES.map((s) => (
                           <option key={s} value={s}>
                             {statusLabel(s)}
                           </option>
@@ -397,13 +515,20 @@ export default async function AdminRequestDetailPage({
                 type="number"
                 step="any"
                 min="0"
-                className="input h-9 w-36 py-0 text-xs"
+                className="input h-9 w-32 py-0 text-xs"
                 placeholder="Amount"
               />
               <select name="currency" defaultValue="INR" className="input h-9 w-auto py-0 text-xs">
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
+                  </option>
+                ))}
+              </select>
+              <select name="type" defaultValue="INTRO_FEE" className="input h-9 w-auto py-0 text-xs">
+                {REVENUE_TYPE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
                   </option>
                 ))}
               </select>
@@ -417,6 +542,13 @@ export default async function AdminRequestDetailPage({
                   ))}
                 </select>
               ) : null}
+              <input
+                name="payerType"
+                className="input h-9 w-28 py-0 text-xs"
+                placeholder="Payer type"
+              />
+              <input name="payerName" className="input h-9 w-36 py-0 text-xs" placeholder="Payer name" />
+              <input name="dueDate" type="date" className="input h-9 w-auto py-0 text-xs" />
               <input
                 name="basis"
                 className="input h-9 min-w-40 flex-1 py-0 text-xs"

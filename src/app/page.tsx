@@ -152,18 +152,18 @@ export default function LandingPage() {
 
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <div>
-              <p className="eyebrow">Private INR liquidity network</p>
-              <h1 className="mt-5 font-display text-[2.7rem] font-medium leading-[1.05] tracking-[-0.012em] text-slate-900 sm:text-[3.5rem]">
-                Find a reviewed
-                <br />
-                INR liquidity partner.
+              <p className="eyebrow">Private reviewed network</p>
+              <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-900 sm:text-[3.15rem]">
+                Stop searching for INR payout
+                <br className="hidden sm:block" /> and liquidity partners in
+                random chats.
               </h1>
               <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-600">
-                INRP2P matches companies that need INR liquidity with manually
-                verified partners — for INR to USDT, USDT to INR and INR payouts.
-                Submit your requirement, get a first response within 48 hours,
-                and be introduced directly to a partner that fits. We never hold
-                your funds.
+                INRP2P is a private, reviewed network for INR payout and liquidity
+                partner introductions — for INR to USDT, USDT to INR and INR
+                payouts. Submit your requirement, get a first response within 48
+                hours, and be introduced directly to a partner that fits. We never
+                hold your funds.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {["INR → USDT", "USDT → INR", "INR payouts"].map((c) => (
@@ -177,10 +177,10 @@ export default function LandingPage() {
               </div>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link href="/request" className="btn btn-gold px-5 py-3">
-                  Request a liquidity partner
+                  Submit company request
                 </Link>
                 <Link href="/apply" className="btn btn-ghost px-5 py-3">
-                  Apply as a liquidity partner
+                  Apply as partner
                 </Link>
               </div>
             </div>
@@ -243,6 +243,36 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Problem ── */}
+        <section className="band-white py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="eyebrow">The problem today</p>
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+              INR liquidity deals are sourced the same way they were a decade ago.
+            </h2>
+            <p className="mt-4 max-w-2xl text-[13.5px] leading-relaxed text-slate-500">
+              Most teams still find INR payout and liquidity partners through cold
+              brokers, public Telegram groups and forwarded contacts — with no way
+              to tell who is actually reviewed.
+            </p>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                { t: "Random brokers", d: "Introductions from people with no accountability for who they connect you to." },
+                { t: "Public Telegram noise", d: "Rates and \"capacity\" posted in open groups, impossible to verify." },
+                { t: "Unknown counterparties", d: "No entity checks, no KYB, no way to size real risk before you engage." },
+                { t: "No review trail", d: "Nothing documented — if a deal goes wrong, there is no record of who vetted whom." },
+                { t: "Poor follow-up", d: "Interest goes cold. No one owns the introduction through to a real conversation." },
+              ].map((p) => (
+                <div key={p.t} className="card h-full p-5">
+                  <span className="mb-2 block h-1 w-6 rounded-full bg-rose-400/70" />
+                  <p className="text-[13px] font-semibold text-slate-900">{p.t}</p>
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{p.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── Two sides ── */}
         <section className="band-white py-24">
           <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
@@ -290,6 +320,10 @@ export default function LandingPage() {
             <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               How it works
             </h2>
+            <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-500">
+              Every submission, review decision and status change is recorded in an
+              append-only audit trail — nothing here is a black box.
+            </p>
 
             <div className="mt-12 hidden items-center px-10 lg:flex">
               {[0, 1, 2, 3].map((i) => (
@@ -321,13 +355,81 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Flow ── */}
+        <section className="border-t border-black/[0.06] py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="eyebrow">From submission to introduction</p>
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+              Company flow &amp; partner flow
+            </h2>
+            <div className="mt-10 grid gap-5 lg:grid-cols-2">
+              <div className="card p-6 sm:p-7">
+                <p className="eyebrow">Company</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {["Submit request", "Manual review", "Matching", "Qualified introduction"].map((step, i, arr) => (
+                    <span key={step} className="flex items-center gap-2">
+                      <span className="chip border-gold-500/35 bg-gold-500/[0.08] text-gold-700">
+                        {step}
+                      </span>
+                      {i < arr.length - 1 ? (
+                        <span aria-hidden className="text-slate-300">
+                          →
+                        </span>
+                      ) : null}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
+                  One structured form, a real reviewer, and a shortlist built on your
+                  volume, banks and speed — not whoever answered first in a chat.
+                </p>
+                <Link href="/request" className="btn btn-ghost btn-sm mt-5">
+                  Submit company request →
+                </Link>
+              </div>
+              <div className="card p-6 sm:p-7">
+                <p className="eyebrow text-emerald-600">Partner</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {["Apply", "Manual review", "Verification", "Matched demand"].map((step, i, arr) => (
+                    <span key={step} className="flex items-center gap-2">
+                      <span className="chip border-emerald-400/40 bg-emerald-50 text-emerald-700">
+                        {step}
+                      </span>
+                      {i < arr.length - 1 ? (
+                        <span aria-hidden className="text-slate-300">
+                          →
+                        </span>
+                      ) : null}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
+                  Declare your directions, capacity and coverage once. Verified
+                  status makes you eligible for qualified demand — no public
+                  listing, no cold inbound.
+                </p>
+                <Link href="/apply" className="btn btn-ghost btn-sm mt-5">
+                  Apply as partner →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Standards ── */}
         <section id="standards" className="band-white scroll-mt-20 py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="eyebrow text-emerald-600">Network standards</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
-              What we verify before an introduction
-            </h2>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow text-emerald-600">Network standards</p>
+                <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+                  What we verify before an introduction
+                </h2>
+              </div>
+              <Link href="/partner-review" className="btn btn-ghost btn-sm">
+                Full review framework →
+              </Link>
+            </div>
             <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {STANDARDS.map((s) => (
                 <div key={s.title} className="flex gap-3.5">
@@ -357,6 +459,24 @@ export default function LandingPage() {
             <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-white">
               INRP2P never holds, moves or converts funds.
             </h2>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                "No custody of funds",
+                "No execution of payments or payouts",
+                "No exchange or trading venue",
+                "No guaranteed liquidity or completion",
+              ].map((t) => (
+                <div
+                  key={t}
+                  className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3"
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-400/40 text-[10px] text-rose-300">
+                    ✕
+                  </span>
+                  <span className="text-[12.5px] font-medium text-slate-200">{t}</span>
+                </div>
+              ))}
+            </div>
             <div className="mt-8 grid gap-x-10 gap-y-4 text-[13.5px] leading-relaxed text-slate-400 md:grid-cols-2">
               <p>
                 There are no wallets, no pooled balances, no escrow and no
@@ -377,6 +497,14 @@ export default function LandingPage() {
                 Each party remains solely responsible for its own regulatory,
                 tax and KYC/AML obligations in every jurisdiction it operates in.
               </p>
+            </div>
+            <div className="mt-8">
+              <Link
+                href="/disclaimer"
+                className="text-[12.5px] font-medium text-gold-400 transition-colors hover:text-gold-300"
+              >
+                Read the full disclaimer →
+              </Link>
             </div>
           </div>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
@@ -406,6 +534,33 @@ export default function LandingPage() {
                   </p>
                 </details>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Private beta ── */}
+        <section className="band-white py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="card flex flex-col items-start gap-5 overflow-hidden p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+              <div>
+                <p className="eyebrow">Private beta</p>
+                <h2 className="mt-3 max-w-xl font-display text-[1.7rem] font-medium leading-snug text-slate-900">
+                  Onboarding a limited number of companies and partners.
+                </h2>
+                <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-slate-500">
+                  INRP2P is in private beta. Every request and application is
+                  reviewed personally, so we keep volume in step with our review
+                  capacity — access is not automatic, and not guaranteed.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-3">
+                <Link href="/request" className="btn btn-gold px-5 py-3">
+                  Submit company request
+                </Link>
+                <Link href="/apply" className="btn btn-ghost px-5 py-3">
+                  Apply as partner
+                </Link>
+              </div>
             </div>
           </div>
         </section>

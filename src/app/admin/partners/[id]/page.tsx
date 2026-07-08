@@ -81,11 +81,19 @@ export default async function AdminPartnerDetailPage({
             <SectionTitle title="Operating profile" />
             <dl className="kv grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
               <KV label="Legal entity">{partner.legalName ?? "Not provided"}</KV>
+              <KV label="Operating country">{partner.operatingCountry ?? "Not provided"}</KV>
               <KV label="Experience">{partner.experienceBand}</KV>
               <KV label="Daily capacity">{partner.dailyCapacityBand}</KV>
+              <KV label="Monthly capacity">{partner.monthlyCapacityBand ?? "Not provided"}</KV>
+              <KV label="Ticket range">
+                {partner.minTicket || partner.maxTicket
+                  ? `${partner.minTicket ?? "—"} to ${partner.maxTicket ?? "—"}`
+                  : "Not provided"}
+              </KV>
               <KV label="Reserve available">{partner.reserveBand}</KV>
               <KV label="Working hours">{partner.workingHours}</KV>
               <KV label="Coverage">{partner.jurisdictions}</KV>
+              <KV label="Settlement preference">{partner.settlementPreference ?? "Not provided"}</KV>
             </dl>
             <div className="mt-5 space-y-3">
               <div>
@@ -145,6 +153,30 @@ export default async function AdminPartnerDetailPage({
               <p className="mt-4 whitespace-pre-wrap rounded-lg bg-black/[0.03] px-4 py-3 text-sm text-slate-600">
                 {partner.complianceNotes}
               </p>
+            ) : null}
+            {partner.references ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">References</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{partner.references}</p>
+              </div>
+            ) : null}
+            {partner.riskNotes ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-500">Risk notes</p>
+                <p className="mt-1 whitespace-pre-wrap rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {partner.riskNotes}
+                </p>
+              </div>
+            ) : null}
+            {partner.additionalComments ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Additional comments
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                  {partner.additionalComments}
+                </p>
+              </div>
             ) : null}
           </div>
 

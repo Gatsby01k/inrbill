@@ -63,12 +63,44 @@ export default async function PartnerProfilePage({
                     ))}
                   </select>
                 </Field>
-                <Field label="Working hours" className="sm:col-span-2">
+                <Field label="Monthly capacity" hint="Optional">
+                  <input
+                    name="monthlyCapacityBand"
+                    defaultValue={partner.monthlyCapacityBand ?? ""}
+                    className="input"
+                    placeholder="e.g. ₹50–200 crore / month"
+                  />
+                </Field>
+                <Field label="Minimum ticket" hint="Optional">
+                  <input
+                    name="minTicket"
+                    defaultValue={partner.minTicket ?? ""}
+                    className="input"
+                    placeholder="e.g. ₹5 lakh"
+                  />
+                </Field>
+                <Field label="Maximum ticket" hint="Optional">
+                  <input
+                    name="maxTicket"
+                    defaultValue={partner.maxTicket ?? ""}
+                    className="input"
+                    placeholder="e.g. ₹5 crore"
+                  />
+                </Field>
+                <Field label="Working hours">
                   <input
                     name="workingHours"
                     defaultValue={partner.workingHours}
                     className="input"
                     placeholder="Hours + days + timezone"
+                  />
+                </Field>
+                <Field label="Settlement preference" className="sm:col-span-2" hint="Optional">
+                  <input
+                    name="settlementPreference"
+                    defaultValue={partner.settlementPreference ?? ""}
+                    className="input"
+                    placeholder="e.g. same-day bank transfer after confirmation"
                   />
                 </Field>
               </div>

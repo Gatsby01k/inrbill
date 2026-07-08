@@ -43,10 +43,18 @@ const STATUS_TONE: Record<string, keyof typeof TONE_CLASS> = {
   RESPONDED: "blue",
   SUCCESSFUL: "emerald",
   FAILED: "rose",
+  // Urgency
+  STANDARD: "slate",
+  URGENT: "gold",
+  CRITICAL: "rose",
   // Revenue
   POTENTIAL: "sky",
+  QUOTED: "blue",
+  AGREED: "gold",
   INVOICED: "gold",
   PAID: "emerald",
+  CANCELLED: "rose",
+  LOST: "rose",
   WAIVED: "slate",
 };
 

@@ -1,6 +1,7 @@
 import { logout } from "@/app/actions/auth";
 import { BrandLockup } from "@/components/brand";
 import { cn } from "@/lib/format";
+import { APP_VERSION } from "@/lib/site";
 import { NavLinks, type NavItem } from "./nav-links";
 
 export function WorkspaceShell({
@@ -47,6 +48,7 @@ export function WorkspaceShell({
               Log out
             </button>
           </form>
+          <p className="mt-3 font-mono text-[10px] text-slate-400">Build {APP_VERSION}</p>
         </div>
       </aside>
       <div className="min-w-0 flex-1">

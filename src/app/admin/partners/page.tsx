@@ -119,11 +119,11 @@ export default async function AdminPartnersPage({
         ) : (
           <div className="p-6">
             <EmptyState
-              title={statusFilter || q ? "Nothing matches this filter" : "No applications yet"}
+              title={statusFilter || q ? "Nothing matches this filter" : "No partner applications yet"}
               body={
                 statusFilter || q
                   ? "Try clearing the filter or searching for something else."
-                  : "Partner applications submitted through the public site appear here for review."
+                  : "Share the partner review link with operators who support INR payout or liquidity flows — applications land here the moment they're submitted."
               }
             />
           </div>

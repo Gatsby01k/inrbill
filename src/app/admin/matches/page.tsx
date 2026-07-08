@@ -62,6 +62,8 @@ export default async function AdminMatchesPage({
                   <th>Partner</th>
                   <th>Direction</th>
                   <th>Status</th>
+                  <th>Confidence</th>
+                  <th>Next action</th>
                   <th>Released</th>
                   <th>Intros</th>
                   <th>Created</th>
@@ -91,6 +93,12 @@ export default async function AdminMatchesPage({
                     <td>
                       <StatusBadge status={m.status} />
                     </td>
+                    <td className="tabular-nums text-xs">
+                      {m.confidenceScore != null ? `${m.confidenceScore}/100` : "—"}
+                    </td>
+                    <td className="max-w-40 truncate text-xs" title={m.nextAction ?? ""}>
+                      {m.nextAction ?? "—"}
+                    </td>
                     <td className="text-xs">
                       <span className={m.releasedToCompany ? "text-emerald-700" : "text-slate-400"}>
                         C{m.releasedToCompany ? " ✓" : " —"}
@@ -110,8 +118,8 @@ export default async function AdminMatchesPage({
         ) : (
           <div className="p-6">
             <EmptyState
-              title={statusFilter ? "No matches with this status" : "No matches yet"}
-              body="Create matches from a request's detail page once partners are verified."
+              title={statusFilter ? "No matches with this status" : "No matches created yet"}
+              body="Review company requests and verified partners to create a qualified introduction — matches you create appear here across the whole pipeline."
             />
           </div>
         )}

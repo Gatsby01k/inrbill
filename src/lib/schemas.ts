@@ -16,9 +16,12 @@ import {
   NOTE_VISIBILITIES,
   PARTNER_STATUSES,
   REQUEST_STATUSES,
+  REQUEST_TYPE_VALUES,
   RESERVE_BANDS,
   REVENUE_STATUSES,
+  REVENUE_TYPE_VALUES,
   SPEED_OPTIONS,
+  URGENCY_VALUES,
 } from "./options";
 
 const trimmed = (min: number, max: number, msg?: string) =>
@@ -68,14 +71,19 @@ export const companyRequestSchema = z.object({
   phone: optionalTrimmed(60),
   // request
   direction: pick(DIRECTION_VALUES, "Select a direction"),
+  requestType: pick(REQUEST_TYPE_VALUES, "Select a request type"),
   dailyVolumeBand: pick(DAILY_VOLUME_BANDS, "Select expected daily volume"),
   monthlyVolumeBand: pick(MONTHLY_VOLUME_BANDS, "Select expected monthly volume"),
+  ticketSize: optionalTrimmed(120),
+  urgency: pick(URGENCY_VALUES, "Select urgency"),
+  countriesInvolved: optionalTrimmed(200),
   banks: multi(BANK_OPTIONS, "Select at least one bank"),
   methods: multi(METHOD_OPTIONS, "Select at least one method"),
   requiredSpeed: pick(SPEED_OPTIONS, "Select required speed"),
   jurisdiction: trimmed(2, 200, "Operating jurisdiction is required"),
   kycReadiness: pick(KYC_READINESS_OPTIONS, "Select KYC/KYB readiness"),
   kycNotes: optionalTrimmed(2000),
+  partnerRequirements: optionalTrimmed(2000),
   notes: optionalTrimmed(4000),
 });
 
@@ -90,9 +98,14 @@ export const partnerApplicationSchema = z.object({
   banks: multi(BANK_OPTIONS, "Select at least one bank"),
   methods: multi(METHOD_OPTIONS, "Select at least one method"),
   dailyCapacityBand: pick(CAPACITY_BANDS, "Select daily capacity"),
+  monthlyCapacityBand: optionalTrimmed(120),
+  minTicket: optionalTrimmed(80),
+  maxTicket: optionalTrimmed(80),
+  settlementPreference: optionalTrimmed(200),
   workingHours: trimmed(2, 160, "Working hours are required"),
   reserveBand: pick(RESERVE_BANDS, "Select available reserve"),
   jurisdictions: trimmed(2, 200, "Coverage is required"),
+  operatingCountry: optionalTrimmed(120),
   complianceFlags: z
     .array(z.string())
     .refine(
@@ -100,6 +113,9 @@ export const partnerApplicationSchema = z.object({
       "Invalid selection",
     ),
   complianceNotes: optionalTrimmed(2000),
+  references: optionalTrimmed(1000),
+  riskNotes: optionalTrimmed(1000),
+  additionalComments: optionalTrimmed(2000),
 });
 
 export const noteSchema = z.object({
@@ -117,8 +133,22 @@ export const documentSchema = z.object({
 export const revenueSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive").max(1_000_000_000_000),
   currency: pick(CURRENCIES, "Select currency"),
+  type: pick(REVENUE_TYPE_VALUES, "Select revenue type"),
+  payerType: optionalTrimmed(40),
+  payerName: optionalTrimmed(160),
   basis: optionalTrimmed(400),
   matchId: optionalTrimmed(60),
+  dueDate: optionalTrimmed(20),
+});
+
+export const matchDecisionSchema = z.object({
+  confidenceScore: z.coerce.number().int().min(0).max(100).optional(),
+  nextAction: optionalTrimmed(300),
+});
+
+export const introOutcomeSchema = z.object({
+  outcome: optionalTrimmed(1000),
+  followUpDate: optionalTrimmed(20),
 });
 
 export const matchCreateSchema = z.object({
@@ -133,6 +163,10 @@ export const introductionCreateSchema = z.object({
 
 export const partnerOpsSchema = z.object({
   dailyCapacityBand: pick(CAPACITY_BANDS, "Select daily capacity"),
+  monthlyCapacityBand: optionalTrimmed(120),
+  minTicket: optionalTrimmed(80),
+  maxTicket: optionalTrimmed(80),
+  settlementPreference: optionalTrimmed(200),
   workingHours: trimmed(2, 160, "Working hours are required"),
   reserveBand: pick(RESERVE_BANDS, "Select available reserve"),
   banks: multi(BANK_OPTIONS, "Select at least one bank"),

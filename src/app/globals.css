@@ -233,4 +233,31 @@
   .pill-active {
     @apply border-gold-600/50 bg-gold-500/[0.1] text-gold-700;
   }
+
+  /* ── Legal / long-form prose ──────────────────────────────── */
+  .prose-legal h2 {
+    @apply mt-10 text-[1.05rem] font-semibold tracking-[-0.01em] text-slate-900 first:mt-0;
+  }
+  .prose-legal h3 {
+    @apply mt-6 text-[13.5px] font-semibold text-slate-800;
+  }
+  .prose-legal p {
+    @apply mt-3 text-[13.5px] leading-relaxed text-slate-600;
+  }
+  .prose-legal ul {
+    @apply mt-3 space-y-2;
+  }
+  .prose-legal li {
+    @apply flex gap-2.5 text-[13.5px] leading-relaxed text-slate-600;
+  }
+  .prose-legal li::before {
+    content: "";
+    @apply mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70;
+  }
+  .prose-legal strong {
+    @apply font-semibold text-slate-800;
+  }
+  .prose-legal a {
+    @apply text-gold-700 underline underline-offset-2 hover:text-gold-600;
+  }
 }

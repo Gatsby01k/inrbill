@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { submitCompanyRequest } from "@/app/actions/public";
 import { SubmitButton } from "@/components/submit-button";
 import { CheckboxGrid, Field, FormError, RadioCards } from "@/components/ui";
-import { cn, directionLabel } from "@/lib/format";
+import { cn } from "@/lib/format";
 import {
   BANK_OPTIONS,
   DAILY_VOLUME_BANDS,
@@ -12,21 +12,29 @@ import {
   METHOD_OPTIONS,
   MONTHLY_VOLUME_BANDS,
   SPEED_OPTIONS,
+  URGENCY_OPTIONS,
 } from "@/lib/options";
 import type { ActionState } from "@/lib/schemas";
 
-const DRAFT_KEY = "inrp2p-request-draft-v1";
+const DRAFT_KEY = "inrp2p-request-draft-v2";
 
-const DIRECTION_CHOICES = [
+const REQUEST_TYPE_CHOICES = [
+  { value: "INR_PAYOUTS", label: "INR payouts", hint: "Recurring INR payouts in India" },
+  { value: "INR_LIQUIDITY", label: "INR liquidity", hint: "General INR liquidity need" },
   { value: "INR_TO_USDT", label: "INR → USDT", hint: "You hold INR and need USDT" },
   { value: "USDT_TO_INR", label: "USDT → INR", hint: "You hold USDT and need INR" },
-  { value: "INR_PAYOUTS", label: "INR payouts", hint: "Recurring INR payouts in India" },
+  { value: "PARTNER_SOURCING", label: "Partner sourcing", hint: "Looking to be introduced to partners directly" },
+  { value: "OTHER", label: "Other", hint: "Describe it in the notes below" },
 ];
+
+const REQUEST_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  REQUEST_TYPE_CHOICES.map((c) => [c.value, c.label]),
+);
 
 /** Field names validated on each step. */
 function stepFields(loggedIn: boolean): string[][] {
   const steps = [
-    ["direction", "dailyVolumeBand", "monthlyVolumeBand", "requiredSpeed"],
+    ["requestType", "dailyVolumeBand", "monthlyVolumeBand", "requiredSpeed"],
     ["banks", "methods", "jurisdiction"],
     ["kycReadiness"],
   ];
@@ -39,7 +47,7 @@ function stepFields(loggedIn: boolean): string[][] {
 const STEP_LABELS_FULL = ["Requirement", "Coverage", "Compliance", "Company & access"];
 
 const REQUIRED_MESSAGES: Record<string, string> = {
-  direction: "Select a direction",
+  requestType: "Select a request type",
   dailyVolumeBand: "Select daily volume",
   monthlyVolumeBand: "Select monthly volume",
   requiredSpeed: "Select settlement speed",
@@ -100,7 +108,7 @@ function Select({
 }
 
 type Snap = {
-  direction: string;
+  requestType: string;
   dailyVolumeBand: string;
   monthlyVolumeBand: string;
   requiredSpeed: string;
@@ -112,7 +120,7 @@ type Snap = {
 };
 
 const EMPTY_SNAP: Snap = {
-  direction: "",
+  requestType: "",
   dailyVolumeBand: "",
   monthlyVolumeBand: "",
   requiredSpeed: "",
@@ -129,7 +137,7 @@ function readSnap(fd: FormData): Snap {
     return typeof v === "string" ? v.trim() : "";
   };
   return {
-    direction: s("direction"),
+    requestType: s("requestType"),
     dailyVolumeBand: s("dailyVolumeBand"),
     monthlyVolumeBand: s("monthlyVolumeBand"),
     requiredSpeed: s("requiredSpeed"),
@@ -223,13 +231,17 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
     try {
       const obj: Record<string, string | string[]> = {};
       for (const name of [
-        "direction",
+        "requestType",
         "dailyVolumeBand",
         "monthlyVolumeBand",
+        "ticketSize",
+        "urgency",
+        "countriesInvolved",
         "requiredSpeed",
         "jurisdiction",
         "kycReadiness",
         "kycNotes",
+        "partnerRequirements",
         "notes",
         "companyName",
         "website",
@@ -353,8 +365,8 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
         <div className="space-y-5 p-6 sm:p-7">
           {/* ── Step 1 — Requirement ── */}
           <div className={step === 0 ? "space-y-5" : "hidden"}>
-            <Field label="Direction" error={fe.direction}>
-              <RadioCards name="direction" options={DIRECTION_CHOICES} />
+            <Field label="Request type" error={fe.requestType}>
+              <RadioCards name="requestType" options={REQUEST_TYPE_CHOICES} />
             </Field>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Daily volume" error={fe.dailyVolumeBand}>
@@ -372,16 +384,33 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                 />
               </Field>
             </div>
-            <Field
-              label="Required settlement speed"
-              error={fe.requiredSpeed}
-              hint="How fast each leg needs to clear once terms are agreed"
-            >
-              <Select
-                name="requiredSpeed"
-                options={SPEED_OPTIONS}
-                placeholder="Select settlement speed"
-              />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
+                label="Expected ticket size"
+                error={fe.ticketSize}
+                hint="Optional — typical size per transaction"
+              >
+                <input
+                  name="ticketSize"
+                  className="input"
+                  placeholder="e.g. ₹20–50 lakh per ticket"
+                  autoComplete="off"
+                />
+              </Field>
+              <Field
+                label="Required settlement speed"
+                error={fe.requiredSpeed}
+                hint="How fast each leg needs to clear once terms are agreed"
+              >
+                <Select
+                  name="requiredSpeed"
+                  options={SPEED_OPTIONS}
+                  placeholder="Select settlement speed"
+                />
+              </Field>
+            </div>
+            <Field label="Urgency" error={fe.urgency}>
+              <RadioCards name="urgency" options={URGENCY_OPTIONS} defaultValue="STANDARD" />
             </Field>
           </div>
 
@@ -393,14 +422,28 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
             <Field label="Methods / rails" error={fe.methods}>
               <CheckboxGrid name="methods" options={METHOD_OPTIONS} cols={3} />
             </Field>
-            <Field label="Operating jurisdiction(s)" error={fe.jurisdiction}>
-              <input
-                name="jurisdiction"
-                className="input"
-                placeholder="e.g. India + UAE"
-                autoComplete="off"
-              />
-            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Operating jurisdiction(s)" error={fe.jurisdiction}>
+                <input
+                  name="jurisdiction"
+                  className="input"
+                  placeholder="e.g. India + UAE"
+                  autoComplete="off"
+                />
+              </Field>
+              <Field
+                label="Countries involved"
+                error={fe.countriesInvolved}
+                hint="Optional — every country funds will move through"
+              >
+                <input
+                  name="countriesInvolved"
+                  className="input"
+                  placeholder="e.g. India, UAE, Singapore"
+                  autoComplete="off"
+                />
+              </Field>
+            </div>
           </div>
 
           {/* ── Step 3 — Compliance ── */}
@@ -413,7 +456,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
               />
             </Field>
             <Field
-              label="KYC / KYB notes"
+              label="Compliance / licensing notes"
               error={fe.kycNotes}
               hint="Optional — licences, registrations, existing audits"
             >
@@ -422,6 +465,18 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                 rows={3}
                 className="input"
                 placeholder="Anything that speeds up review"
+              />
+            </Field>
+            <Field
+              label="Preferred partner requirements"
+              error={fe.partnerRequirements}
+              hint="Optional — anything you need from a partner specifically"
+            >
+              <textarea
+                name="partnerRequirements"
+                rows={3}
+                className="input"
+                placeholder="e.g. must support UPI, must have UAE entity"
               />
             </Field>
             <Field label="Anything else" error={fe.notes} hint="Optional">
@@ -555,8 +610,8 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
           </p>
           <div className="mt-3">
             <SummaryRow
-              label="Direction"
-              value={snap.direction ? directionLabel(snap.direction) : ""}
+              label="Request type"
+              value={snap.requestType ? (REQUEST_TYPE_LABELS[snap.requestType] ?? snap.requestType) : ""}
             />
             <SummaryRow label="Daily" value={snap.dailyVolumeBand} />
             <SummaryRow label="Monthly" value={snap.monthlyVolumeBand} />

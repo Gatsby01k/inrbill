@@ -199,6 +199,23 @@ export default async function PartnerOverviewPage({
               trigger a re-review.
             </p>
           </div>
+          <div className="card p-5">
+            <SectionTitle title="Clear rules" />
+            <p className="text-[12.5px] leading-relaxed text-slate-500">
+              You only see company requests that operations has explicitly released to
+              you — there is no public order book. Verification is not a guarantee of
+              volume, and INRP2P does not endorse or guarantee any company or partner.
+              Full detail:{" "}
+              <Link href="/partner-review" className="text-gold-600 hover:underline">
+                Partner review
+              </Link>{" "}
+              ·{" "}
+              <Link href="/disclaimer" className="text-gold-600 hover:underline">
+                Disclaimer
+              </Link>
+              .
+            </p>
+          </div>
         </div>
       </div>
     </>

@@ -9,6 +9,52 @@ export const DIRECTION_OPTIONS = [
 
 export const DIRECTION_VALUES = ["INR_TO_USDT", "USDT_TO_INR", "INR_PAYOUTS"] as const;
 
+// Broader than DIRECTION_VALUES — what a company is asking for, including
+// requests that aren't a specific corridor (partner sourcing / other).
+export const REQUEST_TYPE_OPTIONS = [
+  { value: "INR_PAYOUTS", label: "INR payouts" },
+  { value: "INR_LIQUIDITY", label: "INR liquidity" },
+  { value: "INR_TO_USDT", label: "INR → USDT" },
+  { value: "USDT_TO_INR", label: "USDT → INR" },
+  { value: "PARTNER_SOURCING", label: "Partner sourcing" },
+  { value: "OTHER", label: "Other" },
+] as const;
+
+export const REQUEST_TYPE_VALUES = [
+  "INR_PAYOUTS",
+  "INR_LIQUIDITY",
+  "INR_TO_USDT",
+  "USDT_TO_INR",
+  "PARTNER_SOURCING",
+  "OTHER",
+] as const;
+
+export const URGENCY_OPTIONS = [
+  { value: "STANDARD", label: "Standard", hint: "Usual review timeline" },
+  { value: "URGENT", label: "Urgent", hint: "Needed within days" },
+  { value: "CRITICAL", label: "Critical", hint: "Time-sensitive, needs immediate attention" },
+] as const;
+
+export const URGENCY_VALUES = ["STANDARD", "URGENT", "CRITICAL"] as const;
+
+export const REVENUE_TYPE_OPTIONS = [
+  { value: "REVIEW_FEE", label: "Review fee" },
+  { value: "PARTNER_ACCESS", label: "Partner access" },
+  { value: "INTRO_FEE", label: "Introduction fee" },
+  { value: "SUCCESS_FEE", label: "Success fee" },
+  { value: "MONTHLY_RETAINER", label: "Monthly retainer" },
+  { value: "CUSTOM", label: "Custom" },
+] as const;
+
+export const REVENUE_TYPE_VALUES = [
+  "REVIEW_FEE",
+  "PARTNER_ACCESS",
+  "INTRO_FEE",
+  "SUCCESS_FEE",
+  "MONTHLY_RETAINER",
+  "CUSTOM",
+] as const;
+
 export const DAILY_VOLUME_BANDS = [
   "Under ₹10 lakh / day",
   "₹10–50 lakh / day",
@@ -114,7 +160,16 @@ export const INTRODUCTION_STATUSES = [
   "FAILED",
 ] as const;
 
-export const REVENUE_STATUSES = ["POTENTIAL", "INVOICED", "PAID", "WAIVED"] as const;
+export const REVENUE_STATUSES = [
+  "POTENTIAL",
+  "QUOTED",
+  "AGREED",
+  "INVOICED",
+  "PAID",
+  "CANCELLED",
+  "LOST",
+  "WAIVED",
+] as const;
 
 export const NOTE_VISIBILITIES = ["INTERNAL", "COMPANY", "PARTNER"] as const;
 

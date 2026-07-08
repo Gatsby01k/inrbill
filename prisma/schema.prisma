@@ -29,6 +29,34 @@ enum Direction {
   INR_PAYOUTS
 }
 
+// Broader intake categorisation than Direction — includes non-corridor request
+// types (partner sourcing, other) that Direction deliberately does not cover,
+// since Direction also drives partner-matching eligibility and must stay a
+// clean 3-value corridor enum.
+enum RequestType {
+  INR_PAYOUTS
+  INR_LIQUIDITY
+  INR_TO_USDT
+  USDT_TO_INR
+  PARTNER_SOURCING
+  OTHER
+}
+
+enum Urgency {
+  STANDARD
+  URGENT
+  CRITICAL
+}
+
+enum RevenueType {
+  REVIEW_FEE
+  PARTNER_ACCESS
+  INTRO_FEE
+  SUCCESS_FEE
+  MONTHLY_RETAINER
+  CUSTOM
+}
+
 enum RequestStatus {
   SUBMITTED
   IN_REVIEW
@@ -65,8 +93,12 @@ enum IntroductionStatus {
 
 enum RevenueStatus {
   POTENTIAL
+  QUOTED
+  AGREED
   INVOICED
   PAID
+  CANCELLED
+  LOST
   WAIVED
 }
 
@@ -139,14 +171,19 @@ model LiquidityRequest {
   companyId        String
   company          CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   direction        Direction
+  requestType      RequestType   @default(INR_PAYOUTS)
   dailyVolumeBand  String
   monthlyVolumeBand String
+  ticketSize        String?
+  urgency           Urgency      @default(STANDARD)
+  countriesInvolved String?
   banks            String[]
   methods          String[]
   requiredSpeed    String
   jurisdiction     String
   kycReadiness     String
   kycNotes         String?
+  partnerRequirements String?
   notes            String?
   status           RequestStatus @default(SUBMITTED)
   createdAt        DateTime      @default(now())
@@ -178,11 +215,19 @@ model PartnerProfile {
   banks             String[]
   methods           String[]
   dailyCapacityBand String
+  monthlyCapacityBand String?
+  minTicket           String?
+  maxTicket           String?
+  settlementPreference String?
   workingHours      String
   reserveBand       String
   jurisdictions     String
+  operatingCountry    String?
   complianceFlags   String[]
   complianceNotes   String?
+  references          String?
+  riskNotes           String?
+  additionalComments  String?
   status            PartnerStatus @default(APPLIED)
   verifiedAt        DateTime?
   createdAt         DateTime      @default(now())
@@ -205,6 +250,8 @@ model Match {
   partner           PartnerProfile   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   status            MatchStatus @default(SUGGESTED)
   adminNote         String?
+  confidenceScore   Int?
+  nextAction        String?
   releasedToCompany Boolean     @default(false)
   releasedToPartner Boolean     @default(false)
   createdAt         DateTime    @default(now())
@@ -225,6 +272,8 @@ model Introduction {
   status      IntroductionStatus @default(PENDING)
   channel     IntroChannel       @default(EMAIL)
   summary     String?
+  outcome     String?
+  followUpDate DateTime?
   sentAt      DateTime?
   respondedAt DateTime?
   createdAt   DateTime           @default(now())
@@ -243,8 +292,12 @@ model RevenueRecord {
   match      Match?        @relation(fields: [matchId], references: [id], onDelete: SetNull)
   amount     Decimal       @db.Decimal(18, 2)
   currency   Currency      @default(INR)
+  type       RevenueType   @default(CUSTOM)
+  payerType  String? // e.g. "Company", "Partner"
+  payerName  String?
   basis      String? // e.g. "25 bps on first month volume", "fixed introduction fee"
   status     RevenueStatus @default(POTENTIAL)
+  dueDate    DateTime?
   invoicedAt DateTime?
   paidAt     DateTime?
   createdAt  DateTime      @default(now())

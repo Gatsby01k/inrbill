@@ -1,4 +1,4 @@
-import { DIRECTION_OPTIONS } from "./options";
+import { DIRECTION_OPTIONS, REQUEST_TYPE_OPTIONS, REVENUE_TYPE_OPTIONS } from "./options";
 
 export function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -15,6 +15,18 @@ export function statusLabel(s: string) {
 
 export function directionLabel(d: string) {
   return DIRECTION_OPTIONS.find((o) => o.value === d)?.label ?? d;
+}
+
+export function requestTypeLabel(t: string) {
+  return REQUEST_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? d(t);
+}
+
+export function revenueTypeLabel(t: string) {
+  return REVENUE_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? d(t);
+}
+
+function d(v: string) {
+  return statusLabel(v);
 }
 
 export function fmtDate(d: Date) {
@@ -67,6 +79,10 @@ export function auditLabel(action: string, meta?: unknown): string {
       return `Introduction recorded${m.channel ? ` via ${String(m.channel).toLowerCase()}` : ""}`;
     case "introduction.status_changed":
       return `Introduction ${from} → ${to}`;
+    case "introduction.outcome_updated":
+      return "Introduction outcome / follow-up updated";
+    case "match.decision_updated":
+      return "Match decision-support notes updated";
     case "revenue.created":
       return `Revenue recorded${m.amount ? ` — ${String(m.amount)} ${String(m.currency ?? "")}` : ""}`;
     case "revenue.status_changed":
