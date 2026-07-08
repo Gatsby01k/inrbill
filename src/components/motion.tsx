@@ -114,46 +114,6 @@ export function Counter({
   );
 }
 
-/* ── CursorSpotlight ───────────────────────────────────────────
-   Mount once near the root. A single delegated mousemove listener
-   updates --mx/--my custom properties on whichever .card is under
-   the pointer, driving the radial-gradient glow defined in
-   globals.css (.card::before). Zero per-card listeners.          */
-
-export function CursorSpotlight() {
-  useEffect(() => {
-    let raf = 0;
-    let lastEl: HTMLElement | null = null;
-
-    function handleMove(e: MouseEvent) {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const target = e.target as HTMLElement | null;
-        const card = target?.closest<HTMLElement>(".card");
-        if (card) {
-          const rect = card.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 100;
-          const y = ((e.clientY - rect.top) / rect.height) * 100;
-          card.style.setProperty("--mx", `${x}%`);
-          card.style.setProperty("--my", `${y}%`);
-          lastEl = card;
-        } else if (lastEl) {
-          lastEl = null;
-        }
-      });
-    }
-
-    document.addEventListener("mousemove", handleMove, { passive: true });
-    return () => {
-      document.removeEventListener("mousemove", handleMove);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  return null;
-}
-
 /* ── SlidingIndicator ──────────────────────────────────────────
    Tracks an "active" element inside a relatively-positioned
    container and animates a highlight pill to its position.

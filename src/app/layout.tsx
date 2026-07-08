@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
-import { CursorSpotlight } from "@/components/motion";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -47,10 +46,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
-      <body className="min-h-screen">
-        <CursorSpotlight />
-        {children}
-      </body>
+      <body className="min-h-screen">{children}</body>
     </html>
   );
 }

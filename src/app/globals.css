@@ -70,31 +70,10 @@
   /* ── Surfaces ─────────────────────────────────────────────── */
   .card {
     @apply relative rounded-xl border border-black/[0.08] bg-white shadow-card;
-    isolation: isolate;
     transition:
       transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
       box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
       border-color 0.35s ease;
-  }
-  /* Cursor-tracked spotlight — position set via --mx/--my custom properties
-     from a single delegated mousemove listener (see CursorSpotlight component). */
-  .card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    background: radial-gradient(
-      280px circle at var(--mx, 50%) var(--my, 50%),
-      rgba(255, 153, 51, 0.14),
-      transparent 70%
-    );
-    transition: opacity 0.4s ease;
-  }
-  .card:hover::before {
-    opacity: 1;
   }
   a.card:hover,
   button.card:hover,
