@@ -28,14 +28,14 @@ export default function GlobalError({
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "system-ui, sans-serif",
-          background: "#070C16",
-          color: "#F1F5F9",
+          background: "#FAF7F1",
+          color: "#1e293b",
           padding: "24px",
           textAlign: "center",
         }}
       >
         <h1 style={{ fontSize: "18px", fontWeight: 600 }}>INRP2P is temporarily unavailable</h1>
-        <p style={{ marginTop: "8px", fontSize: "13px", color: "#94A3B8", maxWidth: "360px" }}>
+        <p style={{ marginTop: "8px", fontSize: "13px", color: "#64748b", maxWidth: "360px" }}>
           Please try again in a moment. If this continues, contact network operations.
         </p>
         <button

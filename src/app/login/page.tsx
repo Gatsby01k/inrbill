@@ -27,7 +27,7 @@ export default async function LoginPage({
           <Wordmark />
         </div>
         <div className="card p-7 shadow-raised">
-          <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-50">
+          <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
             Sign in to your workspace
           </h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">
@@ -39,11 +39,11 @@ export default async function LoginPage({
         </div>
         <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
           New here?{" "}
-          <Link href="/request" className="text-gold-400 transition-colors hover:text-gold-300">
+          <Link href="/request" className="text-gold-600 transition-colors hover:text-gold-700">
             Submit a request
           </Link>{" "}
           or{" "}
-          <Link href="/apply" className="text-gold-400 transition-colors hover:text-gold-300">
+          <Link href="/apply" className="text-gold-600 transition-colors hover:text-gold-700">
             apply as a partner
           </Link>
           .

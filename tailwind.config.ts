@@ -5,22 +5,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Deep chakra navy — used only in the "ink" bands (footer, no-custody section)
         night: {
-          950: "#04070D",
-          900: "#070C16",
-          850: "#0A101D",
-          800: "#0E1626",
-          700: "#152138",
-          600: "#1D2D4E",
+          950: "#050A1F",
+          900: "#0A1440",
+          850: "#0E1B52",
+          800: "#142868",
+          700: "#1E3A8A",
+          600: "#2B4FA8",
         },
-        // Brand amber-gold, derived from the logo gradient (#F6B03D → #E8790F)
+        // Brand saffron — vivid Indian-flag "kesari" orange
         gold: {
-          200: "#FBE4B8",
-          300: "#F8D28B",
-          400: "#F4B95A",
-          500: "#EFA12F",
-          600: "#DD8114",
-          700: "#B4650D",
+          200: "#FFDBB0",
+          300: "#FFC17A",
+          400: "#FFA94D",
+          500: "#FF9933",
+          600: "#EB7A0F",
+          700: "#C15F0A",
+        },
+        // India flag green — verification / partner-side accent
+        leaf: {
+          50: "#E7F6EA",
+          100: "#C6ECCE",
+          200: "#93D9A2",
+          300: "#5CC072",
+          400: "#2FA34D",
+          500: "#178A38",
+          600: "#0F6E2C",
+          700: "#0B5A24",
         },
       },
       fontFamily: {
@@ -52,11 +64,10 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        card: "inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.3), 0 16px 40px -24px rgba(0,0,0,0.6)",
+        card: "0 1px 2px rgba(35,28,12,0.05), 0 12px 32px -20px rgba(35,28,12,0.16)",
         raised:
-          "inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.35), 0 32px 72px -32px rgba(0,0,0,0.7)",
-        glow: "0 0 90px -18px rgba(238,161,47,0.45)",
-        frost: "0 0 70px -20px rgba(125,168,220,0.35)",
+          "0 1px 3px rgba(35,28,12,0.07), 0 24px 64px -28px rgba(35,28,12,0.28)",
+        glow: "0 0 90px -18px rgba(255,153,51,0.5)",
       },
       keyframes: {
         reveal: {

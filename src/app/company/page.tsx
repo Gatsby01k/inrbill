@@ -51,7 +51,7 @@ export default async function CompanyHomePage() {
               <tbody>
                 {requests.map((r) => (
                   <tr key={r.id}>
-                    <td className="font-mono text-xs text-gold-400">{r.reference}</td>
+                    <td className="font-mono text-xs text-gold-700">{r.reference}</td>
                     <td className="whitespace-nowrap">{requestTypeLabel(r.requestType)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>
@@ -65,7 +65,7 @@ export default async function CompanyHomePage() {
                     <td>
                       <Link
                         href={`/company/requests/${r.id}`}
-                        className="text-xs font-medium text-gold-400 hover:underline"
+                        className="text-xs font-medium text-gold-600 hover:underline"
                       >
                         Open →
                       </Link>
@@ -100,7 +100,7 @@ export default async function CompanyHomePage() {
           payouts, does not operate an exchange, and does not guarantee liquidity, a match,
           or that any transaction completes. Once introduced, you deal with the partner
           directly, and remain responsible for your own KYC, AML, tax and legal obligations.
-          Full detail: <Link href="/disclaimer" className="text-gold-400 hover:underline">Disclaimer</Link>.
+          Full detail: <Link href="/disclaimer" className="text-gold-600 hover:underline">Disclaimer</Link>.
         </p>
       </div>
     </>

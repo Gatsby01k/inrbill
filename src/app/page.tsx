@@ -143,22 +143,22 @@ export default function LandingPage() {
             fill="none"
             aria-hidden
           >
-            <circle cx="310" cy="310" r="290" stroke="rgba(238,161,47,0.14)" strokeWidth="1.5" />
-            <circle cx="310" cy="310" r="214" stroke="rgba(238,161,47,0.09)" strokeWidth="1.5" />
-            <circle cx="310" cy="20" r="7" fill="rgba(238,161,47,0.35)" />
-            <circle cx="59" cy="455" r="7" fill="rgba(238,161,47,0.22)" />
-            <circle cx="561" cy="455" r="7" fill="rgba(238,161,47,0.22)" />
+            <circle cx="310" cy="310" r="290" stroke="rgba(255,153,51,0.18)" strokeWidth="1.5" />
+            <circle cx="310" cy="310" r="214" stroke="rgba(255,153,51,0.11)" strokeWidth="1.5" />
+            <circle cx="310" cy="20" r="7" fill="rgba(255,153,51,0.4)" />
+            <circle cx="59" cy="455" r="7" fill="rgba(23,138,56,0.3)" />
+            <circle cx="561" cy="455" r="7" fill="rgba(255,153,51,0.28)" />
           </svg>
 
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <div>
               <p className="eyebrow">Private reviewed network</p>
-              <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-50 sm:text-[3.15rem]">
+              <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-900 sm:text-[3.15rem]">
                 Stop searching for INR payout
                 <br className="hidden sm:block" /> and liquidity partners in
                 random chats.
               </h1>
-              <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-400">
+              <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-600">
                 INRP2P is a private, reviewed network for INR payout and liquidity
                 partner introductions — for INR to USDT, USDT to INR and INR
                 payouts. Submit your requirement, get a first response within 48
@@ -169,7 +169,7 @@ export default function LandingPage() {
                 {["INR → USDT", "USDT → INR", "INR payouts"].map((c) => (
                   <span
                     key={c}
-                    className="rounded-md border border-white/[0.1] bg-night-850 px-2.5 py-1 font-mono text-[11px] font-medium tracking-wide text-slate-400"
+                    className="rounded-md border border-black/[0.1] bg-white px-2.5 py-1 font-mono text-[11px] font-medium tracking-wide text-slate-600"
                   >
                     {c}
                   </span>
@@ -186,24 +186,24 @@ export default function LandingPage() {
             </div>
 
             <div className="card overflow-hidden shadow-raised">
-              <div className="flex items-center gap-2.5 border-b border-white/[0.07] bg-white/[0.02] px-5 py-3.5">
+              <div className="flex items-center gap-2.5 border-b border-black/[0.07] bg-black/[0.02] px-5 py-3.5">
                 <BrandMark size={18} />
-                <p className="text-[13px] font-semibold text-slate-100">How your request moves</p>
+                <p className="text-[13px] font-semibold text-slate-800">How your request moves</p>
               </div>
               <div className="p-5">
                 <ol>
                   {PIPELINE.map((p, i) => (
                     <li key={p.step} className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-400">
+                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-700">
                           {i + 1}
                         </span>
                         {i < PIPELINE.length - 1 ? (
-                          <span className="my-1 w-px flex-1 bg-white/[0.09]" />
+                          <span className="my-1 w-px flex-1 bg-black/[0.09]" />
                         ) : null}
                       </div>
                       <div className={i < PIPELINE.length - 1 ? "pb-5" : ""}>
-                        <p className="text-[13px] font-semibold text-slate-50">{p.step}</p>
+                        <p className="text-[13px] font-semibold text-slate-900">{p.step}</p>
                         <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
                           {p.text}
                         </p>
@@ -212,9 +212,9 @@ export default function LandingPage() {
                   ))}
                 </ol>
               </div>
-              <div className="flex items-center gap-2.5 border-t border-emerald-500/25 bg-emerald-500/[0.06] px-5 py-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <p className="text-[12px] leading-relaxed text-emerald-300">
+              <div className="flex items-center gap-2.5 border-t border-leaf-500/25 bg-leaf-500/[0.06] px-5 py-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-leaf-500" />
+                <p className="text-[12px] leading-relaxed text-leaf-800">
                   Settlement happens directly between you and the partner.
                 </p>
               </div>
@@ -223,17 +223,17 @@ export default function LandingPage() {
 
           {/* Facts */}
           <div className="mx-auto mt-20 max-w-6xl px-4 sm:px-6">
-            <div className="grid overflow-hidden rounded-xl border border-white/[0.08] bg-night-850/70 backdrop-blur-sm sm:grid-cols-3">
+            <div className="grid overflow-hidden rounded-xl border border-black/[0.08] bg-white/70 backdrop-blur-sm sm:grid-cols-3">
               {FACTS.map((f, i) => (
                 <div
                   key={f.value}
                   className={
                     i > 0
-                      ? "border-t border-white/[0.06] px-6 py-5 sm:border-l sm:border-t-0"
+                      ? "border-t border-black/[0.06] px-6 py-5 sm:border-l sm:border-t-0"
                       : "px-6 py-5"
                   }
                 >
-                  <p className="tnum font-display text-[28px] font-medium text-slate-50">
+                  <p className="tnum font-display text-[28px] font-medium text-slate-900">
                     {f.value}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.label}</p>
@@ -247,7 +247,7 @@ export default function LandingPage() {
         <section className="band-white py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="eyebrow">The problem today</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               INR liquidity deals are sourced the same way they were a decade ago.
             </h2>
             <p className="mt-4 max-w-2xl text-[13.5px] leading-relaxed text-slate-500">
@@ -265,7 +265,7 @@ export default function LandingPage() {
               ].map((p) => (
                 <div key={p.t} className="card h-full p-5">
                   <span className="mb-2 block h-1 w-6 rounded-full bg-rose-400/70" />
-                  <p className="text-[13px] font-semibold text-slate-50">{p.t}</p>
+                  <p className="text-[13px] font-semibold text-slate-900">{p.t}</p>
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{p.d}</p>
                 </div>
               ))}
@@ -278,12 +278,12 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
             <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
               <p className="eyebrow">For companies</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-50">
+              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Get INR liquidity from verified partners.
               </h2>
               <ul className="mt-5 space-y-3">
                 {COMPANY_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-400">
+                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
                     <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
                     {t}
                   </li>
@@ -294,14 +294,14 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
-              <p className="eyebrow text-emerald-400">For liquidity partners</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-50">
+              <p className="eyebrow text-leaf-600">For liquidity partners</p>
+              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
                 Receive qualified demand without going public.
               </h2>
               <ul className="mt-5 space-y-3">
                 {PARTNER_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-400">
-                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-emerald-500/70" />
+                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
+                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-leaf-500/70" />
                     {t}
                   </li>
                 ))}
@@ -314,10 +314,10 @@ export default function LandingPage() {
         </section>
 
         {/* ── Process ── */}
-        <section id="how-it-works" className="scroll-mt-20 border-t border-white/[0.06] py-24">
+        <section id="how-it-works" className="scroll-mt-20 border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="eyebrow">Process</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               How it works
             </h2>
             <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-500">
@@ -328,7 +328,7 @@ export default function LandingPage() {
             <div className="mt-12 hidden items-center px-10 lg:flex">
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="flex flex-1 items-center last:flex-none">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-500/50 bg-gold-500/10 font-mono text-[11px] font-semibold text-gold-400">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-500/50 bg-gold-500/10 font-mono text-[11px] font-semibold text-gold-700">
                     {i + 1}
                   </span>
                   {i < 3 ? (
@@ -344,10 +344,10 @@ export default function LandingPage() {
                   key={s.t}
                   className="card h-full p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
                 >
-                  <p className="font-mono text-[11px] tracking-wider text-gold-400 lg:hidden">
+                  <p className="font-mono text-[11px] tracking-wider text-gold-600 lg:hidden">
                     0{i + 1}
                   </p>
-                  <p className="text-[14.5px] font-semibold text-slate-50">{s.t}</p>
+                  <p className="text-[14.5px] font-semibold text-slate-900">{s.t}</p>
                   <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
                 </div>
               ))}
@@ -356,10 +356,10 @@ export default function LandingPage() {
         </section>
 
         {/* ── Flow ── */}
-        <section className="border-t border-white/[0.06] py-24">
+        <section className="border-t border-black/[0.06] py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="eyebrow">From submission to introduction</p>
-            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
               Company flow &amp; partner flow
             </h2>
             <div className="mt-10 grid gap-5 lg:grid-cols-2">
@@ -368,7 +368,7 @@ export default function LandingPage() {
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {["Submit request", "Manual review", "Matching", "Qualified introduction"].map((step, i, arr) => (
                     <span key={step} className="flex items-center gap-2">
-                      <span className="chip border-gold-500/35 bg-gold-500/[0.08] text-gold-400">
+                      <span className="chip border-gold-500/35 bg-gold-500/[0.08] text-gold-700">
                         {step}
                       </span>
                       {i < arr.length - 1 ? (
@@ -388,11 +388,11 @@ export default function LandingPage() {
                 </Link>
               </div>
               <div className="card p-6 sm:p-7">
-                <p className="eyebrow text-emerald-400">Partner</p>
+                <p className="eyebrow text-leaf-600">Partner</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {["Apply", "Manual review", "Verification", "Matched demand"].map((step, i, arr) => (
                     <span key={step} className="flex items-center gap-2">
-                      <span className="chip border-emerald-400/30 bg-emerald-400/10 text-emerald-300">
+                      <span className="chip border-leaf-400/40 bg-leaf-50 text-leaf-700">
                         {step}
                       </span>
                       {i < arr.length - 1 ? (
@@ -421,8 +421,8 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="eyebrow text-emerald-400">Network standards</p>
-                <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+                <p className="eyebrow text-leaf-600">Network standards</p>
+                <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
                   What we verify before an introduction
                 </h2>
               </div>
@@ -433,11 +433,11 @@ export default function LandingPage() {
             <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {STANDARDS.map((s) => (
                 <div key={s.title} className="flex gap-3.5">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-emerald-400/40 bg-emerald-400/10 text-[11px] text-emerald-300">
+                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[11px] text-leaf-600">
                     ✓
                   </span>
                   <div>
-                    <p className="text-[13.5px] font-semibold text-slate-50">{s.title}</p>
+                    <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
                   </div>
                 </div>
@@ -507,24 +507,24 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-leaf-500/45 to-transparent" />
         </section>
 
         {/* ── FAQ ── */}
         <section className="py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <p className="eyebrow">FAQ</p>
-            <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-50">
+            <h2 className="mt-3 font-display text-[2rem] font-medium leading-tight text-slate-900">
               Frequently asked questions
             </h2>
             <div className="mt-8 space-y-2.5">
               {FAQ.map((f) => (
                 <details key={f.q} className="card group px-5 py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-100 transition-colors group-open:text-gold-400 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[13.5px] font-semibold text-slate-800 transition-colors group-open:text-gold-700 [&::-webkit-details-marker]:hidden">
                     {f.q}
                     <span
                       aria-hidden
-                      className="text-slate-400 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-400"
+                      className="text-slate-400 transition-transform duration-200 group-open:rotate-45 group-open:text-gold-600"
                     >
                       +
                     </span>
@@ -544,7 +544,7 @@ export default function LandingPage() {
             <div className="card flex flex-col items-start gap-5 overflow-hidden p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10">
               <div>
                 <p className="eyebrow">Private beta</p>
-                <h2 className="mt-3 max-w-xl font-display text-[1.7rem] font-medium leading-snug text-slate-50">
+                <h2 className="mt-3 max-w-xl font-display text-[1.7rem] font-medium leading-snug text-slate-900">
                   Onboarding a limited number of companies and partners.
                 </h2>
                 <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-slate-500">
@@ -572,7 +572,7 @@ export default function LandingPage() {
               <div className="mx-auto flex justify-center">
                 <BrandMark size={40} />
               </div>
-              <h2 className="mx-auto mt-5 max-w-xl font-display text-[2rem] font-medium leading-tight text-slate-50">
+              <h2 className="mx-auto mt-5 max-w-xl font-display text-[2rem] font-medium leading-tight text-slate-900">
                 Speak to the operations team
               </h2>
               <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-slate-500">

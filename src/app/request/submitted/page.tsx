@@ -41,7 +41,7 @@ export default async function RequestSubmittedPage({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Reference
               </p>
-              <p className="mt-1 font-mono text-xl text-gold-400">{ref}</p>
+              <p className="mt-1 font-mono text-xl text-gold-700">{ref}</p>
             </div>
             <Link href="/company" className="btn btn-gold btn-sm">
               Open company workspace
@@ -54,11 +54,11 @@ export default async function RequestSubmittedPage({
           <ol className="space-y-5">
             {NEXT_STEPS.map((s, i) => (
               <li key={s.t} className="flex gap-4">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-xs text-gold-400">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-xs text-gold-700">
                   {i + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-50">{s.t}</p>
+                  <p className="text-sm font-semibold text-slate-900">{s.t}</p>
                   <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{s.d}</p>
                 </div>
               </li>
@@ -68,7 +68,7 @@ export default async function RequestSubmittedPage({
 
         <p className="text-xs leading-relaxed text-slate-400">
           Questions in the meantime? Write to{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold-400 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold-600 hover:underline">
             {CONTACT_EMAIL}
           </a>{" "}
           quoting your reference.

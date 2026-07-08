@@ -69,8 +69,8 @@ export default function HowItWorksPage() {
       <ul className="!mt-4 space-y-5">
         {STAGES.map((s) => (
           <li key={s.t} className="!flex-col !gap-1 before:hidden">
-            <p className="text-[13.5px] font-semibold text-slate-50">{s.t}</p>
-            <p className="mt-0.5 text-[13.5px] leading-relaxed text-slate-400">{s.d}</p>
+            <p className="text-[13.5px] font-semibold text-slate-900">{s.t}</p>
+            <p className="mt-0.5 text-[13.5px] leading-relaxed text-slate-600">{s.d}</p>
           </li>
         ))}
       </ul>
@@ -106,10 +106,10 @@ export default function HowItWorksPage() {
       <h2>Roles and responsibilities</h2>
       <div className="not-prose mt-4 grid gap-3 sm:grid-cols-3">
         {ROLES.map((r) => (
-          <div key={r.who} className="rounded-lg border border-white/[0.08] bg-white/[0.015] p-4">
-            <p className="text-[12.5px] font-semibold text-slate-50">{r.who}</p>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400">{r.does}</p>
-            <p className="mt-2 text-xs leading-relaxed text-rose-400">{r.not}</p>
+          <div key={r.who} className="rounded-lg border border-black/[0.08] bg-black/[0.015] p-4">
+            <p className="text-[12.5px] font-semibold text-slate-900">{r.who}</p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600">{r.does}</p>
+            <p className="mt-2 text-xs leading-relaxed text-rose-600">{r.not}</p>
           </div>
         ))}
       </div>

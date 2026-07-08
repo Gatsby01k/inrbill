@@ -24,8 +24,8 @@ export default function GlobalRouteError({
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
       <BrandLockup />
       <div className="card max-w-sm p-7 text-center">
-        <p className="font-mono text-xs text-rose-400">Error</p>
-        <h1 className="mt-2 text-lg font-semibold text-slate-50">Something went wrong</h1>
+        <p className="font-mono text-xs text-rose-600">Error</p>
+        <h1 className="mt-2 text-lg font-semibold text-slate-900">Something went wrong</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-slate-500">
           Nothing was lost — the page hit an unexpected error. Try again, or head back and
           pick up where you left off.

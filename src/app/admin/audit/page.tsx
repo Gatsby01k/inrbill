@@ -38,14 +38,14 @@ export default async function AdminAuditPage() {
                     <td className="whitespace-nowrap text-xs text-slate-500">
                       {fmtDateTime(e.createdAt)}
                     </td>
-                    <td className="text-xs font-medium text-slate-300">{e.actorLabel}</td>
-                    <td className="text-slate-100">{auditLabel(e.action, e.meta)}</td>
+                    <td className="text-xs font-medium text-slate-700">{e.actorLabel}</td>
+                    <td className="text-slate-800">{auditLabel(e.action, e.meta)}</td>
                     <td className="font-mono text-[11px] text-slate-400">{e.action}</td>
                     <td className="whitespace-nowrap text-xs">
                       {e.requestId ? (
                         <Link
                           href={`/admin/requests/${e.requestId}`}
-                          className="text-gold-400 hover:underline"
+                          className="text-gold-600 hover:underline"
                         >
                           request
                         </Link>
@@ -54,7 +54,7 @@ export default async function AdminAuditPage() {
                       {e.partnerId ? (
                         <Link
                           href={`/admin/partners/${e.partnerId}`}
-                          className="text-emerald-400 hover:underline"
+                          className="text-leaf-600 hover:underline"
                         >
                           partner
                         </Link>

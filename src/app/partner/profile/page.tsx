@@ -133,7 +133,7 @@ export default async function PartnerProfilePage({
               <KV label="Operating name">{partner.displayName}</KV>
               <KV label="Legal entity">{partner.legalName ?? "Not provided"}</KV>
               <KV label="Reference">
-                <span className="font-mono text-emerald-400">{partner.reference}</span>
+                <span className="font-mono text-leaf-700">{partner.reference}</span>
               </KV>
               <KV label="Status">
                 <StatusBadge status={partner.status} />

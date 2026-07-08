@@ -31,11 +31,11 @@ export function LegalShell({
       <main className="hero-aurora flex-1 pb-24 pt-32">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <p className="eyebrow">{eyebrow}</p>
-          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-50 sm:text-[2.5rem]">
+          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-900 sm:text-[2.5rem]">
             {title}
           </h1>
-          <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-slate-400">{sub}</p>
-          <p className="mt-4 text-xs text-slate-500">Last updated {updated}</p>
+          <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-slate-500">{sub}</p>
+          <p className="mt-4 text-xs text-slate-400">Last updated {updated}</p>
 
           <div className="prose-legal card mt-8 p-6 sm:p-8">{children}</div>
 
@@ -44,7 +44,7 @@ export function LegalShell({
               <Link
                 key={l.href}
                 href={l.href}
-                className="text-xs font-medium text-slate-500 transition-colors hover:text-gold-400"
+                className="text-xs font-medium text-slate-500 transition-colors hover:text-gold-700"
               >
                 {l.label}
               </Link>
@@ -70,13 +70,13 @@ const CORE_POSITIONS = [
 /** The seven mandatory disclosures, rendered as a compact reference card. */
 export function CorePositions({ title = "What INRP2P is — and is not" }: { title?: string }) {
   return (
-    <div className="not-prose rounded-xl border border-white/[0.07] bg-white/[0.02] p-5">
+    <div className="not-prose rounded-xl border border-black/[0.08] bg-black/[0.02] p-5">
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
         {title}
       </p>
       <ul className="mt-3 space-y-2.5">
         {CORE_POSITIONS.map((t) => (
-          <li key={t} className="flex gap-2.5 text-[13px] leading-relaxed text-slate-300">
+          <li key={t} className="flex gap-2.5 text-[13px] leading-relaxed text-slate-700">
             <span className="mt-[7px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
             {t}
           </li>

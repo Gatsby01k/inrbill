@@ -19,27 +19,27 @@ export function WorkspaceShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="shrink-0 border-b border-white/[0.07] bg-night-900 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[236px] lg:flex-col lg:border-b-0 lg:border-r">
-        <div className="flex h-[60px] items-center justify-between border-b border-white/[0.06] px-4 lg:px-5">
+      <aside className="shrink-0 border-b border-black/[0.08] bg-[#F6F1E7] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[236px] lg:flex-col lg:border-b-0 lg:border-r">
+        <div className="flex h-[60px] items-center justify-between border-b border-black/[0.06] px-4 lg:px-5">
           <BrandLockup markSize={26} />
           <span
             className={cn(
               "rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
-              badgeTone === "gold" && "border-gold-500/40 bg-gold-500/10 text-gold-400",
-              badgeTone === "emerald" && "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-              badgeTone === "sky" && "border-sky-400/30 bg-sky-400/10 text-sky-300",
+              badgeTone === "gold" && "border-gold-600/40 bg-gold-500/10 text-gold-700",
+              badgeTone === "emerald" && "border-leaf-300 bg-leaf-50 text-leaf-700",
+              badgeTone === "sky" && "border-sky-300 bg-sky-50 text-sky-700",
             )}
           >
             {badge}
           </span>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 py-2.5 lg:flex-col lg:overflow-visible lg:py-4">
-          <p className="hidden px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 lg:block">
+          <p className="hidden px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 lg:block">
             Workspace
           </p>
           <NavLinks items={nav} />
         </nav>
-        <div className="hidden border-t border-white/[0.07] p-4 lg:mt-auto lg:block">
+        <div className="hidden border-t border-black/[0.07] p-4 lg:mt-auto lg:block">
           <p className="truncate text-[11.5px] text-slate-500" title={userLine}>
             {userLine}
           </p>
@@ -48,11 +48,11 @@ export function WorkspaceShell({
               Log out
             </button>
           </form>
-          <p className="mt-3 font-mono text-[10px] text-slate-500">Build {APP_VERSION}</p>
+          <p className="mt-3 font-mono text-[10px] text-slate-400">Build {APP_VERSION}</p>
         </div>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex h-11 items-center justify-end gap-3 border-b border-white/[0.06] px-4 sm:px-6 lg:hidden">
+        <header className="flex h-11 items-center justify-end gap-3 border-b border-black/[0.06] px-4 sm:px-6 lg:hidden">
           <p className="truncate text-[11.5px] text-slate-500">{userLine}</p>
           <form action={logout}>
             <button type="submit" className="btn btn-ghost btn-sm">

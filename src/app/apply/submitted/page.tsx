@@ -39,7 +39,7 @@ export default async function ApplySubmittedPage({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Reference
               </p>
-              <p className="mt-1 font-mono text-xl text-emerald-400">{ref}</p>
+              <p className="mt-1 font-mono text-xl text-leaf-700">{ref}</p>
             </div>
             <Link href="/partner" className="btn btn-gold btn-sm">
               Open partner workspace
@@ -48,15 +48,15 @@ export default async function ApplySubmittedPage({
         ) : null}
 
         <div className="card p-6 sm:p-7">
-          <p className="eyebrow mb-5 text-emerald-400">Review process</p>
+          <p className="eyebrow mb-5 text-leaf-600">Review process</p>
           <ol className="space-y-5">
             {REVIEW_STEPS.map((s, i) => (
               <li key={s.t} className="flex gap-4">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/10 font-mono text-xs text-emerald-300">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-leaf-400/40 bg-leaf-400/10 font-mono text-xs text-leaf-700">
                   {i + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-50">{s.t}</p>
+                  <p className="text-sm font-semibold text-slate-900">{s.t}</p>
                   <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{s.d}</p>
                 </div>
               </li>
@@ -66,7 +66,7 @@ export default async function ApplySubmittedPage({
 
         <p className="text-xs leading-relaxed text-slate-400">
           Have documents ready? Send them to{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold-400 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-gold-600 hover:underline">
             {CONTACT_EMAIL}
           </a>{" "}
           quoting your reference to speed up verification.

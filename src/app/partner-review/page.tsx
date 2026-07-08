@@ -44,11 +44,11 @@ export default function PartnerReviewPage() {
       <div className="not-prose mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2">
         {CRITERIA.map((c) => (
           <div key={c.title} className="flex gap-3">
-            <span className="mt-0.5 flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-md border border-emerald-400/40 bg-emerald-400/10 text-[10px] text-emerald-300">
+            <span className="mt-0.5 flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[10px] text-leaf-600">
               ✓
             </span>
             <div>
-              <p className="text-[13px] font-semibold text-slate-50">{c.title}</p>
+              <p className="text-[13px] font-semibold text-slate-900">{c.title}</p>
               <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">{c.text}</p>
             </div>
           </div>
@@ -59,8 +59,8 @@ export default function PartnerReviewPage() {
       <ul className="!mt-4 space-y-3">
         {STAGES.map((x) => (
           <li key={x.s} className="!flex-col !gap-0.5 before:hidden">
-            <p className="text-[13px] font-semibold text-slate-50">{x.s}</p>
-            <p className="text-[13px] leading-relaxed text-slate-400">{x.d}</p>
+            <p className="text-[13px] font-semibold text-slate-900">{x.s}</p>
+            <p className="text-[13px] leading-relaxed text-slate-600">{x.d}</p>
           </li>
         ))}
       </ul>
