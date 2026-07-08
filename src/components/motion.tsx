@@ -18,7 +18,7 @@ export function Reveal({
   children: React.ReactNode;
   index?: number;
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   threshold?: number;
 }) {
   const ref = useRef<HTMLElement | null>(null);
@@ -201,7 +201,6 @@ export function SlidingIndicator({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSelector, containerRef]);
 
   if (!rect) return null;
