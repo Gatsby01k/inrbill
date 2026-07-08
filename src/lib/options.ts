@@ -175,5 +175,11 @@ export const NOTE_VISIBILITIES = ["INTERNAL", "COMPANY", "PARTNER"] as const;
 
 export const CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "network@inrp2p.example";
+/** Direct line to the CEO — the primary "talk to us" Telegram contact. */
 export const CONTACT_TELEGRAM =
-  process.env.NEXT_PUBLIC_CONTACT_TELEGRAM ?? "inrp2p_network";
+  process.env.NEXT_PUBLIC_CONTACT_TELEGRAM ?? "INRP2P_CEO";
+/** Public announcements / updates channel. */
+export const CONTACT_TELEGRAM_CHANNEL =
+  process.env.NEXT_PUBLIC_CONTACT_TELEGRAM_CHANNEL ?? "INR_P2P_USDT";
+export const CONTACT_LINKEDIN =
+  process.env.NEXT_PUBLIC_CONTACT_LINKEDIN ?? "https://www.linkedin.com/company/inrp2p/";

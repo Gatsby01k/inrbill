@@ -5,7 +5,12 @@ import { Reveal } from "@/components/motion";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { CONTACT_EMAIL, CONTACT_TELEGRAM } from "@/lib/options";
+import {
+  CONTACT_EMAIL,
+  CONTACT_LINKEDIN,
+  CONTACT_TELEGRAM,
+  CONTACT_TELEGRAM_CHANNEL,
+} from "@/lib/options";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -104,7 +109,11 @@ const jsonLd = {
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
       email: CONTACT_EMAIL,
-      sameAs: [`https://t.me/${CONTACT_TELEGRAM}`],
+      sameAs: [
+        CONTACT_LINKEDIN,
+        `https://t.me/${CONTACT_TELEGRAM}`,
+        `https://t.me/${CONTACT_TELEGRAM_CHANNEL}`,
+      ],
       description: SITE_DESCRIPTION,
     },
     {
@@ -589,7 +598,23 @@ export default function LandingPage() {
                   rel="noreferrer"
                   className="btn btn-ghost px-5 py-3"
                 >
-                  Telegram · @{CONTACT_TELEGRAM}
+                  Telegram (CEO) · @{CONTACT_TELEGRAM}
+                </a>
+                <a
+                  href={`https://t.me/${CONTACT_TELEGRAM_CHANNEL}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-ghost px-5 py-3"
+                >
+                  Channel · @{CONTACT_TELEGRAM_CHANNEL}
+                </a>
+                <a
+                  href={CONTACT_LINKEDIN}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-ghost px-5 py-3"
+                >
+                  LinkedIn
                 </a>
               </div>
             </Reveal>

@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { BrandMark, Wordmark } from "@/components/brand";
-import { CONTACT_EMAIL, CONTACT_TELEGRAM } from "@/lib/options";
+import {
+  CONTACT_EMAIL,
+  CONTACT_LINKEDIN,
+  CONTACT_TELEGRAM,
+  CONTACT_TELEGRAM_CHANNEL,
+} from "@/lib/options";
 
 export function SiteFooter() {
   return (
@@ -77,7 +82,23 @@ export function SiteFooter() {
                   rel="noreferrer"
                   className="transition-colors hover:text-white"
                 >
-                  @{CONTACT_TELEGRAM}
+                  Telegram — CEO @{CONTACT_TELEGRAM}
+                </a>
+                <a
+                  href={`https://t.me/${CONTACT_TELEGRAM_CHANNEL}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
+                  Telegram channel @{CONTACT_TELEGRAM_CHANNEL}
+                </a>
+                <a
+                  href={CONTACT_LINKEDIN}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
+                  LinkedIn
                 </a>
               </div>
             </div>
