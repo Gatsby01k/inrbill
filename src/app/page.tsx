@@ -6,6 +6,7 @@ import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
 import {
   CONTACT_EMAIL,
   CONTACT_LINKEDIN,
@@ -21,13 +22,6 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
-
-const PIPELINE = [
-  { step: "Submitted", text: "Your requirement enters the queue with a reference number." },
-  { step: "In review", text: "A person reviews the request and your KYB position." },
-  { step: "Matching", text: "Verified partners are shortlisted against direction, volume, banks and speed." },
-  { step: "Introduced", text: "You are introduced directly. Terms are agreed between you and the partner." },
-];
 
 const FACTS = [
   { value: "24–48h", label: "First response on every request" },
@@ -182,39 +176,8 @@ export default function LandingPage() {
               </div>
             </Reveal>
 
-            <Reveal index={2} className="card overflow-hidden shadow-raised">
-              <div className="flex items-center gap-2.5 border-b border-black/[0.07] bg-black/[0.02] px-5 py-3.5">
-                <BrandMark size={18} />
-                <p className="text-[13px] font-semibold text-slate-800">How your request moves</p>
-              </div>
-              <div className="p-5">
-                <ol>
-                  {PIPELINE.map((p, i) => (
-                    <li key={p.step} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-gold-500/40 bg-gold-500/10 font-mono text-[11px] text-gold-700">
-                          {i + 1}
-                        </span>
-                        {i < PIPELINE.length - 1 ? (
-                          <span className="my-1 w-px flex-1 bg-black/[0.09]" />
-                        ) : null}
-                      </div>
-                      <div className={i < PIPELINE.length - 1 ? "pb-5" : ""}>
-                        <p className="text-[13px] font-semibold text-slate-900">{p.step}</p>
-                        <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-                          {p.text}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <div className="flex items-center gap-2.5 border-t border-leaf-500/25 bg-leaf-500/[0.06] px-5 py-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-leaf-500" />
-                <p className="text-[12px] leading-relaxed text-leaf-800">
-                  Settlement happens directly between you and the partner.
-                </p>
-              </div>
+            <Reveal index={2}>
+              <RequestPipelineCard />
             </Reveal>
           </div>
 
