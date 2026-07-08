@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/site/nav";
+import { BrandLockup } from "@/components/brand";
 
 export default function GlobalRouteError({
   error,
@@ -22,7 +22,7 @@ export default function GlobalRouteError({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
-      <Logo />
+      <BrandLockup />
       <div className="card max-w-sm p-7 text-center">
         <p className="font-mono text-xs text-rose-600">Error</p>
         <h1 className="mt-2 text-lg font-semibold text-slate-900">Something went wrong</h1>
