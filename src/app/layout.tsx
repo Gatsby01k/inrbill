@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, Newsreader } from "next/font/google";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
+import { GA_MEASUREMENT_ID, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -46,6 +47,23 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
+      {GA_MEASUREMENT_ID ? (
+        <head>
+          {/* Google tag (gtag.js) — every page, since this layout wraps the whole site. */}
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga-gtag-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}');
+            `}
+          </Script>
+        </head>
+      ) : null}
       <body className="min-h-screen">{children}</body>
     </html>
   );
