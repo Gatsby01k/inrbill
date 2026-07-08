@@ -7,15 +7,15 @@ import { cn, statusLabel } from "@/lib/format";
    Red = risk · Gray = structure                                */
 
 const TONE_CLASS = {
-  sky: { chip: "border-sky-200 bg-sky-50 text-sky-700", dot: "bg-sky-500" },
-  blue: { chip: "border-blue-200 bg-blue-50 text-blue-700", dot: "bg-blue-500" },
-  gold: { chip: "border-gold-500/35 bg-gold-500/[0.09] text-gold-700", dot: "bg-gold-500" },
+  sky: { chip: "border-sky-400/30 bg-sky-400/[0.1] text-sky-300", dot: "bg-sky-400" },
+  blue: { chip: "border-blue-400/30 bg-blue-400/[0.1] text-blue-300", dot: "bg-blue-400" },
+  gold: { chip: "border-gold-500/35 bg-gold-500/[0.12] text-gold-400", dot: "bg-gold-500" },
   emerald: {
-    chip: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    dot: "bg-emerald-500",
+    chip: "border-emerald-400/30 bg-emerald-400/[0.1] text-emerald-300",
+    dot: "bg-emerald-400",
   },
-  rose: { chip: "border-rose-200 bg-rose-50 text-rose-600", dot: "bg-rose-500" },
-  slate: { chip: "border-black/[0.09] bg-black/[0.03] text-slate-500", dot: "bg-slate-400" },
+  rose: { chip: "border-rose-400/30 bg-rose-400/[0.1] text-rose-300", dot: "bg-rose-400" },
+  slate: { chip: "border-white/[0.1] bg-white/[0.04] text-slate-400", dot: "bg-slate-400" },
 } as const;
 
 const STATUS_TONE: Record<string, keyof typeof TONE_CLASS> = {
@@ -82,8 +82,8 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">{title}</h1>
-        {sub ? <p className="mt-1 max-w-2xl text-[13px] text-slate-500">{sub}</p> : null}
+        <h1 className="text-lg font-semibold tracking-[-0.01em] text-slate-50">{title}</h1>
+        {sub ? <p className="mt-1 max-w-2xl text-[13px] text-slate-400">{sub}</p> : null}
       </div>
       {actions}
     </div>
@@ -104,6 +104,7 @@ export function SectionTitle({
       <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         {title}
       </h2>
+
       {action}
     </div>
   );
@@ -111,9 +112,9 @@ export function SectionTitle({
 
 export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-black/[0.07] bg-black/[0.015] px-6 py-10 text-center">
+    <div className="flex flex-col items-center rounded-lg border border-white/[0.06] bg-white/[0.02] px-6 py-10 text-center">
       <BrandMark size={26} className="opacity-50" />
-      <p className="mt-3 text-[13px] font-medium text-slate-700">{title}</p>
+      <p className="mt-3 text-[13px] font-medium text-slate-200">{title}</p>
       {body ? <p className="mt-1 max-w-sm text-xs leading-relaxed text-slate-500">{body}</p> : null}
     </div>
   );
@@ -131,16 +132,16 @@ export function Stat({
   tone?: "default" | "gold" | "emerald";
 }) {
   return (
-    <div className="card px-4 py-3 transition-colors hover:border-black/[0.16]">
+    <div className="card px-4 py-3 transition-colors hover:border-white/[0.14]">
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
         {label}
       </p>
       <p
         className={cn(
           "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
-          tone === "gold" && "text-gold-700",
-          tone === "emerald" && "text-emerald-600",
-          tone === "default" && "text-slate-900",
+          tone === "gold" && "text-gold-400",
+          tone === "emerald" && "text-emerald-400",
+          tone === "default" && "text-slate-50",
         )}
       >
         {value}
@@ -156,7 +157,7 @@ export function KV({ label, children }: { label: string; children: React.ReactNo
       <dt className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500">
         {label}
       </dt>
-      <dd className="mt-1 text-[13px] leading-snug text-slate-800">{children}</dd>
+      <dd className="mt-1 text-[13px] leading-snug text-slate-100">{children}</dd>
     </div>
   );
 }
@@ -165,7 +166,7 @@ export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-gold-700"
+      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-gold-400"
     >
       <span aria-hidden className="text-[13px] leading-none">
         ←
@@ -197,7 +198,7 @@ export function Field({
       {hint && !error ? (
         <span className="mt-1.5 block text-[11.5px] text-slate-500">{hint}</span>
       ) : null}
-      {error ? <span className="mt-1.5 block text-[11.5px] text-rose-600">{error}</span> : null}
+      {error ? <span className="mt-1.5 block text-[11.5px] text-rose-400">{error}</span> : null}
     </label>
   );
 }
@@ -226,7 +227,7 @@ export function CheckboxGrid({
       {items.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-black/[0.1] bg-white px-3 py-2 text-[13px] text-slate-700 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-gold-600/60 has-[:checked]:bg-gold-500/[0.07] has-[:checked]:text-slate-900"
+          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-white/[0.1] bg-white/[0.02] px-3 py-2 text-[13px] text-slate-300 transition-colors duration-150 hover:border-white/25 hover:bg-white/[0.05] has-[:checked]:border-gold-500/60 has-[:checked]:bg-gold-500/[0.1] has-[:checked]:text-slate-50"
         >
           <input
             type="checkbox"
@@ -256,7 +257,7 @@ export function RadioCards({
       {options.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-black/[0.1] bg-white px-3.5 py-3 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-gold-600/60 has-[:checked]:bg-gold-500/[0.07]"
+          className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-white/[0.1] bg-white/[0.02] px-3.5 py-3 transition-colors duration-150 hover:border-white/25 hover:bg-white/[0.05] has-[:checked]:border-gold-500/60 has-[:checked]:bg-gold-500/[0.1]"
         >
           <span className="flex items-center gap-2.5">
             <input
@@ -266,7 +267,7 @@ export function RadioCards({
               defaultChecked={defaultValue === o.value}
               className="h-3.5 w-3.5 accent-[#DD8114]"
             />
-            <span className="text-[13px] font-semibold text-slate-800">{o.label}</span>
+            <span className="text-[13px] font-semibold text-slate-100">{o.label}</span>
           </span>
           {o.hint ? <span className="ml-6 text-xs text-slate-500">{o.hint}</span> : null}
         </label>
@@ -286,8 +287,8 @@ export function FormSection({
 }) {
   return (
     <section className="card p-6 sm:p-7">
-      <div className="border-b border-black/[0.07] pb-4">
-        <h2 className="text-sm font-semibold tracking-[-0.01em] text-slate-900">{title}</h2>
+      <div className="border-b border-white/[0.07] pb-4">
+        <h2 className="text-sm font-semibold tracking-[-0.01em] text-slate-50">{title}</h2>
         {sub ? <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p> : null}
       </div>
       <div className="mt-5 space-y-5">{children}</div>
@@ -298,7 +299,7 @@ export function FormSection({
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-[13px] text-rose-700">
+    <div className="flex items-start gap-2.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-[13px] text-rose-300">
       <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
       {message}
     </div>

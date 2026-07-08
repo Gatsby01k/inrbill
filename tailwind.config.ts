@@ -52,10 +52,11 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(35,28,12,0.05), 0 12px 32px -20px rgba(35,28,12,0.16)",
+        card: "inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.3), 0 16px 40px -24px rgba(0,0,0,0.6)",
         raised:
-          "0 1px 3px rgba(35,28,12,0.07), 0 24px 64px -28px rgba(35,28,12,0.28)",
-        glow: "0 0 90px -18px rgba(238,161,47,0.5)",
+          "inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.35), 0 32px 72px -32px rgba(0,0,0,0.7)",
+        glow: "0 0 90px -18px rgba(238,161,47,0.45)",
+        frost: "0 0 70px -20px rgba(125,168,220,0.35)",
       },
       keyframes: {
         reveal: {

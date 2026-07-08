@@ -59,8 +59,8 @@ export default async function AdminPartnerDetailPage({
       <BackLink href="/admin/partners" label="All partners" />
 
       <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-sm text-emerald-700">{partner.reference}</span>
-        <h1 className="text-xl font-semibold text-slate-900">{partner.displayName}</h1>
+        <span className="font-mono text-sm text-emerald-400">{partner.reference}</span>
+        <h1 className="text-xl font-semibold text-slate-50">{partner.displayName}</h1>
         <StatusBadge status={partner.status} />
         <span className="text-xs text-slate-500">
           applied {fmtDate(partner.createdAt)}
@@ -100,7 +100,7 @@ export default async function AdminPartnerDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Directions</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {partner.directions.map((d) => (
-                    <span key={d} className="chip border-gold-500/30 bg-gold-500/[0.06] text-gold-700">
+                    <span key={d} className="chip border-gold-500/30 bg-gold-500/[0.06] text-gold-400">
                       {directionLabel(d)}
                     </span>
                   ))}
@@ -110,7 +110,7 @@ export default async function AdminPartnerDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Banks</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {partner.banks.map((b) => (
-                    <span key={b} className="chip border-black/10 bg-black/[0.03] text-slate-700">
+                    <span key={b} className="chip border-white/10 bg-white/[0.03] text-slate-300">
                       {b}
                     </span>
                   ))}
@@ -120,7 +120,7 @@ export default async function AdminPartnerDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Methods</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {partner.methods.map((m) => (
-                    <span key={m} className="chip border-black/10 bg-black/[0.03] text-slate-700">
+                    <span key={m} className="chip border-white/10 bg-white/[0.03] text-slate-300">
                       {m}
                     </span>
                   ))}
@@ -139,8 +139,8 @@ export default async function AdminPartnerDetailPage({
                     key={flag}
                     className={
                       has
-                        ? "flex items-center gap-2.5 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-2.5 text-sm text-emerald-800"
-                        : "flex items-center gap-2.5 rounded-lg border border-black/10 bg-black/[0.02] px-3 py-2.5 text-sm text-slate-500"
+                        ? "flex items-center gap-2.5 rounded-lg border border-emerald-400/25 bg-emerald-400/[0.06] px-3 py-2.5 text-sm text-emerald-300"
+                        : "flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 text-sm text-slate-500"
                     }
                   >
                     <span aria-hidden>{has ? "✓" : "—"}</span>
@@ -150,20 +150,20 @@ export default async function AdminPartnerDetailPage({
               })}
             </ul>
             {partner.complianceNotes ? (
-              <p className="mt-4 whitespace-pre-wrap rounded-lg bg-black/[0.03] px-4 py-3 text-sm text-slate-600">
+              <p className="mt-4 whitespace-pre-wrap rounded-lg bg-white/[0.03] px-4 py-3 text-sm text-slate-400">
                 {partner.complianceNotes}
               </p>
             ) : null}
             {partner.references ? (
               <div className="mt-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">References</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{partner.references}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{partner.references}</p>
               </div>
             ) : null}
             {partner.riskNotes ? (
               <div className="mt-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-500">Risk notes</p>
-                <p className="mt-1 whitespace-pre-wrap rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <p className="mt-1 whitespace-pre-wrap rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
                   {partner.riskNotes}
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default async function AdminPartnerDetailPage({
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Additional comments
                 </p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">
                   {partner.additionalComments}
                 </p>
               </div>
@@ -200,12 +200,12 @@ export default async function AdminPartnerDetailPage({
                         <td>
                           <Link
                             href={`/admin/requests/${m.requestId}`}
-                            className="font-mono text-xs text-gold-700 hover:underline"
+                            className="font-mono text-xs text-gold-400 hover:underline"
                           >
                             {m.request.reference}
                           </Link>
                         </td>
-                        <td className="font-medium text-slate-800">
+                        <td className="font-medium text-slate-100">
                           {m.request.company.companyName}
                         </td>
                         <td className="text-xs">{directionLabel(m.request.direction)}</td>
@@ -282,7 +282,7 @@ export default async function AdminPartnerDetailPage({
             <dl className="space-y-3">
               <KV label="Contact">{partner.contactName}</KV>
               <KV label="Email">
-                <a href={`mailto:${partner.user.email}`} className="text-gold-600 hover:underline">
+                <a href={`mailto:${partner.user.email}`} className="text-gold-400 hover:underline">
                   {partner.user.email}
                 </a>
               </KV>

@@ -158,11 +158,11 @@ export default async function AdminDashboard() {
                   <li key={intro.id} className="flex items-center justify-between gap-3 text-[13px]">
                     <Link
                       href={`/admin/requests/${intro.match.requestId}`}
-                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                      className="min-w-0 truncate text-slate-300 hover:text-gold-300"
                     >
                       {intro.match.request.company.companyName} ↔ {intro.match.partner.displayName}
                     </Link>
-                    <span className="shrink-0 text-xs text-gold-700">
+                    <span className="shrink-0 text-xs text-gold-400">
                       {intro.followUpDate ? fmtDate(intro.followUpDate) : ""}
                     </span>
                   </li>
@@ -178,7 +178,7 @@ export default async function AdminDashboard() {
                   <li key={r.id} className="flex items-center justify-between gap-3 text-[13px]">
                     <Link
                       href={`/admin/requests/${r.id}`}
-                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                      className="min-w-0 truncate text-slate-300 hover:text-gold-300"
                     >
                       {r.reference} — {r.company.companyName}
                     </Link>
@@ -189,11 +189,11 @@ export default async function AdminDashboard() {
                   <li key={p.id} className="flex items-center justify-between gap-3 text-[13px]">
                     <Link
                       href={`/admin/partners/${p.id}`}
-                      className="min-w-0 truncate text-slate-700 hover:text-gold-700"
+                      className="min-w-0 truncate text-slate-300 hover:text-gold-300"
                     >
                       {p.reference} — {p.displayName}
                     </Link>
-                    <span className="shrink-0 text-xs text-rose-600">Risk notes on file</span>
+                    <span className="shrink-0 text-xs text-rose-400">Risk notes on file</span>
                   </li>
                 ))}
               </ul>
@@ -204,12 +204,12 @@ export default async function AdminDashboard() {
 
       <SectionTitle title={`Requests · ${totalRequests}`} />
       <div className="card overflow-hidden">
-        <div className="grid grid-cols-2 gap-px bg-black/[0.06] sm:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-px bg-white/[0.06] sm:grid-cols-3 xl:grid-cols-6">
           {REQUEST_STATUSES.map((s) => (
             <Link
               key={s}
               href={`/admin/requests?status=${s}`}
-              className="bg-white px-4 py-3.5 transition-colors hover:bg-[#FAF6EC]"
+              className="bg-night-850 px-4 py-3.5 transition-colors hover:bg-white/[0.04]"
             >
               <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
                 {statusLabel(s)}
@@ -218,10 +218,10 @@ export default async function AdminDashboard() {
                 className={cn(
                   "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
                   s === "INTRODUCED"
-                    ? "text-gold-700"
+                    ? "text-gold-400"
                     : s === "CLOSED"
-                      ? "text-emerald-700"
-                      : "text-slate-900",
+                      ? "text-emerald-400"
+                      : "text-slate-50",
                 )}
               >
                 {countOf(reqGroups, s)}
@@ -233,12 +233,12 @@ export default async function AdminDashboard() {
 
       <SectionTitle title={`Partners · ${totalPartners}`} className="mt-8" />
       <div className="card overflow-hidden">
-        <div className="grid grid-cols-2 gap-px bg-black/[0.06] sm:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-px bg-white/[0.06] sm:grid-cols-3 xl:grid-cols-6">
           {PARTNER_STATUSES.map((s) => (
             <Link
               key={s}
               href={`/admin/partners?status=${s}`}
-              className="bg-white px-4 py-3.5 transition-colors hover:bg-[#FAF6EC]"
+              className="bg-night-850 px-4 py-3.5 transition-colors hover:bg-white/[0.04]"
             >
               <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
                 {statusLabel(s)}
@@ -246,7 +246,7 @@ export default async function AdminDashboard() {
               <p
                 className={cn(
                   "tnum mt-1.5 text-[22px] font-semibold leading-none tracking-[-0.01em]",
-                  s === "VERIFIED" ? "text-emerald-700" : "text-slate-900",
+                  s === "VERIFIED" ? "text-emerald-400" : "text-slate-50",
                 )}
               >
                 {countOf(ptrGroups, s)}
@@ -263,7 +263,7 @@ export default async function AdminDashboard() {
             {MATCH_STATUSES.map((s) => (
               <div key={s} className="flex items-center justify-between">
                 <StatusBadge status={s} />
-                <span className="text-sm font-semibold tabular-nums text-slate-800">
+                <span className="text-sm font-semibold tabular-nums text-slate-100">
                   {countOf(matchGroups, s)}
                 </span>
               </div>
@@ -276,7 +276,7 @@ export default async function AdminDashboard() {
             {INTRODUCTION_STATUSES.map((s) => (
               <div key={s} className="flex items-center justify-between">
                 <StatusBadge status={s} />
-                <span className="text-sm font-semibold tabular-nums text-slate-800">
+                <span className="text-sm font-semibold tabular-nums text-slate-100">
                   {countOf(introGroups, s)}
                 </span>
               </div>
@@ -287,7 +287,7 @@ export default async function AdminDashboard() {
           <SectionTitle
             title="Revenue"
             action={
-              <Link href="/admin/revenue" className="text-xs font-medium text-gold-600 hover:underline">
+              <Link href="/admin/revenue" className="text-xs font-medium text-gold-400 hover:underline">
                 Open ledger →
               </Link>
             }
@@ -296,7 +296,7 @@ export default async function AdminDashboard() {
             {revenueLines.map((line) => (
               <div key={line.status} className="flex items-start justify-between gap-3">
                 <StatusBadge status={line.status} />
-                <span className="text-right text-sm font-semibold tabular-nums text-slate-800">
+                <span className="text-right text-sm font-semibold tabular-nums text-slate-100">
                   {line.parts.length ? line.parts.join(" + ") : "—"}
                 </span>
               </div>
@@ -310,7 +310,7 @@ export default async function AdminDashboard() {
           <SectionTitle
             title="Latest requests"
             action={
-              <Link href="/admin/requests" className="text-xs font-medium text-gold-600 hover:underline">
+              <Link href="/admin/requests" className="text-xs font-medium text-gold-400 hover:underline">
                 View all →
               </Link>
             }
@@ -333,12 +333,12 @@ export default async function AdminDashboard() {
                       <td>
                         <Link
                           href={`/admin/requests/${r.id}`}
-                          className="font-mono text-xs text-gold-700 hover:underline"
+                          className="font-mono text-xs text-gold-400 hover:underline"
                         >
                           {r.reference}
                         </Link>
                       </td>
-                      <td className="font-medium text-slate-800">{r.company.companyName}</td>
+                      <td className="font-medium text-slate-100">{r.company.companyName}</td>
                       <td>{directionLabel(r.direction)}</td>
                       <td>
                         <StatusBadge status={r.status} />
@@ -363,7 +363,7 @@ export default async function AdminDashboard() {
           <SectionTitle
             title="Latest partner applications"
             action={
-              <Link href="/admin/partners" className="text-xs font-medium text-gold-600 hover:underline">
+              <Link href="/admin/partners" className="text-xs font-medium text-gold-400 hover:underline">
                 View all →
               </Link>
             }
@@ -386,12 +386,12 @@ export default async function AdminDashboard() {
                       <td>
                         <Link
                           href={`/admin/partners/${p.id}`}
-                          className="font-mono text-xs text-emerald-700 hover:underline"
+                          className="font-mono text-xs text-emerald-400 hover:underline"
                         >
                           {p.reference}
                         </Link>
                       </td>
-                      <td className="font-medium text-slate-800">{p.displayName}</td>
+                      <td className="font-medium text-slate-100">{p.displayName}</td>
                       <td className="text-xs">{p.dailyCapacityBand}</td>
                       <td>
                         <StatusBadge status={p.status} />
@@ -417,7 +417,7 @@ export default async function AdminDashboard() {
         <SectionTitle
           title="Recent activity"
           action={
-            <Link href="/admin/audit" className="text-xs font-medium text-gold-600 hover:underline">
+            <Link href="/admin/audit" className="text-xs font-medium text-gold-400 hover:underline">
               Full audit log →
             </Link>
           }

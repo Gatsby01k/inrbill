@@ -85,18 +85,18 @@ export default async function AdminRevenuePage({
                     <td>
                       <Link
                         href={`/admin/requests/${r.requestId}`}
-                        className="font-mono text-xs text-gold-700 hover:underline"
+                        className="font-mono text-xs text-gold-400 hover:underline"
                       >
                         {r.request.reference}
                       </Link>
                     </td>
-                    <td className="font-medium text-slate-800">{r.request.company.companyName}</td>
+                    <td className="font-medium text-slate-100">{r.request.company.companyName}</td>
                     <td className="text-xs">{r.match ? r.match.partner.displayName : "—"}</td>
                     <td className="text-xs">{revenueTypeLabel(r.type)}</td>
                     <td className="max-w-40 text-xs">
                       {r.payerName ? `${r.payerType ? `${r.payerType} · ` : ""}${r.payerName}` : "—"}
                     </td>
-                    <td className="whitespace-nowrap font-semibold tabular-nums text-slate-900">
+                    <td className="whitespace-nowrap font-semibold tabular-nums text-slate-50">
                       {money(r.amount.toString(), r.currency)}
                     </td>
                     <td className="max-w-56 text-xs">{r.basis ?? "—"}</td>

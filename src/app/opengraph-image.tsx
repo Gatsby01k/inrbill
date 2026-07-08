@@ -15,9 +15,9 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#FAF7F1",
+          backgroundColor: "#070C16",
           backgroundImage:
-            "radial-gradient(800px 400px at 85% -10%, rgba(238,161,47,0.18), transparent 65%)",
+            "radial-gradient(800px 400px at 85% -10%, rgba(238,161,47,0.22), transparent 65%)",
           fontFamily: "sans-serif",
         }}
       >
@@ -38,9 +38,9 @@ export default function OpengraphImage() {
               <circle cx="32" cy="32" r="12.8" />
             </g>
             {/* inner ring detail instead of a text glyph — satori does not support <text> */}
-            <circle cx="32" cy="32" r="6.5" fill="none" stroke="#FAF7F1" strokeWidth="3" />
+            <circle cx="32" cy="32" r="6.5" fill="none" stroke="#070C16" strokeWidth="3" />
           </svg>
-          <div style={{ display: "flex", fontSize: 56, fontWeight: 700, color: "#171B21" }}>
+          <div style={{ display: "flex", fontSize: 56, fontWeight: 700, color: "#F8FAFC" }}>
             INR
             <span style={{ color: "#DD8114" }}>P2P</span>
           </div>
@@ -51,13 +51,13 @@ export default function OpengraphImage() {
             fontSize: 64,
             fontWeight: 700,
             lineHeight: 1.1,
-            color: "#171B21",
+            color: "#F8FAFC",
             maxWidth: 900,
           }}
         >
           Reviewed INR liquidity partners. Qualified introductions.
         </div>
-        <div style={{ marginTop: 28, fontSize: 28, color: "#5B6472", maxWidth: 860 }}>
+        <div style={{ marginTop: 28, fontSize: 28, color: "#94A3B8", maxWidth: 860 }}>
           INR → USDT · USDT → INR · INR payouts. Manual review. No custody, ever.
         </div>
         <div

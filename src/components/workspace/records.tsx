@@ -36,7 +36,7 @@ function Meta({
     <p className="mt-2 text-[11px] text-slate-400">
       {author} · {fmtDateTime(when)}
       {showVisibility ? (
-        <span className="ml-2 rounded border border-black/[0.09] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+        <span className="ml-2 rounded border border-white/[0.08] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
           {VIS_LABEL[visibility] ?? visibility}
         </span>
       ) : null}
@@ -61,8 +61,8 @@ export function NoteList({
   return (
     <ul className="space-y-3">
       {notes.map((n) => (
-        <li key={n.id} className="rounded-lg border border-black/[0.08] bg-[#FCFAF5] px-4 py-3">
-          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-slate-700">{n.body}</p>
+        <li key={n.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-slate-300">{n.body}</p>
           <Meta
             author={n.authorLabel}
             when={n.createdAt}
@@ -132,14 +132,14 @@ export function DocumentList({
   return (
     <ul className="space-y-3">
       {documents.map((d) => (
-        <li key={d.id} className="rounded-lg border border-black/[0.08] bg-[#FCFAF5] px-4 py-3">
-          <p className="text-[13px] font-medium text-slate-800">{d.title}</p>
+        <li key={d.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <p className="text-[13px] font-medium text-slate-100">{d.title}</p>
           {d.url ? (
             <a
               href={d.url}
               target="_blank"
               rel="noreferrer"
-              className="mt-0.5 block break-all text-xs text-gold-700 hover:underline"
+              className="mt-0.5 block break-all text-xs text-gold-400 hover:underline"
             >
               {d.url}
             </a>

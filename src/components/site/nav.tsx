@@ -12,17 +12,17 @@ export async function SiteNav() {
     <header className="glass-nav fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo />
-        <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-500 md:flex">
-          <Link href="/#how-it-works" className="transition-colors hover:text-slate-900">
+        <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-400 md:flex">
+          <Link href="/#how-it-works" className="transition-colors hover:text-white">
             How it works
           </Link>
-          <Link href="/#standards" className="transition-colors hover:text-slate-900">
+          <Link href="/#standards" className="transition-colors hover:text-white">
             Network standards
           </Link>
-          <Link href="/#no-custody" className="transition-colors hover:text-slate-900">
+          <Link href="/#no-custody" className="transition-colors hover:text-white">
             No custody
           </Link>
-          <Link href="/#contact" className="transition-colors hover:text-slate-900">
+          <Link href="/#contact" className="transition-colors hover:text-white">
             Contact
           </Link>
         </nav>
@@ -34,7 +34,7 @@ export async function SiteNav() {
           ) : (
             <Link
               href="/login"
-              className="text-[13px] font-medium text-slate-500 transition-colors hover:text-slate-900"
+              className="text-[13px] font-medium text-slate-400 transition-colors hover:text-white"
             >
               Log in
             </Link>

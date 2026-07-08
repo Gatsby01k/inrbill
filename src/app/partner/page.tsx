@@ -93,7 +93,7 @@ export default async function PartnerOverviewPage({
             <span className="text-xs text-slate-500">verified {fmtDate(partner.verifiedAt)}</span>
           ) : null}
         </div>
-        <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-slate-600">
+        <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-slate-400">
           {STATUS_EXPLAINER[partner.status]}
         </p>
       </div>
@@ -108,8 +108,8 @@ export default async function PartnerOverviewPage({
                 {partner.matches.map((m) => (
                   <div key={m.id} className="rounded-xl border border-gold-500/20 bg-gold-500/[0.03] p-4">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <span className="font-mono text-xs text-gold-700">{m.request.reference}</span>
-                      <p className="text-sm font-semibold text-slate-900">
+                      <span className="font-mono text-xs text-gold-400">{m.request.reference}</span>
+                      <p className="text-sm font-semibold text-slate-50">
                         {directionLabel(m.request.direction)}
                       </p>
                       <StatusBadge status={m.status} />
@@ -124,7 +124,7 @@ export default async function PartnerOverviewPage({
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {[...m.request.banks, ...m.request.methods].map((x) => (
-                        <span key={x} className="chip border-black/10 bg-black/[0.03] text-slate-700">
+                        <span key={x} className="chip border-white/10 bg-white/[0.03] text-slate-300">
                           {x}
                         </span>
                       ))}
@@ -206,11 +206,11 @@ export default async function PartnerOverviewPage({
               you — there is no public order book. Verification is not a guarantee of
               volume, and INRP2P does not endorse or guarantee any company or partner.
               Full detail:{" "}
-              <Link href="/partner-review" className="text-gold-600 hover:underline">
+              <Link href="/partner-review" className="text-gold-400 hover:underline">
                 Partner review
               </Link>{" "}
               ·{" "}
-              <Link href="/disclaimer" className="text-gold-600 hover:underline">
+              <Link href="/disclaimer" className="text-gold-400 hover:underline">
                 Disclaimer
               </Link>
               .

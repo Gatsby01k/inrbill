@@ -151,14 +151,14 @@ function readSnap(fd: FormData): Snap {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-black/[0.05] py-2 last:border-b-0">
+    <div className="flex items-baseline justify-between gap-4 border-b border-white/[0.05] py-2 last:border-b-0">
       <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500">
         {label}
       </span>
       <span
         className={cn(
           "text-right text-[12.5px]",
-          value ? "font-medium text-slate-800" : "text-slate-400",
+          value ? "font-medium text-slate-100" : "text-slate-400",
         )}
       >
         {value || "—"}
@@ -323,7 +323,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
         />
 
         {/* Progress */}
-        <div className="border-b border-black/[0.07] bg-black/[0.015] px-6 py-4 sm:px-7">
+        <div className="border-b border-white/[0.07] bg-white/[0.015] px-6 py-4 sm:px-7">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
               Step {step + 1} of {labels.length}
@@ -335,7 +335,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
               <p className="text-[11px] text-slate-400">Submitting as {loggedInCompany}</p>
             ) : null}
           </div>
-          <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-black/[0.06]">
+          <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
             <div
               className="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-600 transition-all duration-300"
               style={{ width: `${((step + 1) / labels.length) * 100}%` }}
@@ -350,8 +350,8 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                 disabled={i > step}
                 className={cn(
                   "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
-                  i === step && "bg-gold-500/10 text-gold-700",
-                  i < step && "text-slate-500 hover:bg-black/[0.04] hover:text-slate-800",
+                  i === step && "bg-gold-500/10 text-gold-400",
+                  i < step && "text-slate-500 hover:bg-white/[0.04] hover:text-slate-100",
                   i > step && "cursor-default text-slate-300",
                 )}
               >
@@ -535,8 +535,8 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                   />
                 </Field>
               </div>
-              <div className="rounded-lg border border-black/[0.07] bg-black/[0.015] p-4">
-                <p className="text-xs font-semibold text-slate-700">Workspace access</p>
+              <div className="rounded-lg border border-white/[0.07] bg-white/[0.015] p-4">
+                <p className="text-xs font-semibold text-slate-300">Workspace access</p>
                 <p className="mt-0.5 text-[11.5px] text-slate-500">
                   Creates your company workspace to track status and introductions.
                 </p>
@@ -567,7 +567,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
           <FormError message={state.error} />
 
           {/* Navigation */}
-          <div className="flex items-center justify-between gap-4 border-t border-black/[0.07] pt-5">
+          <div className="flex items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
             <div className="flex items-center gap-3">
               {step > 0 ? (
                 <button type="button" onClick={() => goTo(step - 1)} className="btn btn-ghost">
@@ -624,7 +624,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
           </div>
         </div>
         <div className="mt-4 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
-          <p className="text-[12px] leading-relaxed text-emerald-800">
+          <p className="text-[12px] leading-relaxed text-emerald-300">
             A person reviews every request. First response within 24–48 hours.
           </p>
         </div>

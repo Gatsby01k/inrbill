@@ -20,10 +20,10 @@ export function FormShell({
       <main className="hero-aurora flex-1 pb-24 pt-32">
         <div className={wide ? "mx-auto max-w-5xl px-4 sm:px-6" : "mx-auto max-w-3xl px-4 sm:px-6"}>
           <p className="eyebrow">{eyebrow}</p>
-          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-900 sm:text-[2.5rem]">
+          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-50 sm:text-[2.5rem]">
             {title}
           </h1>
-          <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-slate-500">
+          <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-slate-400">
             {sub}
           </p>
           <div className="mt-10">{children}</div>
