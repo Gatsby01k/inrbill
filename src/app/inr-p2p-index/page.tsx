@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { Direction } from "@prisma/client";
 import { Reveal } from "@/components/motion";
 import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
+import { EmbedBadgeSection } from "@/components/site/embed-badge-section";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteNav } from "@/components/site/nav";
 import { EmptyState, Stat } from "@/components/ui";
-import { db } from "@/lib/db";
+import { getLiquidityIndexSnapshot } from "@/lib/liquidity-index";
 import { BANK_OPTIONS, DIRECTION_OPTIONS, METHOD_OPTIONS } from "@/lib/options";
 import { SITE_URL } from "@/lib/site";
 
@@ -37,30 +37,15 @@ const INDEX_FAQ = [
 ];
 
 export default async function LiquidityIndexPage() {
-  const partners = await db.partnerProfile.findMany({
-    where: { status: { in: ["VERIFIED", "LIMITED"] } },
-    select: { directions: true, banks: true, methods: true, status: true },
-  });
-
-  const total = partners.length;
-  const verified = partners.filter((p) => p.status === "VERIFIED").length;
-
-  const corridors = DIRECTION_OPTIONS.map((d) => {
-    const value = d.value as Direction;
-    const inCorridor = partners.filter((p) => p.directions.includes(value));
-    const banks = Array.from(new Set(inCorridor.flatMap((p) => p.banks))).filter((b) =>
-      (BANK_OPTIONS as readonly string[]).includes(b),
-    );
-    const methods = Array.from(new Set(inCorridor.flatMap((p) => p.methods))).filter((m) =>
-      (METHOD_OPTIONS as readonly string[]).includes(m),
-    );
-    return { label: d.label, count: inCorridor.length, banks, methods };
-  });
-
-  const corridorsCovered = corridors.filter((c) => c.count > 0).length;
-  const banksCovered = new Set(partners.flatMap((p) => p.banks)).size;
-  const methodsCovered = new Set(partners.flatMap((p) => p.methods)).size;
-  const updatedOn = new Date().toISOString().slice(0, 10);
+  const {
+    total,
+    verified,
+    corridors,
+    corridorsCovered,
+    banksCovered,
+    methodsCovered,
+    updatedOn,
+  } = await getLiquidityIndexSnapshot();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -211,7 +196,11 @@ export default async function LiquidityIndexPage() {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-wrap items-center gap-3">
+          <div className="mt-12">
+            <EmbedBadgeSection />
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/request" className="btn btn-gold px-5 py-3">
               Submit a request
             </Link>
