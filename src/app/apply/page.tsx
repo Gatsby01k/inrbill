@@ -9,13 +9,23 @@ export const metadata: Metadata = {
   alternates: { canonical: "/apply" },
 };
 
+const TRUST_CHIPS = ["~4 minutes", "No fee to apply", "Reviewed by a person", "Private until introduced"];
+
 export default function ApplyPage() {
   return (
     <FormShell
       eyebrow="Partner application"
       title="Apply to join the network."
-      sub="INRP2P routes qualified corporate demand to reviewed liquidity partners. Declare your real coverage and capacity — verification is manual, and only verified partners receive introductions."
+      sub="We route screened corporate demand to reviewed liquidity partners — no public listing, no cold inbound. Tell us exactly what you run: corridors, banks, capacity, hours. Verification is manual, and your identity stays private until an introduction is made."
+      wide
     >
+      <div className="mb-8 flex flex-wrap gap-2">
+        {TRUST_CHIPS.map((c) => (
+          <span key={c} className="chip border-leaf-400/40 bg-leaf-50 text-leaf-700">
+            {c}
+          </span>
+        ))}
+      </div>
       <ApplyForm />
     </FormShell>
   );
