@@ -52,7 +52,7 @@ export default function DisclaimerPage() {
         not verified in real time. INRP2P does not guarantee that a partner can fulfil a given
         volume at a given moment, that terms will be agreeable to both sides, or that any
         transaction introduced through the network will complete. Market conditions, banking
-        restrictions, compliance holds and counterparty decisions are outside INRP2P's control.
+        restrictions, compliance holds and counterparty decisions are outside INRP2P&apos;s control.
       </p>
 
       <h2>No guarantee of introduction</h2>
@@ -78,9 +78,9 @@ export default function DisclaimerPage() {
         Each party introduced through the network is solely responsible for its own licensing,
         registration, KYC/KYB, anti-money-laundering controls, tax treatment, sanctions
         screening and any other legal or regulatory obligation that applies to it in every
-        jurisdiction in which it operates. INRP2P's review process is a network-quality filter,
-        not a substitute for either party's own due diligence, and verification of a partner is
-        not a certification, endorsement or warranty by INRP2P of that partner's compliance,
+        jurisdiction in which it operates. INRP2P&apos;s review process is a network-quality filter,
+        not a substitute for either party&apos;s own due diligence, and verification of a partner is
+        not a certification, endorsement or warranty by INRP2P of that partner&apos;s compliance,
         solvency or conduct.
       </p>
 

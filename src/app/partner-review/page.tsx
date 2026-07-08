@@ -66,16 +66,16 @@ export default function PartnerReviewPage() {
       </ul>
       <p>
         Verified partners are subject to ongoing monitoring — capacity, coverage and compliance
-        changes are reviewed, and status can move at any time, including back to "Under review"
-        or to "Suspended".
+        changes are reviewed, and status can move at any time, including back to &quot;Under review&quot;
+        or to &quot;Suspended&quot;.
       </p>
 
       <h2>What verification does not mean</h2>
       <ul>
         <li>It is not a certification, license, or regulatory endorsement of the partner.</li>
-        <li>It is not a guarantee of the partner's solvency, capacity at any given moment, or conduct.</li>
+        <li>It is not a guarantee of the partner&apos;s solvency, capacity at any given moment, or conduct.</li>
         <li>It does not make INRP2P a guarantor, agent or counterparty to any transaction the partner enters into.</li>
-        <li>It does not replace a company's own due diligence before transacting.</li>
+        <li>It does not replace a company&apos;s own due diligence before transacting.</li>
       </ul>
       <p>
         Full detail on these limits is in the <Link href="/disclaimer">Disclaimer</Link>.

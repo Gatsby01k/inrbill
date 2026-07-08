@@ -18,7 +18,7 @@ export default function TermsPage() {
       updated="8 July 2026"
     >
       <p>
-        These terms govern access to and use of INRP2P (the "network", "service"). By
+        These terms govern access to and use of INRP2P (the &quot;network&quot;, &quot;service&quot;). By
         submitting a company request, a partner application, or otherwise using any part of
         the site or workspaces, you agree to these terms on behalf of yourself and the entity
         you represent. If you do not agree, do not use the service.
@@ -52,7 +52,7 @@ export default function TermsPage() {
       <p>
         Every request and application is subject to manual review. INRP2P may accept, decline,
         pause, request more information about, or discontinue review of any submission at its
-        discretion. Reaching "Verified" partner status or "In Review" request status is not a
+        discretion. Reaching &quot;Verified&quot; partner status or &quot;In Review&quot; request status is not a
         promise of a match; a match is not a promise of an introduction; an introduction is not
         a promise of a completed transaction.
       </p>
@@ -101,7 +101,7 @@ export default function TermsPage() {
 
       <h2>9. Disclaimers of warranties</h2>
       <p>
-        The service is provided "as is" and "as available". To the fullest extent permitted by
+        The service is provided &quot;as is&quot; and &quot;as available&quot;. To the fullest extent permitted by
         law, INRP2P disclaims all warranties, express or implied, including fitness for a
         particular purpose, accuracy of partner or company representations, and uninterrupted
         or error-free operation.
@@ -109,7 +109,7 @@ export default function TermsPage() {
 
       <h2>10. Limitation of liability</h2>
       <p>
-        To the fullest extent permitted by law, INRP2P's aggregate liability arising from or
+        To the fullest extent permitted by law, INRP2P&apos;s aggregate liability arising from or
         relating to the service or these terms is limited to the fees you have paid INRP2P in
         the twelve months preceding the claim, and INRP2P is not liable for indirect,
         consequential, special or punitive damages, or for any loss arising from a transaction
@@ -140,7 +140,7 @@ export default function TermsPage() {
       <h2>14. Changes to these terms</h2>
       <p>
         We may update these terms as the service evolves. Material changes will be reflected by
-        an updated "last updated" date on this page; continued use after a change constitutes
+        an updated &quot;last updated&quot; date on this page; continued use after a change constitutes
         acceptance.
       </p>
 

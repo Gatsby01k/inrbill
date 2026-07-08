@@ -75,17 +75,17 @@ export default function HowItWorksPage() {
         ))}
       </ul>
 
-      <h2>What "manual review" means in practice</h2>
+      <h2>What &quot;manual review&quot; means in practice</h2>
       <p>
         Every request and every partner application is read and assessed by a person on network
         operations — never approved automatically, and never accepted purely on payment of a
         fee. Review checks completeness of the submission, plausibility of the stated volume and
         capacity, and available compliance signals (entity registration, KYB documentation,
-        references). Requests or applications that don't clear this bar are declined or sent back
+        references). Requests or applications that don&apos;t clear this bar are declined or sent back
         for more information.
       </p>
 
-      <h2>What a "qualified introduction" is — and isn't</h2>
+      <h2>What a &quot;qualified introduction&quot; is — and isn&apos;t</h2>
       <p>
         A qualified introduction means an operator has reviewed both sides, judged them a
         reasonable fit on stated requirements, and connected them directly. It is a considered

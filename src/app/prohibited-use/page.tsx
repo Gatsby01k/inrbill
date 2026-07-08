@@ -71,7 +71,7 @@ export default function ProhibitedUsePage() {
 
       <p>
         This policy sits alongside the <Link href="/terms">Terms of Service</Link> and the{" "}
-        <Link href="/disclaimer">Disclaimer</Link>, and does not limit INRP2P's rights under
+        <Link href="/disclaimer">Disclaimer</Link>, and does not limit INRP2P&apos;s rights under
         either.
       </p>
     </LegalShell>

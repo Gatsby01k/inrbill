@@ -62,13 +62,13 @@ export default function PrivacyPage() {
       <h2>3. How information is shared</h2>
       <p>
         Request and partner details are visible internally to network operations only. A
-        specific company's request summary is shared with a specific partner — and vice versa —
+        specific company&apos;s request summary is shared with a specific partner — and vice versa —
         only once an admin explicitly releases that introduction. We may also share information:
       </p>
       <ul>
         <li>With service providers who host our infrastructure, under confidentiality obligations.</li>
         <li>Where required by law, regulation, legal process, or to protect the rights and safety of the network.</li>
-        <li>In connection with a merger, acquisition or asset transfer, with continuity of this policy's protections.</li>
+        <li>In connection with a merger, acquisition or asset transfer, with continuity of this policy&apos;s protections.</li>
       </ul>
 
       <h2>4. Data retention</h2>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
       <h2>10. Changes to this policy</h2>
       <p>
         We may update this policy as the service evolves. Material changes will be reflected by
-        an updated "last updated" date on this page.
+        an updated &quot;last updated&quot; date on this page.
       </p>
 
       <h2>11. Contact</h2>

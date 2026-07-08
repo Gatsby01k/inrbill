@@ -32,7 +32,7 @@ export default function FeesPage() {
         structure so there are no surprises.
       </p>
 
-      <h2>How we're compensated</h2>
+      <h2>How we&apos;re compensated</h2>
       <ul>
         {FEE_TYPES.map((f) => (
           <li key={f.t}>
