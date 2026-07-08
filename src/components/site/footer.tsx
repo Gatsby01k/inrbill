@@ -35,6 +35,9 @@ export function SiteFooter() {
                 <Link href="/apply" className="transition-colors hover:text-white">
                   Apply for Trader Review
                 </Link>
+                <Link href="/inr-p2p-index" className="transition-colors hover:text-white">
+                  Liquidity index
+                </Link>
                 <Link href="/how-it-works" className="transition-colors hover:text-white">
                   How it works
                 </Link>

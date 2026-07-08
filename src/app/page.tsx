@@ -73,6 +73,18 @@ const STANDARDS = [
 
 const FAQ = [
   {
+    q: "What is INR P2P trading?",
+    a: "INR P2P (peer-to-peer) trading is a direct exchange of Indian Rupees for an asset like USDT between two counterparties, without a public order book or exchange as the other side of the trade. INRP2P reviews and introduces the counterparties — it does not operate an order book, hold funds, or set the rate.",
+  },
+  {
+    q: "What is an INR liquidity partner?",
+    a: "An INR liquidity partner is a reviewed desk, payout operator or trading team that can move real volume in INR — via bank rails like IMPS, NEFT, RTGS or UPI — against USDT or as INR payouts, on a declared schedule and capacity. INRP2P verifies a partner's entity, banking coverage, capacity and compliance readiness before any introduction is made.",
+  },
+  {
+    q: "How do USDT to INR P2P payouts work in India?",
+    a: "A company submits its requirement — direction, volume, banks, required speed and jurisdiction — to INRP2P. After manual review, it is matched against verified partners whose declared coverage fits. Once introduced, the company and partner agree pricing and settlement directly and transact under their own arrangement; INRP2P is not a party to the transfer.",
+  },
+  {
     q: "Does INRP2P touch funds at any point?",
     a: "No. INRP2P never holds, transmits, converts or custodies funds, and is never a counterparty. We review, match and introduce. Settlement happens directly between the introduced parties under their own agreements.",
   },
@@ -101,9 +113,25 @@ const jsonLd = {
       "@type": "Organization",
       "@id": `${SITE_URL}/#org`,
       name: "INRP2P",
+      alternateName: "INR P2P",
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
       email: CONTACT_EMAIL,
+      areaServed: { "@type": "Country", name: "India" },
+      knowsAbout: [
+        "INR P2P trading",
+        "USDT to INR liquidity",
+        "INR to USDT liquidity",
+        "INR payouts",
+        "P2P India",
+        "OTC INR liquidity",
+      ],
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: CONTACT_EMAIL,
+        contactType: "customer service",
+        availableLanguage: ["English"],
+      },
       sameAs: [
         CONTACT_LINKEDIN,
         `https://t.me/${CONTACT_TELEGRAM}`,
@@ -202,6 +230,14 @@ export default function LandingPage() {
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.label}</p>
                 </div>
               ))}
+            </Reveal>
+            <Reveal index={4} className="mt-4 text-center">
+              <Link
+                href="/inr-p2p-index"
+                className="text-[12px] font-medium text-slate-500 transition-colors hover:text-gold-700"
+              >
+                See live corridor, bank and rail coverage on the liquidity index →
+              </Link>
             </Reveal>
           </div>
         </section>

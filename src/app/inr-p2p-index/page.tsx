@@ -1,0 +1,225 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { Direction } from "@prisma/client";
+import { Reveal } from "@/components/motion";
+import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
+import { SiteFooter } from "@/components/site/footer";
+import { SiteNav } from "@/components/site/nav";
+import { EmptyState, Stat } from "@/components/ui";
+import { db } from "@/lib/db";
+import { BANK_OPTIONS, DIRECTION_OPTIONS, METHOD_OPTIONS } from "@/lib/options";
+import { SITE_URL } from "@/lib/site";
+
+// Real network data, refreshed hourly rather than on every request — this is
+// a coverage snapshot, not a live feed, so an hour of staleness is honest.
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "INR P2P & USDT-INR Liquidity Index — Live Network Coverage",
+  description:
+    "A live, honest snapshot of the INRP2P network: which INR↔USDT and INR payout corridors, banks and rails are currently covered by reviewed liquidity partners. Not a rate feed — a coverage index, refreshed hourly.",
+  alternates: { canonical: "/inr-p2p-index" },
+};
+
+const INDEX_FAQ = [
+  {
+    q: "Is this a live USDT/INR exchange rate?",
+    a: "No. INRP2P is not an exchange and does not publish or guarantee a rate. This index shows which corridors, banks and rails reviewed partners currently cover — a coverage snapshot, not a price feed. Pricing is agreed directly between the introduced parties.",
+  },
+  {
+    q: "How often does this index update?",
+    a: "It reflects the current state of verified and limited partners in the network and refreshes roughly every hour.",
+  },
+  {
+    q: "How do I get counted in this index?",
+    a: "Apply as a liquidity partner. Once your application passes manual review and verification, your declared corridors, banks and rails count toward this index.",
+  },
+];
+
+export default async function LiquidityIndexPage() {
+  const partners = await db.partnerProfile.findMany({
+    where: { status: { in: ["VERIFIED", "LIMITED"] } },
+    select: { directions: true, banks: true, methods: true, status: true },
+  });
+
+  const total = partners.length;
+  const verified = partners.filter((p) => p.status === "VERIFIED").length;
+
+  const corridors = DIRECTION_OPTIONS.map((d) => {
+    const value = d.value as Direction;
+    const inCorridor = partners.filter((p) => p.directions.includes(value));
+    const banks = Array.from(new Set(inCorridor.flatMap((p) => p.banks))).filter((b) =>
+      (BANK_OPTIONS as readonly string[]).includes(b),
+    );
+    const methods = Array.from(new Set(inCorridor.flatMap((p) => p.methods))).filter((m) =>
+      (METHOD_OPTIONS as readonly string[]).includes(m),
+    );
+    return { label: d.label, count: inCorridor.length, banks, methods };
+  });
+
+  const corridorsCovered = corridors.filter((c) => c.count > 0).length;
+  const banksCovered = new Set(partners.flatMap((p) => p.banks)).size;
+  const methodsCovered = new Set(partners.flatMap((p) => p.methods)).size;
+  const updatedOn = new Date().toISOString().slice(0, 10);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Dataset",
+        name: "INRP2P INR P2P & USDT-INR Liquidity Index",
+        description:
+          "Aggregated snapshot of corridor, bank and payment-rail coverage across INRP2P's reviewed INR liquidity partner network. Not individually identifying — coverage only.",
+        url: `${SITE_URL}/inr-p2p-index`,
+        isAccessibleForFree: true,
+        creator: { "@type": "Organization", name: "INRP2P", url: SITE_URL },
+        temporalCoverage: updatedOn,
+        variableMeasured: [
+          "Corridor coverage",
+          "Bank coverage",
+          "Payment rail coverage",
+          "Verified partner count",
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: INDEX_FAQ.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+    ],
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <SiteNav />
+      <main className="hero-aurora flex-1 pb-24 pt-32">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <p className="eyebrow">Network snapshot · updated hourly</p>
+          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-900 sm:text-[2.5rem]">
+            INR P2P &amp; USDT-INR liquidity index.
+          </h1>
+          <p className="mt-3 max-w-2xl text-[13.5px] leading-relaxed text-slate-500">
+            A coverage snapshot of the INRP2P network — which corridors, banks and
+            payment rails reviewed liquidity partners currently support. This is
+            not a price feed and not a guarantee: INRP2P is not an exchange, holds
+            no funds, and does not set rates. It is an honest read on what real,
+            verified coverage exists right now.
+          </p>
+
+          {/* What is INR P2P — definitional block for humans and answer engines */}
+          <Reveal className="card mt-8 p-6 sm:p-7">
+            <p className="text-[13px] font-semibold text-slate-900">
+              What &ldquo;INR P2P&rdquo; actually means here
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
+              INR P2P (peer-to-peer) liquidity is a direct trade or payout between
+              two counterparties — a company needing INR↔USDT conversion or INR
+              payouts, and a reviewed partner able to fund it — rather than a
+              public order book. INRP2P&apos;s role is limited to review, matching
+              and introduction: we verify a partner&apos;s entity, banking coverage,
+              capacity and compliance readiness, then introduce a qualified fit.
+              Everything after that — price, terms, settlement — happens directly
+              between the two parties.
+            </p>
+          </Reveal>
+
+          {/* Stats */}
+          <Reveal index={1} className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Active partners" value={total} tone="gold" sub={`${verified} fully verified`} />
+            <Stat label="Corridors covered" value={corridorsCovered} sub={`of ${DIRECTION_OPTIONS.length}`} />
+            <Stat label="Banks covered" value={banksCovered} sub={`of ${BANK_OPTIONS.length} tracked`} />
+            <Stat label="Rails covered" value={methodsCovered} sub={`of ${METHOD_OPTIONS.length} tracked`} />
+          </Reveal>
+
+          {total < 3 ? (
+            <p className="mt-3 text-[11.5px] leading-relaxed text-slate-400">
+              INRP2P is in private beta and onboards partners deliberately — small,
+              real numbers here, not inflated ones.{" "}
+              <Link href="/apply" className="text-gold-600 hover:underline">
+                Apply as a partner
+              </Link>{" "}
+              to help fill a corridor.
+            </p>
+          ) : null}
+
+          {/* Corridors */}
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {corridors.map((c, i) => (
+              <Reveal key={c.label} index={i + 2} className="card flex h-full flex-col p-5">
+                <p className="eyebrow text-leaf-600">{c.label}</p>
+                {c.count > 0 ? (
+                  <>
+                    <p className="mt-2 text-[12.5px] text-slate-500">
+                      {c.count} reviewed partner{c.count === 1 ? "" : "s"} active on this corridor.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">
+                          Banks covered
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {c.banks.map((b) => (
+                            <span key={b} className="chip border-black/10 bg-black/[0.03] text-slate-700">
+                              {b}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">
+                          Rails covered
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {c.methods.map((m) => (
+                            <span key={m} className="chip border-black/10 bg-black/[0.03] text-slate-700">
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-3 flex-1">
+                    <EmptyState
+                      title="Coverage building"
+                      body="No verified partner on this corridor yet. If you can fund it, apply."
+                    />
+                  </div>
+                )}
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Mini FAQ */}
+          <div className="mt-12">
+            <p className="eyebrow">Reading this page</p>
+            <div className="mt-4 space-y-4">
+              {INDEX_FAQ.map((f, i) => (
+                <Reveal key={f.q} index={i} className="card p-5">
+                  <p className="text-[13px] font-semibold text-slate-900">{f.q}</p>
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{f.a}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-wrap items-center gap-3">
+            <Link href="/request" className="btn btn-gold px-5 py-3">
+              Submit a request
+            </Link>
+            <ApplyTraderCta />
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
