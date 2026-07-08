@@ -111,6 +111,7 @@ export async function createMatch(fd: FormData) {
   const parsed = matchCreateSchema.safeParse({
     partnerId: s(fd, "partnerId"),
     adminNote: s(fd, "adminNote"),
+    confidenceScore: s(fd, "confidenceScore") || undefined,
   });
   if (!requestId || !parsed.success) fail(fd, fallback, "Select a partner to match.");
 
@@ -126,6 +127,7 @@ export async function createMatch(fd: FormData) {
         requestId,
         partnerId: partner.id,
         adminNote: parsed.data.adminNote,
+        confidenceScore: parsed.data.confidenceScore,
       },
     });
     await audit({
@@ -137,7 +139,13 @@ export async function createMatch(fd: FormData) {
       requestId,
       partnerId: partner.id,
       matchId: match.id,
-      meta: { partnerName: partner.displayName, requestRef: request.reference },
+      meta: {
+        partnerName: partner.displayName,
+        requestRef: request.reference,
+        ...(parsed.data.confidenceScore != null
+          ? { suggested: true, confidenceScore: parsed.data.confidenceScore }
+          : {}),
+      },
     });
   } catch (e) {
     if ((e as { code?: string }).code === "P2002") {

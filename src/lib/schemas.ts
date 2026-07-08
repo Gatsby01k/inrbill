@@ -154,6 +154,7 @@ export const introOutcomeSchema = z.object({
 export const matchCreateSchema = z.object({
   partnerId: trimmed(10, 60, "Select a partner"),
   adminNote: optionalTrimmed(1000),
+  confidenceScore: z.coerce.number().int().min(0).max(100).optional(),
 });
 
 export const introductionCreateSchema = z.object({

@@ -42,6 +42,7 @@ import {
   revenueTypeLabel,
   statusLabel,
 } from "@/lib/format";
+import { rankPartners } from "@/lib/matching";
 import {
   CURRENCIES,
   INTRO_CHANNELS,
@@ -107,6 +108,7 @@ export default async function AdminRequestDetailPage({
   ]);
 
   const back = `/admin/requests/${id}`;
+  const suggestions = rankPartners(request, eligiblePartners, 5);
 
   return (
     <>
@@ -406,10 +408,64 @@ export default async function AdminRequestDetailPage({
               ))}
             </div>
 
+            {/* Suggested partners */}
+            {suggestions.length ? (
+              <div className="mt-5 border-t border-black/10 pt-5">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Suggested partners · scored automatically
+                </p>
+                <div className="space-y-2">
+                  {suggestions.map(({ partner: p, score, reasons }) => (
+                    <div
+                      key={p.id}
+                      className="rounded-xl border border-black/10 bg-black/[0.02] p-3.5 animate-reveal"
+                    >
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        <span
+                          className={`chip font-mono font-semibold ${
+                            score >= 70
+                              ? "border-leaf-300 bg-leaf-50 text-leaf-700"
+                              : score >= 40
+                                ? "border-gold-300 bg-gold-50 text-gold-700"
+                                : "border-black/10 bg-black/[0.03] text-slate-500"
+                          }`}
+                        >
+                          {score}/100
+                        </span>
+                        <Link
+                          href={`/admin/partners/${p.id}`}
+                          className="text-sm font-semibold text-slate-900 hover:text-gold-700"
+                        >
+                          {p.displayName}
+                        </Link>
+                        <span className="font-mono text-[11px] text-leaf-700">{p.reference}</span>
+                        <StatusBadge status={p.status} />
+                      </div>
+                      <p className="mt-1.5 text-xs text-slate-500">{reasons.join(" · ")}</p>
+                      <form action={createMatch} className="mt-2.5 flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="requestId" value={request.id} />
+                        <input type="hidden" name="back" value={back} />
+                        <input type="hidden" name="partnerId" value={p.id} />
+                        <input type="hidden" name="confidenceScore" value={score} />
+                        <input
+                          name="adminNote"
+                          className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                          placeholder="Why this partner fits — optional"
+                        />
+                        <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
+                          Match at {score}/100
+                        </SubmitButton>
+                      </form>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {/* Add match */}
             <div className="mt-5 border-t border-black/10 pt-5">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Add partner match
+                Add partner match — manual selection
               </p>
               {eligiblePartners.length ? (
                 <form action={createMatch} className="flex flex-wrap items-center gap-2">
