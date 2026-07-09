@@ -1,9 +1,23 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createSession, destroySession, roleHome, verifyPassword } from "@/lib/auth";
+import {
+  bumpTwoFactorAttempts,
+  clearTwoFactorChallenge,
+  createSession,
+  createTwoFactorChallenge,
+  destroySession,
+  getTwoFactorChallenge,
+  roleHome,
+  verifyPassword,
+} from "@/lib/auth";
 import { db } from "@/lib/db";
-import { loginSchema, type ActionState } from "@/lib/schemas";
+import { loginSchema, twoFactorCodeSchema, type ActionState } from "@/lib/schemas";
+import { matchBackupCode, verifyTotp } from "@/lib/totp";
+
+function safeNext(next: FormDataEntryValue | null): string | null {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = loginSchema.safeParse({
@@ -17,14 +31,64 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
     return { error: "Invalid email or password." };
   }
 
-  await createSession(user.id);
+  const next = safeNext(formData.get("next"));
 
-  const next = formData.get("next");
-  const target =
-    typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
-      ? next
-      : roleHome(user.role);
-  redirect(target);
+  // Password is correct — for accounts with 2FA enabled, that's only step
+  // one. Park them in a short-lived challenge instead of a real session
+  // until they prove they hold the authenticator/backup code too.
+  if (user.totpEnabled) {
+    await createTwoFactorChallenge(user.id, next ?? undefined);
+    redirect(next ? `/login/verify?next=${encodeURIComponent(next)}` : "/login/verify");
+  }
+
+  await createSession(user.id);
+  redirect(next ?? roleHome(user.role));
+}
+
+export async function verifyTwoFactor(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const challenge = await getTwoFactorChallenge();
+  if (!challenge) {
+    return { error: "That verification step expired. Sign in again." };
+  }
+
+  const parsed = twoFactorCodeSchema.safeParse(formData.get("code"));
+  if (!parsed.success) return { error: "Enter the 6-digit code or a backup code." };
+  const submitted = parsed.data;
+
+  const user = await db.user.findUnique({ where: { id: challenge.userId } });
+  if (!user || !user.totpEnabled || !user.totpSecret) {
+    await clearTwoFactorChallenge();
+    return { error: "Two-factor is no longer enabled on this account. Sign in again." };
+  }
+
+  const isTotpMatch = /^\d{6}$/.test(submitted) && verifyTotp(user.totpSecret, submitted);
+
+  let usedBackupHash: string | null = null;
+  if (!isTotpMatch) {
+    usedBackupHash = await matchBackupCode(submitted, user.totpBackupCodes);
+  }
+
+  if (!isTotpMatch && !usedBackupHash) {
+    await bumpTwoFactorAttempts(challenge.token);
+    return { error: "Incorrect code. Check your authenticator app and try again." };
+  }
+
+  if (usedBackupHash) {
+    // Single-use — burn it the moment it's redeemed.
+    await db.user.update({
+      where: { id: user.id },
+      data: { totpBackupCodes: { set: user.totpBackupCodes.filter((h) => h !== usedBackupHash) } },
+    });
+  }
+
+  await createSession(user.id);
+  await clearTwoFactorChallenge();
+  redirect(challenge.next ?? roleHome(user.role));
+}
+
+export async function cancelTwoFactorChallenge() {
+  await clearTwoFactorChallenge();
+  redirect("/login");
 }
 
 export async function logout() {

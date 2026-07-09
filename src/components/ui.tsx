@@ -57,6 +57,10 @@ const STATUS_TONE: Record<string, keyof typeof TONE_CLASS> = {
   CANCELLED: "rose",
   LOST: "rose",
   WAIVED: "slate",
+  // Error monitoring
+  WARNING: "gold",
+  ERROR: "rose",
+  FATAL: "rose",
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {

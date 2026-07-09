@@ -55,6 +55,13 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+/** Accepts either a 6-digit TOTP code or an XXXXX-XXXXX backup code. */
+export const twoFactorCodeSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter a code")
+  .max(20, "Enter a code");
+
 export const accountSchema = z.object({
   email: emailSchema,
   password: z.string().min(10, "Use at least 10 characters"),

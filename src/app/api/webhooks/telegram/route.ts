@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/error-log";
 import { sendTelegramMessageTo } from "@/lib/telegram";
 
 // Telegram calls this for every incoming message once the bot's webhook is
@@ -24,45 +25,50 @@ type TelegramUpdate = {
 };
 
 export async function POST(req: NextRequest) {
-  const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (configuredSecret) {
-    const header = req.headers.get("x-telegram-bot-api-secret-token");
-    if (header !== configuredSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
-  let update: TelegramUpdate;
   try {
-    update = (await req.json()) as TelegramUpdate;
-  } catch {
+    const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (configuredSecret) {
+      const header = req.headers.get("x-telegram-bot-api-secret-token");
+      if (header !== configuredSecret) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
+    let update: TelegramUpdate;
+    try {
+      update = (await req.json()) as TelegramUpdate;
+    } catch {
+      return NextResponse.json({ ok: true });
+    }
+
+    const chatId = update.message?.chat?.id;
+    const text = update.message?.text?.trim().toUpperCase();
+    if (!chatId || !text) return NextResponse.json({ ok: true });
+
+    if (!LINK_CODE_RE.test(text)) {
+      // Not a link code — this bot doesn't otherwise process free-text
+      // messages, so just acknowledge and stay silent.
+      return NextResponse.json({ ok: true });
+    }
+
+    const user = await db.user.findUnique({ where: { telegramLinkCode: text } });
+    if (!user) {
+      await sendTelegramMessageTo(
+        String(chatId),
+        "This code isn't valid or has already been used. Generate a new one from your INRP2P workspace.",
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    await db.user.update({
+      where: { id: user.id },
+      data: { telegramChatId: String(chatId), telegramLinkCode: null },
+    });
+    await sendTelegramMessageTo(String(chatId), "✅ Connected — you'll get INRP2P updates here from now on.");
+
     return NextResponse.json({ ok: true });
+  } catch (err) {
+    await logError({ error: err, source: "route:/api/webhooks/telegram", severity: "ERROR" });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  const chatId = update.message?.chat?.id;
-  const text = update.message?.text?.trim().toUpperCase();
-  if (!chatId || !text) return NextResponse.json({ ok: true });
-
-  if (!LINK_CODE_RE.test(text)) {
-    // Not a link code — this bot doesn't otherwise process free-text
-    // messages, so just acknowledge and stay silent.
-    return NextResponse.json({ ok: true });
-  }
-
-  const user = await db.user.findUnique({ where: { telegramLinkCode: text } });
-  if (!user) {
-    await sendTelegramMessageTo(
-      String(chatId),
-      "This code isn't valid or has already been used. Generate a new one from your INRP2P workspace.",
-    );
-    return NextResponse.json({ ok: true });
-  }
-
-  await db.user.update({
-    where: { id: user.id },
-    data: { telegramChatId: String(chatId), telegramLinkCode: null },
-  });
-  await sendTelegramMessageTo(String(chatId), "✅ Connected — you'll get INRP2P updates here from now on.");
-
-  return NextResponse.json({ ok: true });
 }

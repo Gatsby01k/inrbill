@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { logError } from "@/lib/error-log";
 import {
   runFollowUpWatchdog,
   runRevenueOverdueWatchdog,
@@ -22,20 +23,20 @@ export async function GET(req: NextRequest) {
   }
 
   const [sla, revenue, followUp, uninvoiced] = await Promise.all([
-    runSlaWatchdog().catch((err) => {
-      console.error("runSlaWatchdog failed", err);
+    runSlaWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
-    runRevenueOverdueWatchdog().catch((err) => {
-      console.error("runRevenueOverdueWatchdog failed", err);
+    runRevenueOverdueWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runRevenueOverdueWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
-    runFollowUpWatchdog().catch((err) => {
-      console.error("runFollowUpWatchdog failed", err);
+    runFollowUpWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runFollowUpWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
-    runRevenueUninvoicedWatchdog().catch((err) => {
-      console.error("runRevenueUninvoicedWatchdog failed", err);
+    runRevenueUninvoicedWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runRevenueUninvoicedWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
   ]);

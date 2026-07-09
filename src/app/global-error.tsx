@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { reportClientError } from "@/app/actions/report-error";
 
 /**
  * Last-resort boundary — only triggers if the root layout itself throws.
@@ -16,6 +17,16 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[INRP2P] Root layout error", { message: error.message, digest: error.digest });
+    reportClientError({
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      url: typeof window !== "undefined" ? window.location.pathname : undefined,
+      source: "client:global-error-boundary",
+      // Root-layout failures are the most serious tier — nothing else on the
+      // site can render while this is happening.
+      severity: "FATAL",
+    }).catch(() => {});
   }, [error]);
 
   return (

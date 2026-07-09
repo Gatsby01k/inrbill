@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { reportClientError } from "@/app/actions/report-error";
 import { BrandLockup } from "@/components/brand";
 
 export default function GlobalRouteError({
@@ -18,6 +19,13 @@ export default function GlobalRouteError({
       message: error.message,
       digest: error.digest,
     });
+    reportClientError({
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      url: typeof window !== "undefined" ? window.location.pathname : undefined,
+      source: "client:error-boundary",
+    }).catch(() => {});
   }, [error]);
 
   return (

@@ -9,6 +9,10 @@ import { db } from "./db";
 export const SESSION_COOKIE = "inrp2p_session";
 const SESSION_DAYS = 30;
 
+export const CHALLENGE_COOKIE = "inrp2p_2fa_challenge";
+const CHALLENGE_MINUTES = 10;
+const CHALLENGE_MAX_ATTEMPTS = 5;
+
 export function hashPassword(pw: string) {
   return bcrypt.hash(pw, 12);
 }
@@ -67,4 +71,50 @@ export async function requireRole(role: Role): Promise<SessionUser> {
 export function actorLabel(user: SessionUser) {
   if (user.role === "ADMIN") return "Operator";
   return user.company?.companyName ?? user.partner?.displayName ?? user.name;
+}
+
+/**
+ * Short-lived "password verified, waiting on a TOTP code" state — created
+ * once the password step passes for an account with 2FA enabled, and never
+ * becomes a real Session by itself. Mirrors createSession's cookie pattern.
+ */
+export async function createTwoFactorChallenge(userId: string, next?: string) {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + CHALLENGE_MINUTES * 60 * 1000);
+  await db.twoFactorChallenge.create({
+    data: { token, userId, next: next ?? null, expiresAt },
+  });
+  const jar = await cookies();
+  jar.set(CHALLENGE_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
+  return token;
+}
+
+export async function getTwoFactorChallenge() {
+  const jar = await cookies();
+  const token = jar.get(CHALLENGE_COOKIE)?.value;
+  if (!token) return null;
+  const challenge = await db.twoFactorChallenge.findUnique({ where: { token } });
+  if (!challenge || challenge.expiresAt < new Date()) return null;
+  if (challenge.attempts >= CHALLENGE_MAX_ATTEMPTS) return null;
+  return challenge;
+}
+
+export async function bumpTwoFactorAttempts(token: string) {
+  await db.twoFactorChallenge.updateMany({
+    where: { token },
+    data: { attempts: { increment: 1 } },
+  });
+}
+
+export async function clearTwoFactorChallenge() {
+  const jar = await cookies();
+  const token = jar.get(CHALLENGE_COOKIE)?.value;
+  if (token) await db.twoFactorChallenge.deleteMany({ where: { token } });
+  jar.delete(CHALLENGE_COOKIE);
 }

@@ -138,9 +138,19 @@ model User {
   telegramChatId   String?
   telegramLinkCode String? @unique
 
+  // TOTP two-factor auth (currently offered to ADMIN only). totpSecret is
+  // written the moment setup starts but totpEnabled stays false until the
+  // admin proves they can generate a real code — an unconfirmed secret
+  // never gates login. Backup codes are bcrypt-hashed, single-use, removed
+  // from the array the moment one is redeemed.
+  totpSecret       String?
+  totpEnabled      Boolean  @default(false)
+  totpBackupCodes  String[] @default([])
+
   sessions Session[]
   company  CompanyProfile?
   partner  PartnerProfile?
+  twoFactorChallenges TwoFactorChallenge[]
 }
 
 model Session {
@@ -148,6 +158,23 @@ model Session {
   token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Short-lived "password verified, waiting on a TOTP code" state — a login
+// attempt lands here between the password step and a real Session existing.
+// Never becomes a Session by itself; verifyTwoFactor() is the only path
+// that turns one into an actual login.
+model TwoFactorChallenge {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  next      String? // where to redirect after a successful verify
+  attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -390,6 +417,36 @@ model AuditLog {
   @@index([requestId])
   @@index([partnerId])
   @@index([createdAt])
+}
+
+// ── Error monitoring ─────────────────────────────────────────────────────────
+// Native substitute for Sentry — there's no network access for `npm install`
+// in this build environment, so unhandled errors are captured by hand: caught
+// in error.tsx/global-error.tsx and key server-action/route catch blocks,
+// written here, and (for ERROR/FATAL) pushed to the existing ops Telegram
+// chat. Resolved errors are kept, not deleted, for a real audit trail.
+
+enum ErrorSeverity {
+  WARNING
+  ERROR
+  FATAL
+}
+
+model ErrorLog {
+  id         String        @id @default(cuid())
+  severity   ErrorSeverity @default(ERROR)
+  message    String
+  stack      String? // truncated stack trace, if available
+  source     String // e.g. "server-action:updateRequestStatus", "route:/api/webhooks/razorpay", "client:error-boundary"
+  url        String? // request path, when known
+  userId     String? // actor at the time, when known — no FK, so a deleted user never blocks logging
+  meta       Json?
+  resolved   Boolean       @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([resolved, createdAt])
+  @@index([severity])
 }
 
 // ── Utility ──────────────────────────────────────────────────────────────────
