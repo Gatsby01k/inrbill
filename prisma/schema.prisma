@@ -313,6 +313,14 @@ model RevenueRecord {
   paymentLinkId  String? @unique // Razorpay's plink_xxx id
   paymentLinkUrl String? // short_url — shareable link sent to the payer
   paymentRef     String? // Razorpay's pay_xxx id once the link is paid
+  // NOWPayments — non-custodial USDT collection for INRP2P's own fee when
+  // the payer settles in crypto instead of INR. Same boundary as Razorpay:
+  // only ever INRP2P's own commission, never the underlying P2P trade
+  // funds. Looked up in the webhook via order_id = this record's own id,
+  // so no separate unique constraint is needed here (unlike paymentLinkId).
+  cryptoInvoiceId  String? // NOWPayments invoice id
+  cryptoInvoiceUrl String? // invoice_url — shareable hosted payment link
+  cryptoPaymentRef String? // NOWPayments payment_id once paid
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 

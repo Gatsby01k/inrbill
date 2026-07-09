@@ -6,6 +6,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revenueTypeLabel } from "@/lib/format";
+import { createCryptoInvoice } from "@/lib/nowpayments";
 import { createPaymentLink } from "@/lib/razorpay";
 import {
   documentSchema,
@@ -543,6 +544,80 @@ export async function createRevenuePaymentLink(fd: FormData) {
     requestId: existing.requestId,
     matchId: existing.matchId,
     meta: { paymentLinkId: link.id, amount: existing.amount.toString(), currency: existing.currency },
+  });
+
+  done(fd, fallback);
+}
+
+/**
+ * Generates a NOWPayments hosted USDT invoice for one of INRP2P's own
+ * service-fee RevenueRecords, for the case where the payer settles in
+ * crypto instead of INR. Same boundary and same idempotent/status-guard
+ * shape as `createRevenuePaymentLink` above — this is strictly INRP2P's
+ * own fee, never the underlying P2P trade funds.
+ */
+export async function createRevenueCryptoInvoice(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const revenueId = s(fd, "revenueId");
+  const fallback = "/admin/revenue";
+  if (!revenueId) fail(fd, fallback, "Revenue record not found.");
+
+  const existing = await db.revenueRecord.findUnique({
+    where: { id: revenueId },
+    include: { request: true },
+  });
+  if (!existing) fail(fd, fallback, "Revenue record not found.");
+
+  if (existing.cryptoInvoiceUrl) done(fd, fallback);
+
+  if (existing.currency !== "USDT") {
+    fail(fd, fallback, "NOWPayments invoices only support USDT — this record is in a different currency.");
+  }
+  if (["PAID", "CANCELLED", "LOST", "WAIVED"].includes(existing.status)) {
+    fail(fd, fallback, "This revenue record is no longer collectible — change its status first.");
+  }
+
+  const description = [
+    revenueTypeLabel(existing.type),
+    `Request ${existing.request.reference}`,
+    existing.basis,
+  ]
+    .filter(Boolean)
+    .join(" — ");
+
+  const invoice = await createCryptoInvoice({
+    amountUsdt: Number(existing.amount),
+    description,
+    orderId: existing.id,
+  });
+
+  if (!invoice) {
+    fail(
+      fd,
+      fallback,
+      "Couldn't create a NOWPayments invoice — check NOWPAYMENTS_API_KEY is set correctly, or try again in a moment.",
+    );
+  }
+
+  await db.revenueRecord.update({
+    where: { id: revenueId },
+    data: {
+      cryptoInvoiceId: invoice.id,
+      cryptoInvoiceUrl: invoice.invoiceUrl,
+      status: ["POTENTIAL", "QUOTED", "AGREED"].includes(existing.status) ? "INVOICED" : existing.status,
+      invoicedAt: existing.invoicedAt ?? new Date(),
+    },
+  });
+
+  await audit({
+    action: "revenue.crypto_invoice_created",
+    entityType: "RevenueRecord",
+    entityId: revenueId,
+    actorId: user.id,
+    actorLabel: "Operator",
+    requestId: existing.requestId,
+    matchId: existing.matchId,
+    meta: { cryptoInvoiceId: invoice.id, amount: existing.amount.toString(), currency: existing.currency },
   });
 
   done(fd, fallback);

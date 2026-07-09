@@ -7,6 +7,7 @@ import {
   addRevenue,
   createIntroduction,
   createMatch,
+  createRevenueCryptoInvoice,
   createRevenuePaymentLink,
   toggleMatchRelease,
   updateIntroductionOutcome,
@@ -44,6 +45,7 @@ import {
   statusLabel,
 } from "@/lib/format";
 import { rankPartners } from "@/lib/matching";
+import { isNowPaymentsConfigured } from "@/lib/nowpayments";
 import { isRazorpayConfigured } from "@/lib/razorpay";
 import {
   CURRENCIES,
@@ -580,6 +582,34 @@ export default async function AdminRequestDetailPage({
                         <input type="hidden" name="back" value={back} />
                         <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Generating…">
                           Generate Razorpay payment link
+                        </SubmitButton>
+                      </form>
+                    ) : null}
+                    {r.cryptoInvoiceUrl ? (
+                      <div className="flex basis-full items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-500/[0.06] px-2.5 py-1.5 text-xs">
+                        <span className="font-medium text-slate-700">USDT invoice:</span>
+                        <a
+                          href={r.cryptoInvoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-emerald-700 underline decoration-emerald-600/40 underline-offset-2 hover:text-emerald-800"
+                        >
+                          {r.cryptoInvoiceUrl}
+                        </a>
+                        {r.cryptoPaymentRef ? (
+                          <span className="text-[11px] text-slate-400">· paid ({r.cryptoPaymentRef})</span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">· share this with the payer</span>
+                        )}
+                      </div>
+                    ) : isNowPaymentsConfigured() &&
+                      r.currency === "USDT" &&
+                      !["PAID", "CANCELLED", "LOST", "WAIVED"].includes(r.status) ? (
+                      <form action={createRevenueCryptoInvoice} className="flex basis-full items-center">
+                        <input type="hidden" name="revenueId" value={r.id} />
+                        <input type="hidden" name="back" value={back} />
+                        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Generating…">
+                          Generate USDT invoice
                         </SubmitButton>
                       </form>
                     ) : null}

@@ -1,0 +1,111 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { audit } from "@/lib/audit";
+import { db } from "@/lib/db";
+import { verifyNowPaymentsSignature } from "@/lib/nowpayments";
+
+// NOWPayments calls this whenever a payment's status changes. Scoped
+// strictly to INRP2P's own USDT-priced service fee collection — it never
+// touches the underlying P2P trade funds between company and partner.
+//
+// Setup in the NOWPayments dashboard: Store/Payment Settings → set the IPN
+// callback URL to https://<your-domain>/api/webhooks/nowpayments, generate
+// an IPN secret key there, and put it in NOWPAYMENTS_IPN_SECRET. Also set
+// "underpaid payments" to be flagged as partially_paid (not auto-finished)
+// — this route only ever trusts an exact "finished" status.
+export const dynamic = "force-dynamic";
+
+type NowPaymentsIpnPayload = {
+  payment_id?: number | string;
+  payment_status?: string;
+  order_id?: string;
+  price_amount?: number;
+  price_currency?: string;
+  actually_paid?: number;
+  pay_currency?: string;
+};
+
+export async function POST(req: NextRequest) {
+  // Unlike Razorpay, NOWPayments' signature covers the PARSED body with its
+  // keys deep-sorted, not the raw bytes — so it's read as JSON directly.
+  let payload: NowPaymentsIpnPayload;
+  try {
+    payload = (await req.json()) as NowPaymentsIpnPayload;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const signature = req.headers.get("x-nowpayments-sig");
+  if (!verifyNowPaymentsSignature(payload, signature)) {
+    console.error("NOWPayments IPN signature verification failed");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  // Only "finished" means NOWPayments itself considers the invoice fully
+  // paid. "confirming", "confirmed", "sending" are still in flight, and
+  // "partially_paid" means the customer sent less than invoiced — none of
+  // these should ever mark a fee as collected.
+  if (payload.payment_status !== "finished") {
+    return NextResponse.json({ ok: true, ignored: payload.payment_status ?? null });
+  }
+
+  // order_id was set to the RevenueRecord's own id at invoice creation, so
+  // it doubles as the lookup key — no separate unique external-id column
+  // to keep in sync.
+  const orderId = payload.order_id;
+  if (!orderId) {
+    console.error("NOWPayments IPN finished payment missing order_id", payload);
+    return NextResponse.json({ ok: true });
+  }
+
+  const record = await db.revenueRecord.findUnique({ where: { id: orderId } });
+  if (!record) {
+    console.error("NOWPayments IPN: no RevenueRecord matches order_id", orderId);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Defense in depth: don't just trust the status field — check the amount
+  // actually received against what this fee was invoiced for. A small
+  // tolerance (0.5%) absorbs harmless rounding on tiny crypto fractions
+  // without accepting a materially short payment as complete.
+  const expected = Number(record.amount);
+  const paid = payload.actually_paid ?? 0;
+  if (!(paid >= expected * 0.995)) {
+    console.error("NOWPayments IPN amount mismatch — not marking paid", {
+      orderId,
+      expected,
+      actuallyPaid: paid,
+    });
+    return NextResponse.json({ ok: true, mismatch: true });
+  }
+
+  // Atomic, race-safe idempotency, same pattern as the Razorpay webhook —
+  // the WHERE clause itself excludes rows already PAID, so a duplicate IPN
+  // delivery for the same event can only ever update the row once.
+  const result = await db.revenueRecord.updateMany({
+    where: { id: record.id, status: { not: "PAID" } },
+    data: {
+      status: "PAID",
+      paidAt: record.paidAt ?? new Date(),
+      cryptoPaymentRef: payload.payment_id ? String(payload.payment_id) : record.cryptoPaymentRef,
+    },
+  });
+
+  if (result.count === 1) {
+    await audit({
+      action: "revenue.paid_via_nowpayments",
+      entityType: "RevenueRecord",
+      entityId: record.id,
+      actorId: null,
+      actorLabel: "NOWPayments webhook",
+      requestId: record.requestId,
+      matchId: record.matchId,
+      meta: {
+        paymentId: payload.payment_id ?? null,
+        actuallyPaid: paid,
+        payCurrency: payload.pay_currency ?? null,
+      },
+    });
+  }
+
+  return NextResponse.json({ ok: true });
+}
