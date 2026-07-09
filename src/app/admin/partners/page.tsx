@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { PartnerStatus, Prisma } from "@prisma/client";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { TrackRecordBadge } from "@/components/workspace/track-record";
 import { db } from "@/lib/db";
 import { cn, directionLabel, fmtDate, statusLabel } from "@/lib/format";
 import { PARTNER_STATUSES } from "@/lib/options";
+import { getPartnerTrackRecords } from "@/lib/reputation";
 
 export const metadata: Metadata = { title: "Partners" };
 
@@ -37,6 +39,7 @@ export default async function AdminPartnersPage({
     orderBy: { createdAt: "desc" },
     take: 200,
   });
+  const trackRecords = await getPartnerTrackRecords(partners.map((p) => p.id));
 
   return (
     <>
@@ -82,6 +85,7 @@ export default async function AdminPartnersPage({
                   <th>Reserve</th>
                   <th>Hours</th>
                   <th>Matches</th>
+                  <th>Track record</th>
                   <th>Status</th>
                   <th>Applied</th>
                 </tr>
@@ -105,6 +109,19 @@ export default async function AdminPartnersPage({
                     <td className="text-xs">{p.reserveBand}</td>
                     <td className="text-xs">{p.workingHours}</td>
                     <td className="tabular-nums">{p._count.matches}</td>
+                    <td className="max-w-56">
+                      <TrackRecordBadge
+                        record={
+                          trackRecords.get(p.id) ?? {
+                            totalIntroductions: 0,
+                            successfulIntroductions: 0,
+                            failedIntroductions: 0,
+                            successRate: null,
+                            avgResponseHours: null,
+                          }
+                        }
+                      />
+                    </td>
                     <td>
                       <StatusBadge status={p.status} />
                     </td>

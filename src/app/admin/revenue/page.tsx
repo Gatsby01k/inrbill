@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { updateRevenueStatus } from "@/app/actions/admin";
-import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, FormError, PageHeader, Stat, StatusBadge } from "@/components/ui";
+import { Disclosure } from "@/components/workspace/disclosure";
+import { StatusPills } from "@/components/workspace/status-pills";
 import { db } from "@/lib/db";
 import { fmtDate, money, revenueTypeLabel, statusLabel } from "@/lib/format";
 import { REVENUE_STATUSES } from "@/lib/options";
@@ -121,21 +122,15 @@ export default async function AdminRevenuePage({
                         .filter(Boolean)
                         .join(" · ")}
                     </td>
-                    <td>
-                      <form action={updateRevenueStatus} className="flex items-center gap-1.5">
-                        <input type="hidden" name="revenueId" value={r.id} />
-                        <input type="hidden" name="back" value="/admin/revenue" />
-                        <select name="status" defaultValue={r.status} className="input h-8 w-auto py-0 text-xs">
-                          {REVENUE_STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                              {statusLabel(s)}
-                            </option>
-                          ))}
-                        </select>
-                        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                          Set
-                        </SubmitButton>
-                      </form>
+                    <td className="min-w-48">
+                      <Disclosure label="Change">
+                        <StatusPills
+                          action={updateRevenueStatus}
+                          hidden={{ revenueId: r.id, back: "/admin/revenue" }}
+                          options={REVENUE_STATUSES}
+                          current={r.status}
+                        />
+                      </Disclosure>
                     </td>
                   </tr>
                 ))}
