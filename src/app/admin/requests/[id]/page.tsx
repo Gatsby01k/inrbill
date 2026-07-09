@@ -26,12 +26,15 @@ import {
   SectionTitle,
   StatusBadge,
 } from "@/components/ui";
+import { Disclosure } from "@/components/workspace/disclosure";
+import { PipelineStepper } from "@/components/workspace/pipeline-stepper";
 import {
   DocumentComposer,
   DocumentList,
   NoteComposer,
   NoteList,
 } from "@/components/workspace/records";
+import { StatusPills } from "@/components/workspace/status-pills";
 import { Timeline } from "@/components/workspace/timeline";
 import { db } from "@/lib/db";
 import {
@@ -52,7 +55,6 @@ import {
   INTRO_CHANNELS,
   INTRODUCTION_STATUSES,
   MATCH_STATUSES,
-  REQUEST_STATUSES,
   REVENUE_STATUSES,
   REVENUE_TYPE_OPTIONS,
 } from "@/lib/options";
@@ -63,6 +65,8 @@ const ADMIN_NOTE_VISIBILITY = [
   { value: "INTERNAL", label: "Internal only" },
   { value: "COMPANY", label: "Share with company" },
 ];
+
+const REQUEST_FLOW = ["SUBMITTED", "IN_REVIEW", "MATCHING", "INTRODUCED", "CLOSED"] as const;
 
 export default async function AdminRequestDetailPage({
   params,
@@ -113,18 +117,29 @@ export default async function AdminRequestDetailPage({
 
   const back = `/admin/requests/${id}`;
   const suggestions = rankPartners(request, eligiblePartners, 5);
+  const hasAnyMatch = request.matches.length > 0;
 
   return (
     <>
       <BackLink href="/admin/requests" label="All requests" />
 
-      <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="mb-4 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <span className="font-mono text-sm text-gold-700">{request.reference}</span>
         <h1 className="text-xl font-semibold text-slate-900">{request.company.companyName}</h1>
-        <StatusBadge status={request.status} />
         <span className="text-xs text-slate-500">
           {directionLabel(request.direction)} · submitted {fmtDate(request.createdAt)}
         </span>
+      </div>
+
+      {/* Pipeline — the single, unmissable "where is this deal" control */}
+      <div className="card mb-6 p-4 sm:p-5">
+        <PipelineStepper
+          action={updateRequestStatus}
+          hidden={{ requestId: request.id, back }}
+          steps={REQUEST_FLOW}
+          current={request.status}
+          branches={["REJECTED"]}
+        />
       </div>
 
       {error ? (
@@ -206,318 +221,307 @@ export default async function AdminRequestDetailPage({
             <SectionTitle title={`Matching · ${request.matches.length}`} />
 
             <div className="space-y-4">
-              {request.matches.map((m) => (
-                <div key={m.id} className="rounded-xl border border-black/10 bg-black/[0.02] p-4">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <Link
-                      href={`/admin/partners/${m.partnerId}`}
-                      className="text-sm font-semibold text-slate-900 hover:text-gold-700"
-                    >
-                      {m.partner.displayName}
-                    </Link>
-                    <span className="font-mono text-[11px] text-leaf-700">{m.partner.reference}</span>
-                    <StatusBadge status={m.status} />
-                    <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {m.partner.dailyCapacityBand} · {m.partner.workingHours}
-                  </p>
-                  {m.adminNote ? (
-                    <p className="mt-2 rounded-lg bg-black/[0.03] px-3 py-2 text-xs text-slate-600">
-                      {m.adminNote}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span>
-                      Confidence:{" "}
-                      <strong className="text-slate-800">
-                        {m.confidenceScore != null ? `${m.confidenceScore}/100` : "not set"}
-                      </strong>
-                    </span>
-                    {m.nextAction ? (
-                      <span>
-                        Next action: <strong className="text-slate-800">{m.nextAction}</strong>
+              {request.matches.map((m) => {
+                const hasDecisionData = m.confidenceScore != null || !!m.nextAction;
+                return (
+                  <div key={m.id} className="rounded-xl border border-black/10 bg-black/[0.02] p-4">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <Link
+                        href={`/admin/partners/${m.partnerId}`}
+                        className="text-sm font-semibold text-slate-900 hover:text-gold-700"
+                      >
+                        {m.partner.displayName}
+                      </Link>
+                      <span className="font-mono text-[11px] text-leaf-700">{m.partner.reference}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {m.partner.dailyCapacityBand} · {m.partner.workingHours}
                       </span>
+                      <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
+                    </div>
+                    {m.adminNote ? (
+                      <p className="mt-2 rounded-lg bg-black/[0.03] px-3 py-2 text-xs text-slate-600">
+                        {m.adminNote}
+                      </p>
                     ) : null}
-                  </div>
-                  <form
-                    action={updateMatchDecision}
-                    className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-black/[0.02] p-2"
-                  >
-                    <input type="hidden" name="matchId" value={m.id} />
-                    <input type="hidden" name="back" value={back} />
-                    <input
-                      name="confidenceScore"
-                      type="number"
-                      min="0"
-                      max="100"
-                      defaultValue={m.confidenceScore ?? ""}
-                      className="input h-8 w-20 py-0 text-xs"
-                      placeholder="0–100"
-                    />
-                    <input
-                      name="nextAction"
-                      defaultValue={m.nextAction ?? ""}
-                      className="input h-8 min-w-40 flex-1 py-0 text-xs"
-                      placeholder="Next action — decision support only"
-                    />
-                    <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                      Save
-                    </SubmitButton>
-                  </form>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <form action={updateMatchStatus} className="flex items-center gap-2">
-                      <input type="hidden" name="matchId" value={m.id} />
-                      <input type="hidden" name="back" value={back} />
-                      <select name="status" defaultValue={m.status} className="input h-8 w-auto py-0 text-xs">
-                        {MATCH_STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {statusLabel(s)}
-                          </option>
-                        ))}
-                      </select>
-                      <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                        Set
-                      </SubmitButton>
-                    </form>
-
-                    <form action={toggleMatchRelease}>
-                      <input type="hidden" name="matchId" value={m.id} />
-                      <input type="hidden" name="side" value="company" />
-                      <input type="hidden" name="back" value={back} />
-                      <SubmitButton
-                        className={m.releasedToCompany ? "btn btn-danger btn-sm" : "btn btn-ghost btn-sm"}
-                        pendingLabel="…"
-                      >
-                        {m.releasedToCompany ? "Revoke company release" : "Release to company"}
-                      </SubmitButton>
-                    </form>
-
-                    <form action={toggleMatchRelease}>
-                      <input type="hidden" name="matchId" value={m.id} />
-                      <input type="hidden" name="side" value="partner" />
-                      <input type="hidden" name="back" value={back} />
-                      <SubmitButton
-                        className={m.releasedToPartner ? "btn btn-danger btn-sm" : "btn btn-ghost btn-sm"}
-                        pendingLabel="…"
-                      >
-                        {m.releasedToPartner ? "Revoke partner release" : "Release to partner"}
-                      </SubmitButton>
-                    </form>
-                  </div>
-
-                  {/* Introductions */}
-                  <div className="mt-4 border-t border-black/5 pt-3">
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                      Introductions
-                    </p>
-                    {m.introductions.length ? (
-                      <ul className="space-y-2">
-                        {m.introductions.map((intro) => (
-                          <li
-                            key={intro.id}
-                            className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-black/[0.03] px-3 py-2.5"
+                    {/* Stage + release, the two things that matter at a glance */}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <StatusPills
+                        action={updateMatchStatus}
+                        hidden={{ matchId: m.id, back }}
+                        options={MATCH_STATUSES}
+                        current={m.status}
+                        tone="danger"
+                        labels={{ INTRODUCED: "Introduced" }}
+                      />
+                      <div className="flex items-center gap-1.5 border-l border-black/10 pl-3">
+                        <form action={toggleMatchRelease} className="contents">
+                          <input type="hidden" name="matchId" value={m.id} />
+                          <input type="hidden" name="side" value="company" />
+                          <input type="hidden" name="back" value={back} />
+                          <button
+                            type="submit"
+                            className={`pill ${m.releasedToCompany ? "pill-active" : ""}`}
                           >
-                            <StatusBadge status={intro.status} />
-                            <span className="text-xs text-slate-600">
-                              {statusLabel(intro.channel)}
-                              {intro.sentAt ? ` · sent ${fmtDateTime(intro.sentAt)}` : ""}
-                              {intro.respondedAt ? ` · responded ${fmtDateTime(intro.respondedAt)}` : ""}
-                            </span>
-                            {intro.summary ? (
-                              <span className="w-full text-xs text-slate-500">{intro.summary}</span>
-                            ) : null}
-                            {intro.followUpDate ? (
-                              <span className="text-xs text-gold-700">
-                                Follow up {fmtDate(intro.followUpDate)}
-                              </span>
-                            ) : null}
-                            {intro.outcome ? (
-                              <span className="w-full text-xs text-slate-500">Outcome: {intro.outcome}</span>
-                            ) : null}
-                            {intro.settledRate != null ? (
-                              <span className="text-xs text-leaf-700">
-                                Settled ₹{intro.settledRate.toString()}/USDT
-                              </span>
-                            ) : null}
-                            <form action={updateIntroductionStatus} className="ml-auto flex items-center gap-2">
-                              <input type="hidden" name="introductionId" value={intro.id} />
-                              <input type="hidden" name="back" value={back} />
-                              <select
-                                name="status"
-                                defaultValue={intro.status}
-                                className="input h-8 w-auto py-0 text-xs"
-                              >
-                                {INTRODUCTION_STATUSES.map((s) => (
-                                  <option key={s} value={s}>
-                                    {statusLabel(s)}
-                                  </option>
-                                ))}
-                              </select>
-                              <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                                Set
-                              </SubmitButton>
-                            </form>
-                            <form
-                              action={updateIntroductionOutcome}
-                              className="flex w-full flex-wrap items-center gap-2 border-t border-black/5 pt-2"
-                            >
-                              <input type="hidden" name="introductionId" value={intro.id} />
-                              <input type="hidden" name="back" value={back} />
-                              <input
-                                type="date"
-                                name="followUpDate"
-                                defaultValue={
-                                  intro.followUpDate
-                                    ? intro.followUpDate.toISOString().slice(0, 10)
-                                    : ""
-                                }
-                                className="input h-8 w-auto py-0 text-xs"
-                              />
-                              <input
-                                name="outcome"
-                                defaultValue={intro.outcome ?? ""}
-                                className="input h-8 min-w-40 flex-1 py-0 text-xs"
-                                placeholder="Outcome notes"
-                              />
-                              {request.direction === "INR_TO_USDT" || request.direction === "USDT_TO_INR" ? (
-                                <input
-                                  name="settledRate"
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  defaultValue={intro.settledRate?.toString() ?? ""}
-                                  className="input h-8 w-32 py-0 text-xs"
-                                  placeholder="₹/USDT settled"
-                                />
-                              ) : null}
-                              <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                                Save follow-up
-                              </SubmitButton>
-                            </form>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-slate-400">No introduction recorded yet.</p>
-                    )}
+                            {m.releasedToCompany ? "✓ Released to company" : "Release to company"}
+                          </button>
+                        </form>
+                        <form action={toggleMatchRelease} className="contents">
+                          <input type="hidden" name="matchId" value={m.id} />
+                          <input type="hidden" name="side" value="partner" />
+                          <input type="hidden" name="back" value={back} />
+                          <button
+                            type="submit"
+                            className={`pill ${m.releasedToPartner ? "pill-active" : ""}`}
+                          >
+                            {m.releasedToPartner ? "✓ Released to partner" : "Release to partner"}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
 
-                    <form action={createIntroduction} className="mt-3 flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="matchId" value={m.id} />
+                    {/* Decision notes — tucked away unless already in use */}
+                    <Disclosure
+                      label="Decision notes"
+                      defaultOpen={hasDecisionData}
+                      className="mt-3 border-t border-black/5 pt-3"
+                    >
+                      <form
+                        action={updateMatchDecision}
+                        className="flex flex-wrap items-center gap-2"
+                      >
+                        <input type="hidden" name="matchId" value={m.id} />
+                        <input type="hidden" name="back" value={back} />
+                        <input
+                          name="confidenceScore"
+                          type="number"
+                          min="0"
+                          max="100"
+                          defaultValue={m.confidenceScore ?? ""}
+                          className="input h-8 w-24 py-0 text-xs"
+                          placeholder="Confidence 0–100"
+                        />
+                        <input
+                          name="nextAction"
+                          defaultValue={m.nextAction ?? ""}
+                          className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                          placeholder="Next action — decision support only"
+                        />
+                        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
+                          Save
+                        </SubmitButton>
+                      </form>
+                    </Disclosure>
+
+                    {/* Introductions */}
+                    <div className="mt-4 border-t border-black/5 pt-3">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        Introduction
+                      </p>
+                      {m.introductions.length ? (
+                        <ul className="space-y-2">
+                          {m.introductions.map((intro) => {
+                            const hasFollowUpData =
+                              !!intro.followUpDate || !!intro.outcome || intro.settledRate != null;
+                            return (
+                              <li
+                                key={intro.id}
+                                className="rounded-lg bg-black/[0.03] px-3 py-2.5"
+                              >
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                                  <span className="text-xs font-medium text-slate-600">
+                                    via {intro.channel.toLowerCase()}
+                                    {intro.sentAt ? ` · sent ${fmtDateTime(intro.sentAt)}` : ""}
+                                  </span>
+                                </div>
+                                {intro.summary ? (
+                                  <p className="mt-1 text-xs text-slate-500">{intro.summary}</p>
+                                ) : null}
+                                <div className="mt-2">
+                                  <StatusPills
+                                    action={updateIntroductionStatus}
+                                    hidden={{ introductionId: intro.id, back }}
+                                    options={INTRODUCTION_STATUSES}
+                                    current={intro.status}
+                                    tone="danger"
+                                  />
+                                </div>
+
+                                <Disclosure
+                                  label="Follow-up & outcome"
+                                  defaultOpen={hasFollowUpData}
+                                  className="mt-2.5 border-t border-black/5 pt-2.5"
+                                >
+                                  <form
+                                    action={updateIntroductionOutcome}
+                                    className="flex flex-wrap items-center gap-2"
+                                  >
+                                    <input type="hidden" name="introductionId" value={intro.id} />
+                                    <input type="hidden" name="back" value={back} />
+                                    <input
+                                      type="date"
+                                      name="followUpDate"
+                                      defaultValue={
+                                        intro.followUpDate
+                                          ? intro.followUpDate.toISOString().slice(0, 10)
+                                          : ""
+                                      }
+                                      className="input h-8 w-auto py-0 text-xs"
+                                    />
+                                    <input
+                                      name="outcome"
+                                      defaultValue={intro.outcome ?? ""}
+                                      className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                                      placeholder="Outcome notes"
+                                    />
+                                    {request.direction === "INR_TO_USDT" ||
+                                    request.direction === "USDT_TO_INR" ? (
+                                      <input
+                                        name="settledRate"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        defaultValue={intro.settledRate?.toString() ?? ""}
+                                        className="input h-8 w-32 py-0 text-xs"
+                                        placeholder="₹/USDT settled"
+                                      />
+                                    ) : null}
+                                    <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
+                                      Save
+                                    </SubmitButton>
+                                  </form>
+                                </Disclosure>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
+
+                      <Disclosure
+                        label={m.introductions.length ? "+ Record another introduction" : "Record introduction"}
+                        defaultOpen={m.introductions.length === 0}
+                        className={m.introductions.length ? "mt-3" : "mt-1"}
+                      >
+                        <form action={createIntroduction} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="matchId" value={m.id} />
+                          <input type="hidden" name="back" value={back} />
+                          <select name="channel" defaultValue="EMAIL" className="input h-8 w-auto py-0 text-xs">
+                            {INTRO_CHANNELS.map((c) => (
+                              <option key={c} value={c}>
+                                {statusLabel(c)}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            name="summary"
+                            className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                            placeholder="Summary — who was introduced to whom, context"
+                          />
+                          <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
+                            Record introduction
+                          </SubmitButton>
+                        </form>
+                      </Disclosure>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add a partner match — collapsed once one already exists */}
+            <Disclosure
+              label={hasAnyMatch ? "+ Add another partner match" : "Add a partner match"}
+              defaultOpen={!hasAnyMatch}
+              className="mt-5 border-t border-black/10 pt-5"
+            >
+              <div className="space-y-4">
+                {suggestions.length ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Suggested · scored automatically
+                    </p>
+                    {suggestions.map(({ partner: p, score, reasons }) => (
+                      <div
+                        key={p.id}
+                        className="rounded-xl border border-black/10 bg-black/[0.02] p-3.5 animate-reveal"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                          <span
+                            className={`chip font-mono font-semibold ${
+                              score >= 70
+                                ? "border-leaf-300 bg-leaf-50 text-leaf-700"
+                                : score >= 40
+                                  ? "border-gold-300 bg-gold-50 text-gold-700"
+                                  : "border-black/10 bg-black/[0.03] text-slate-500"
+                            }`}
+                          >
+                            {score}/100
+                          </span>
+                          <Link
+                            href={`/admin/partners/${p.id}`}
+                            className="text-sm font-semibold text-slate-900 hover:text-gold-700"
+                          >
+                            {p.displayName}
+                          </Link>
+                          <span className="font-mono text-[11px] text-leaf-700">{p.reference}</span>
+                          <StatusBadge status={p.status} />
+                        </div>
+                        <p className="mt-1.5 text-xs text-slate-500">{reasons.join(" · ")}</p>
+                        <form action={createMatch} className="mt-2.5 flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <input type="hidden" name="back" value={back} />
+                          <input type="hidden" name="partnerId" value={p.id} />
+                          <input type="hidden" name="confidenceScore" value={score} />
+                          <input
+                            name="adminNote"
+                            className="input h-8 min-w-40 flex-1 py-0 text-xs"
+                            placeholder="Why this partner fits — optional"
+                          />
+                          <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
+                            Match at {score}/100
+                          </SubmitButton>
+                        </form>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    Manual selection
+                  </p>
+                  {eligiblePartners.length ? (
+                    <form action={createMatch} className="flex flex-wrap items-center gap-2">
+                      <input type="hidden" name="requestId" value={request.id} />
                       <input type="hidden" name="back" value={back} />
-                      <select name="channel" defaultValue="EMAIL" className="input h-8 w-auto py-0 text-xs">
-                        {INTRO_CHANNELS.map((c) => (
-                          <option key={c} value={c}>
-                            {statusLabel(c)}
+                      <select name="partnerId" defaultValue="" className="input h-9 w-auto max-w-full py-0 text-xs">
+                        <option value="" disabled>
+                          Select a reviewed partner…
+                        </option>
+                        {eligiblePartners.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.displayName} ({p.reference})
                           </option>
                         ))}
                       </select>
                       <input
-                        name="summary"
-                        className="input h-8 min-w-40 flex-1 py-0 text-xs"
-                        placeholder="Summary — who was introduced to whom, context"
+                        name="adminNote"
+                        className="input h-9 min-w-40 flex-1 py-0 text-xs"
+                        placeholder="Why this partner fits — optional"
                       />
-                      <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                        Record introduction
+                      <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
+                        Create match
                       </SubmitButton>
                     </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Suggested partners */}
-            {suggestions.length ? (
-              <div className="mt-5 border-t border-black/10 pt-5">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  Suggested partners · scored automatically
-                </p>
-                <div className="space-y-2">
-                  {suggestions.map(({ partner: p, score, reasons }) => (
-                    <div
-                      key={p.id}
-                      className="rounded-xl border border-black/10 bg-black/[0.02] p-3.5 animate-reveal"
-                    >
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                        <span
-                          className={`chip font-mono font-semibold ${
-                            score >= 70
-                              ? "border-leaf-300 bg-leaf-50 text-leaf-700"
-                              : score >= 40
-                                ? "border-gold-300 bg-gold-50 text-gold-700"
-                                : "border-black/10 bg-black/[0.03] text-slate-500"
-                          }`}
-                        >
-                          {score}/100
-                        </span>
-                        <Link
-                          href={`/admin/partners/${p.id}`}
-                          className="text-sm font-semibold text-slate-900 hover:text-gold-700"
-                        >
-                          {p.displayName}
-                        </Link>
-                        <span className="font-mono text-[11px] text-leaf-700">{p.reference}</span>
-                        <StatusBadge status={p.status} />
-                      </div>
-                      <p className="mt-1.5 text-xs text-slate-500">{reasons.join(" · ")}</p>
-                      <form action={createMatch} className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <input type="hidden" name="requestId" value={request.id} />
-                        <input type="hidden" name="back" value={back} />
-                        <input type="hidden" name="partnerId" value={p.id} />
-                        <input type="hidden" name="confidenceScore" value={score} />
-                        <input
-                          name="adminNote"
-                          className="input h-8 min-w-40 flex-1 py-0 text-xs"
-                          placeholder="Why this partner fits — optional"
-                        />
-                        <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
-                          Match at {score}/100
-                        </SubmitButton>
-                      </form>
-                    </div>
-                  ))}
+                  ) : (
+                    <EmptyState
+                      title="No eligible partners for this direction"
+                      body="Partners must be Verified or Limited and support this corridor. Review partner applications first."
+                    />
+                  )}
                 </div>
               </div>
-            ) : null}
-
-            {/* Add match */}
-            <div className="mt-5 border-t border-black/10 pt-5">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Add partner match — manual selection
-              </p>
-              {eligiblePartners.length ? (
-                <form action={createMatch} className="flex flex-wrap items-center gap-2">
-                  <input type="hidden" name="requestId" value={request.id} />
-                  <input type="hidden" name="back" value={back} />
-                  <select name="partnerId" defaultValue="" className="input h-9 w-auto max-w-full py-0 text-xs">
-                    <option value="" disabled>
-                      Select a reviewed partner…
-                    </option>
-                    {eligiblePartners.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.displayName} ({p.reference}) — {p.dailyCapacityBand}, {p.banks.length} banks,{" "}
-                        {statusLabel(p.status)}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    name="adminNote"
-                    className="input h-9 min-w-40 flex-1 py-0 text-xs"
-                    placeholder="Why this partner fits — optional"
-                  />
-                  <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
-                    Create match
-                  </SubmitButton>
-                </form>
-              ) : (
-                <EmptyState
-                  title="No eligible partners for this direction"
-                  body="Partners must be Verified or Limited and support this corridor. Review partner applications first."
-                />
-              )}
-            </div>
+            </Disclosure>
           </div>
 
           {/* Revenue */}
@@ -528,37 +532,47 @@ export default async function AdminRequestDetailPage({
                 {request.revenues.map((r) => (
                   <li
                     key={r.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-black/10 bg-black/[0.02] px-3.5 py-3"
+                    className="rounded-lg border border-black/10 bg-black/[0.02] px-3.5 py-3"
                   >
-                    <span className="text-sm font-semibold tabular-nums text-slate-900">
-                      {money(r.amount.toString(), r.currency)}
-                    </span>
-                    <span className="chip border-black/10 bg-black/[0.03] text-slate-600">
-                      {revenueTypeLabel(r.type)}
-                    </span>
-                    <StatusBadge status={r.status} />
-                    {r.payerName ? (
-                      <span className="text-xs text-slate-500">
-                        {r.payerType ? `${r.payerType} — ` : ""}
-                        {r.payerName}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <span className="text-sm font-semibold tabular-nums text-slate-900">
+                        {money(r.amount.toString(), r.currency)}
                       </span>
-                    ) : null}
-                    {r.basis ? <span className="text-xs text-slate-500">{r.basis}</span> : null}
-                    {r.match ? (
-                      <span className="text-xs text-slate-400">via {r.match.partner.displayName}</span>
-                    ) : null}
-                    <span className="text-[11px] text-slate-400">
-                      {[
-                        r.dueDate ? `due ${fmtDate(r.dueDate)}` : null,
-                        r.invoicedAt ? `invoiced ${fmtDate(r.invoicedAt)}` : null,
-                        r.paidAt ? `paid ${fmtDate(r.paidAt)}` : null,
-                        `created ${fmtDate(r.createdAt)}`,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
+                      <span className="chip border-black/10 bg-black/[0.03] text-slate-600">
+                        {revenueTypeLabel(r.type)}
+                      </span>
+                      {r.payerName ? (
+                        <span className="text-xs text-slate-500">
+                          {r.payerType ? `${r.payerType} — ` : ""}
+                          {r.payerName}
+                        </span>
+                      ) : null}
+                      {r.match ? (
+                        <span className="text-xs text-slate-400">via {r.match.partner.displayName}</span>
+                      ) : null}
+                      <span className="ml-auto text-[11px] text-slate-400">
+                        {[
+                          r.dueDate ? `due ${fmtDate(r.dueDate)}` : null,
+                          r.paidAt ? `paid ${fmtDate(r.paidAt)}` : null,
+                          `created ${fmtDate(r.createdAt)}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </div>
+                    {r.basis ? <p className="mt-1 text-xs text-slate-500">{r.basis}</p> : null}
+
+                    <div className="mt-2.5">
+                      <StatusPills
+                        action={updateRevenueStatus}
+                        hidden={{ revenueId: r.id, back }}
+                        options={REVENUE_STATUSES}
+                        current={r.status}
+                      />
+                    </div>
+
                     {r.paymentLinkUrl ? (
-                      <div className="flex basis-full items-center gap-2 rounded-md border border-gold-600/20 bg-gold-500/[0.06] px-2.5 py-1.5 text-xs">
+                      <div className="mt-2.5 flex items-center gap-2 rounded-md border border-gold-600/20 bg-gold-500/[0.06] px-2.5 py-1.5 text-xs">
                         <span className="font-medium text-slate-700">Razorpay link:</span>
                         <a
                           href={r.paymentLinkUrl}
@@ -577,7 +591,7 @@ export default async function AdminRequestDetailPage({
                     ) : isRazorpayConfigured() &&
                       r.currency === "INR" &&
                       !["PAID", "CANCELLED", "LOST", "WAIVED"].includes(r.status) ? (
-                      <form action={createRevenuePaymentLink} className="flex basis-full items-center">
+                      <form action={createRevenuePaymentLink} className="mt-2.5">
                         <input type="hidden" name="revenueId" value={r.id} />
                         <input type="hidden" name="back" value={back} />
                         <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Generating…">
@@ -585,8 +599,9 @@ export default async function AdminRequestDetailPage({
                         </SubmitButton>
                       </form>
                     ) : null}
+
                     {r.cryptoInvoiceUrl ? (
-                      <div className="flex basis-full items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-500/[0.06] px-2.5 py-1.5 text-xs">
+                      <div className="mt-2.5 flex items-center gap-2 rounded-md border border-emerald-600/20 bg-emerald-500/[0.06] px-2.5 py-1.5 text-xs">
                         <span className="font-medium text-slate-700">USDT invoice:</span>
                         <a
                           href={r.cryptoInvoiceUrl}
@@ -605,7 +620,7 @@ export default async function AdminRequestDetailPage({
                     ) : isNowPaymentsConfigured() &&
                       r.currency === "USDT" &&
                       !["PAID", "CANCELLED", "LOST", "WAIVED"].includes(r.status) ? (
-                      <form action={createRevenueCryptoInvoice} className="flex basis-full items-center">
+                      <form action={createRevenueCryptoInvoice} className="mt-2.5">
                         <input type="hidden" name="revenueId" value={r.id} />
                         <input type="hidden" name="back" value={back} />
                         <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Generating…">
@@ -613,20 +628,6 @@ export default async function AdminRequestDetailPage({
                         </SubmitButton>
                       </form>
                     ) : null}
-                    <form action={updateRevenueStatus} className="ml-auto flex items-center gap-2">
-                      <input type="hidden" name="revenueId" value={r.id} />
-                      <input type="hidden" name="back" value={back} />
-                      <select name="status" defaultValue={r.status} className="input h-8 w-auto py-0 text-xs">
-                        {REVENUE_STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {statusLabel(s)}
-                          </option>
-                        ))}
-                      </select>
-                      <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
-                        Set
-                      </SubmitButton>
-                    </form>
                   </li>
                 ))}
               </ul>
@@ -639,57 +640,59 @@ export default async function AdminRequestDetailPage({
               </div>
             )}
 
-            <form action={addRevenue} className="flex flex-wrap items-center gap-2 border-t border-black/10 pt-4">
-              <input type="hidden" name="requestId" value={request.id} />
-              <input type="hidden" name="back" value={back} />
-              <input
-                name="amount"
-                type="number"
-                step="any"
-                min="0"
-                className="input h-9 w-32 py-0 text-xs"
-                placeholder="Amount"
-              />
-              <select name="currency" defaultValue="INR" className="input h-9 w-auto py-0 text-xs">
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <select name="type" defaultValue="INTRO_FEE" className="input h-9 w-auto py-0 text-xs">
-                {REVENUE_TYPE_OPTIONS.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-              {request.matches.length ? (
-                <select name="matchId" defaultValue="" className="input h-9 w-auto py-0 text-xs">
-                  <option value="">No specific match</option>
-                  {request.matches.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      via {m.partner.displayName}
+            <Disclosure
+              label={request.revenues.length ? "+ Record revenue" : "Record revenue"}
+              defaultOpen={request.revenues.length === 0}
+              className="border-t border-black/10 pt-4"
+            >
+              <form action={addRevenue} className="flex flex-wrap items-center gap-2">
+                <input type="hidden" name="requestId" value={request.id} />
+                <input type="hidden" name="back" value={back} />
+                <input
+                  name="amount"
+                  type="number"
+                  step="any"
+                  min="0"
+                  className="input h-9 w-32 py-0 text-xs"
+                  placeholder="Amount"
+                />
+                <select name="currency" defaultValue="INR" className="input h-9 w-auto py-0 text-xs">
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
                     </option>
                   ))}
                 </select>
-              ) : null}
-              <input
-                name="payerType"
-                className="input h-9 w-28 py-0 text-xs"
-                placeholder="Payer type"
-              />
-              <input name="payerName" className="input h-9 w-36 py-0 text-xs" placeholder="Payer name" />
-              <input name="dueDate" type="date" className="input h-9 w-auto py-0 text-xs" />
-              <input
-                name="basis"
-                className="input h-9 min-w-40 flex-1 py-0 text-xs"
-                placeholder="Basis — e.g. 25 bps on first-month volume"
-              />
-              <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
-                Record
-              </SubmitButton>
-            </form>
+                <select name="type" defaultValue="INTRO_FEE" className="input h-9 w-auto py-0 text-xs">
+                  {REVENUE_TYPE_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                {request.matches.length ? (
+                  <select name="matchId" defaultValue="" className="input h-9 w-auto py-0 text-xs">
+                    <option value="">No specific match</option>
+                    {request.matches.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        via {m.partner.displayName}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                <input name="payerType" className="input h-9 w-28 py-0 text-xs" placeholder="Payer type" />
+                <input name="payerName" className="input h-9 w-36 py-0 text-xs" placeholder="Payer name" />
+                <input name="dueDate" type="date" className="input h-9 w-auto py-0 text-xs" />
+                <input
+                  name="basis"
+                  className="input h-9 min-w-40 flex-1 py-0 text-xs"
+                  placeholder="Basis — e.g. 25 bps on first-month volume"
+                />
+                <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
+                  Record
+                </SubmitButton>
+              </form>
+            </Disclosure>
           </div>
 
           {/* Notes */}
@@ -721,28 +724,6 @@ export default async function AdminRequestDetailPage({
 
         {/* ── Right rail ── */}
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
-          <div className="card p-5">
-            <SectionTitle title="Request status" />
-            <form action={updateRequestStatus} className="flex items-center gap-2">
-              <input type="hidden" name="requestId" value={request.id} />
-              <input type="hidden" name="back" value={back} />
-              <select name="status" defaultValue={request.status} className="input h-9 py-0 text-sm">
-                {REQUEST_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabel(s)}
-                  </option>
-                ))}
-              </select>
-              <SubmitButton className="btn btn-gold btn-sm" pendingLabel="…">
-                Update
-              </SubmitButton>
-            </form>
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-              Submitted → In Review → Matching → Introduced → Closed. Every change is
-              recorded in the timeline and visible to the company.
-            </p>
-          </div>
-
           <div className="card p-5">
             <SectionTitle title="Company" />
             <dl className="space-y-3">

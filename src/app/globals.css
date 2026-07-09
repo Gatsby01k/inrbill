@@ -292,6 +292,22 @@
     @apply border-gold-600/50 bg-gold-500/[0.1] text-gold-700;
   }
 
+  /* ── Disclosure (collapsible section) ─────────────────────── */
+  .disclosure-summary {
+    @apply flex cursor-pointer select-none list-none items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:text-gold-700;
+  }
+  .disclosure-summary::-webkit-details-marker {
+    display: none;
+  }
+  .disclosure-summary .chev {
+    display: inline-block;
+    font-size: 9px;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  details[open] > .disclosure-summary .chev {
+    transform: rotate(90deg);
+  }
+
   /* ── Loading skeletons ────────────────────────────────────── */
   .skeleton {
     @apply relative overflow-hidden rounded bg-black/[0.06];
