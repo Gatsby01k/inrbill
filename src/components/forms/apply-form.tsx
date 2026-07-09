@@ -247,7 +247,7 @@ export function ApplyForm() {
               onClick={() => goToStep(i)}
               disabled={i > maxStep}
               className={cn(
-                "relative z-[1] flex-1 rounded-lg px-2 py-2.5 text-center text-[11px] font-semibold leading-tight transition-colors",
+                "relative z-[1] flex flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-[11px] font-semibold leading-tight transition-colors",
                 step === i
                   ? "text-slate-900"
                   : i <= maxStep

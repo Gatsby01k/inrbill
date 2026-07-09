@@ -157,10 +157,31 @@ export function SlidingIndicator({
     }
 
     measure();
+    // A second pass one frame later catches layout that hadn't settled yet
+    // on first measure (e.g. a scrollbar appearing, a parent still animating
+    // in) — without it the pill can lock onto a stale, narrower/shorter box.
+    const raf = requestAnimationFrame(measure);
+    // Web fonts swapping in after first paint reflow text without changing
+    // the container's own box size, so ResizeObserver on the container alone
+    // can miss it — re-measure once the real font is active too.
+    let cancelled = false;
+    if (typeof document !== "undefined" && "fonts" in document) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) measure();
+      });
+    }
+
     const ro = new ResizeObserver(measure);
     ro.observe(container);
+    // Also watch the active element directly, not just the container — its
+    // own size can change from text reflow even when the container's box
+    // size stays fixed.
+    const activeEl = container.querySelector<HTMLElement>('[data-active="true"]');
+    if (activeEl) ro.observe(activeEl);
     window.addEventListener("resize", measure);
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
