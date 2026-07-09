@@ -15,6 +15,7 @@ export default async function AdminLayout({
       badge="Operations"
       badgeTone="gold"
       userLine={user.email}
+      showBuildTag
       nav={[
         { href: "/admin", label: "Dashboard", exact: true },
         { href: "/admin/requests", label: "Requests" },

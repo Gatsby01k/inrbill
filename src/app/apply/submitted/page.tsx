@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearDraft } from "@/components/forms/clear-draft";
+import { AccessReveal } from "@/components/site/access-reveal";
 import { FormShell } from "@/components/site/form-shell";
+import { readAccessReveal } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel } from "@/lib/format";
 import { CONTACT_EMAIL } from "@/lib/options";
@@ -59,6 +61,7 @@ export default async function ApplySubmittedPage({
 }) {
   const { ref } = await searchParams;
   const openPreview = ref && ref !== "received" ? await getOpenRequestPreview(ref) : null;
+  const reveal = await readAccessReveal();
   return (
     <FormShell
       eyebrow="Application received"
@@ -67,6 +70,13 @@ export default async function ApplySubmittedPage({
     >
       <div className="space-y-6">
         <ClearDraft draftKey="inrp2p-apply-draft-v1" />
+        {reveal ? (
+          <AccessReveal
+            email={reveal.email}
+            password={reveal.password}
+            backPath={`/apply/submitted${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`}
+          />
+        ) : null}
         {ref && ref !== "received" ? (
           <div className="card flex items-center justify-between gap-4 px-6 py-5">
             <div>

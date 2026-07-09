@@ -2,11 +2,18 @@
 
 import { redirect } from "next/navigation";
 import { audit, nextReference } from "@/lib/audit";
-import { createSession, getSession, hashPassword } from "@/lib/auth";
+import {
+  clearAccessReveal,
+  createSession,
+  generateAccessPassword,
+  getSession,
+  hashPassword,
+  setAccessReveal,
+} from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  accountSchema,
   companyRequestSchema,
+  emailOnlySchema,
   flattenErrors,
   partnerApplicationSchema,
   type ActionState,
@@ -87,16 +94,14 @@ export async function submitCompanyRequest(
   let companyId: string;
   let userId: string | null = null;
   let actor = data.companyName;
+  let newAccessCredentials: { email: string; password: string } | null = null;
 
   if (loggedInCompany) {
     companyId = loggedInCompany.id;
     userId = session!.user.id;
     actor = loggedInCompany.companyName;
   } else {
-    const account = accountSchema.safeParse({
-      email: str(formData, "email"),
-      password: str(formData, "password"),
-    });
+    const account = emailOnlySchema.safeParse({ email: str(formData, "email") });
     if (!account.success) {
       return {
         error: "Please fix the highlighted fields.",
@@ -111,7 +116,10 @@ export async function submitCompanyRequest(
           "An account already exists for this email. Log in first, then submit the request from your workspace.",
       };
     }
-    const passwordHash = await hashPassword(account.data.password);
+    // No one invents a password mid-form — it's generated here and shown once
+    // on the confirmation page, right after the account is already signed in.
+    const plainPassword = generateAccessPassword();
+    const passwordHash = await hashPassword(plainPassword);
     const created = await db.user.create({
       data: {
         email: account.data.email,
@@ -134,6 +142,7 @@ export async function submitCompanyRequest(
     });
     companyId = created.company!.id;
     userId = created.id;
+    newAccessCredentials = { email: account.data.email, password: plainPassword };
   }
 
   const reference = await nextReference("request");
@@ -176,6 +185,9 @@ export async function submitCompanyRequest(
   await checkCoverageGap(request);
 
   if (!loggedInCompany && userId) await createSession(userId);
+  if (newAccessCredentials) {
+    await setAccessReveal(newAccessCredentials.email, newAccessCredentials.password, "/request/submitted");
+  }
   redirect(`/request/submitted?ref=${encodeURIComponent(reference)}`);
 }
 
@@ -216,10 +228,7 @@ export async function submitPartnerApplication(
   };
 
   const parsed = partnerApplicationSchema.safeParse(input);
-  const account = accountSchema.safeParse({
-    email: str(formData, "email"),
-    password: str(formData, "password"),
-  });
+  const account = emailOnlySchema.safeParse({ email: str(formData, "email") });
 
   if (!parsed.success || !account.success) {
     const fieldErrors = {
@@ -237,7 +246,10 @@ export async function submitPartnerApplication(
   }
 
   const data = parsed.data;
-  const passwordHash = await hashPassword(account.data.password);
+  // No one invents a password mid-form — it's generated here and shown once
+  // on the confirmation page, right after the account is already signed in.
+  const plainPassword = generateAccessPassword();
+  const passwordHash = await hashPassword(plainPassword);
   const reference = await nextReference("partner");
 
   const created = await db.user.create({
@@ -289,5 +301,13 @@ export async function submitPartnerApplication(
   });
 
   await createSession(created.id);
+  await setAccessReveal(account.data.email, plainPassword, "/apply/submitted");
   redirect(`/apply/submitted?ref=${encodeURIComponent(reference)}`);
+}
+
+/** Clears the one-time access-credentials reveal once the visitor has saved it. */
+export async function dismissAccessReveal(fd: FormData) {
+  await clearAccessReveal();
+  const back = str(fd, "back");
+  redirect(back.startsWith("/") ? back : "/");
 }

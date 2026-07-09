@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
-import { Reveal } from "@/components/motion";
+import { Counter, Reveal } from "@/components/motion";
 import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
+import { db } from "@/lib/db";
 import {
   CONTACT_EMAIL,
   CONTACT_LINKEDIN,
@@ -14,6 +15,17 @@ import {
   CONTACT_TELEGRAM_CHANNEL,
 } from "@/lib/options";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
+
+// Refreshed every 15 minutes rather than on every request — a public
+// marketing page has no business hitting Postgres per pageview, and the
+// numbers below don't need to be second-fresh to be an honest signal.
+export const revalidate = 900;
+
+// Below this, a raw partner count reads as "this network is tiny" rather
+// than "this network is real" — so the live-stats strip stays hidden until
+// there's actually something worth showing. No manual flag to flip later;
+// it activates itself the moment the network crosses the line.
+const LIVE_STATS_THRESHOLD = 5;
 
 export const metadata: Metadata = {
   title: {
@@ -157,7 +169,13 @@ const jsonLd = {
   ],
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const [verifiedPartners, successfulIntros] = await Promise.all([
+    db.partnerProfile.count({ where: { status: { in: ["VERIFIED", "LIMITED"] } } }),
+    db.introduction.count({ where: { status: "SUCCESSFUL" } }),
+  ]);
+  const showLiveStats = verifiedPartners >= LIVE_STATS_THRESHOLD;
+
   return (
     <div className="flex min-h-screen flex-col">
       <script
@@ -231,7 +249,29 @@ export default function LandingPage() {
                 </div>
               ))}
             </Reveal>
-            <Reveal index={4} className="mt-4 text-center">
+            {showLiveStats ? (
+              <Reveal
+                index={4}
+                className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12.5px] text-slate-500"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-leaf-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-leaf-500" />
+                  </span>
+                  <Counter value={verifiedPartners} className="tnum font-semibold text-slate-800" />{" "}
+                  verified partners in the network
+                </span>
+                {successfulIntros > 0 ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-slate-300">·</span>
+                    <Counter value={successfulIntros} className="tnum font-semibold text-slate-800" />{" "}
+                    successful introductions
+                  </span>
+                ) : null}
+              </Reveal>
+            ) : null}
+            <Reveal index={5} className="mt-4 text-center">
               <Link
                 href="/inr-p2p-index"
                 className="text-[12px] font-medium text-slate-500 transition-colors hover:text-gold-700"

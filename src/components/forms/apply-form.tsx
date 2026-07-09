@@ -67,7 +67,6 @@ const STEP_OF_FIELD: Record<string, number> = {
   phone: 0,
   experienceBand: 0,
   email: 3,
-  password: 3,
   directions: 1,
   banks: 1,
   methods: 1,
@@ -95,7 +94,6 @@ const TEXT_FIELDS = [
   "phone",
   "experienceBand",
   "email",
-  "password",
   "dailyCapacityBand",
   "monthlyCapacityBand",
   "minTicket",
@@ -136,9 +134,6 @@ const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
 const DRAFT_KEY = "inrp2p-apply-draft-v1";
 
-/** Everything except password — a password is never written to localStorage. */
-const DRAFT_FIELDS = TEXT_FIELDS.filter((k) => k !== "password");
-
 export function ApplyForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(
     submitPartnerApplication,
@@ -172,9 +167,9 @@ export function ApplyForm() {
   }, [state]);
 
   // Restore a locally saved draft once, on first mount — closing the tab
-  // mid-application shouldn't cost someone their 4 minutes of work. Never
-  // restores the password field, since that's never persisted in the first
-  // place (see persistDraft below).
+  // mid-application shouldn't cost someone their 4 minutes of work. There's
+  // no password field to worry about — the account password is generated
+  // server-side on submit and never typed here at all.
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
@@ -215,7 +210,7 @@ export function ApplyForm() {
     try {
       const fd = new FormData(form);
       const obj: Record<string, string | string[]> = {};
-      for (const k of DRAFT_FIELDS) {
+      for (const k of TEXT_FIELDS) {
         const v = fd.get(k);
         if (typeof v === "string" && v) obj[k] = v;
       }
@@ -266,7 +261,7 @@ export function ApplyForm() {
       snap.workingHours.trim().length >= 2 &&
       snap.jurisdictions.trim().length >= 2,
     true,
-    EMAIL_RE.test(snap.email) && snap.password.length >= 10,
+    EMAIL_RE.test(snap.email),
   ];
 
   const checklist = [
@@ -473,21 +468,11 @@ export function ApplyForm() {
           <div ref={stepRef3} className={cn(step !== 3 && "hidden")}>
             <FormSection
               title="Create your workspace"
-              sub="This creates your partner login so you can watch verification and matches land — nothing is sent until you submit below."
+              sub="This creates your partner login so you can watch verification and matches land — no password to invent, you'll be signed in immediately after you submit below."
             >
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Email" error={fe.email}>
                   <input name="email" type="email" required className="input" placeholder="you@desk.com" />
-                </Field>
-                <Field label="Password" error={fe.password} hint="Minimum 10 characters">
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={10}
-                    className="input"
-                    placeholder="••••••••••"
-                  />
                 </Field>
               </div>
             </FormSection>

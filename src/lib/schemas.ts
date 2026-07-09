@@ -62,9 +62,11 @@ export const twoFactorCodeSchema = z
   .min(1, "Enter a code")
   .max(20, "Enter a code");
 
-export const accountSchema = z.object({
+// Used by first-touch submission flows (company request, partner application)
+// where the account password is now generated server-side — the visitor
+// only ever types their email, never invents a password mid-form.
+export const emailOnlySchema = z.object({
   email: emailSchema,
-  password: z.string().min(10, "Use at least 10 characters"),
 });
 
 export const companyRequestSchema = z.object({

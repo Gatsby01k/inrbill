@@ -39,7 +39,7 @@ function stepFields(loggedIn: boolean): string[][] {
     ["kycReadiness"],
   ];
   if (!loggedIn) {
-    steps.push(["companyName", "companyJurisdiction", "contactName", "email", "password"]);
+    steps.push(["companyName", "companyJurisdiction", "contactName", "email"]);
   }
   return steps;
 }
@@ -59,7 +59,6 @@ const REQUIRED_MESSAGES: Record<string, string> = {
   companyJurisdiction: "Registration jurisdiction is required",
   contactName: "Contact name is required",
   email: "A valid email is required",
-  password: "Use at least 10 characters",
 };
 
 function validateFields(fields: string[], fd: FormData): Record<string, string> {
@@ -73,10 +72,6 @@ function validateFields(fields: string[], fd: FormData): Record<string, string> 
     const s = typeof v === "string" ? v.trim() : "";
     if (name === "email") {
       if (!/^\S+@\S+\.\S+$/.test(s)) errors[name] = REQUIRED_MESSAGES[name];
-      continue;
-    }
-    if (name === "password") {
-      if (s.length < 10) errors[name] = REQUIRED_MESSAGES[name];
       continue;
     }
     if (!s) errors[name] = REQUIRED_MESSAGES[name];
@@ -538,9 +533,10 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
               <div className="rounded-lg border border-black/[0.07] bg-black/[0.015] p-4">
                 <p className="text-xs font-semibold text-slate-700">Workspace access</p>
                 <p className="mt-0.5 text-[11.5px] text-slate-500">
-                  Creates your company workspace to track status and introductions.
+                  Creates your company workspace to track status and introductions — no
+                  password to invent, you&apos;ll be signed in immediately after submitting.
                 </p>
-                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div className="mt-3">
                   <Field label="Work email" error={fe.email}>
                     <input
                       name="email"
@@ -548,15 +544,6 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                       className="input"
                       placeholder="you@company.com"
                       autoComplete="email"
-                    />
-                  </Field>
-                  <Field label="Password" error={fe.password} hint="Minimum 10 characters">
-                    <input
-                      name="password"
-                      type="password"
-                      className="input"
-                      placeholder="••••••••••"
-                      autoComplete="new-password"
                     />
                   </Field>
                 </div>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearDraft } from "@/components/forms/clear-draft";
 import { FormShell } from "@/components/site/form-shell";
+import { AccessReveal } from "@/components/site/access-reveal";
+import { readAccessReveal } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel } from "@/lib/format";
 import { rankPartners } from "@/lib/matching";
@@ -66,6 +68,7 @@ export default async function RequestSubmittedPage({
 }) {
   const { ref } = await searchParams;
   const matchPreview = ref && ref !== "received" ? await getMatchPreview(ref) : null;
+  const reveal = await readAccessReveal();
   return (
     <FormShell
       eyebrow="Request received"
@@ -74,6 +77,13 @@ export default async function RequestSubmittedPage({
     >
       <div className="space-y-6">
         <ClearDraft />
+        {reveal ? (
+          <AccessReveal
+            email={reveal.email}
+            password={reveal.password}
+            backPath={`/request/submitted${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`}
+          />
+        ) : null}
         {ref && ref !== "received" ? (
           <div className="card flex items-center justify-between gap-4 px-6 py-5">
             <div>

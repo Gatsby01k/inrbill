@@ -9,12 +9,16 @@ export function WorkspaceShell({
   badgeTone = "gold",
   nav,
   userLine,
+  showBuildTag = false,
   children,
 }: {
   badge: string;
   badgeTone?: "gold" | "emerald" | "sky";
   nav: NavItem[];
   userLine: string;
+  /** Internal build/version tag — an operations detail, not something a
+      company or partner needs to see in their own workspace. Admin only. */
+  showBuildTag?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -48,7 +52,9 @@ export function WorkspaceShell({
               Log out
             </button>
           </form>
-          <p className="mt-3 font-mono text-[10px] text-slate-400">Build {APP_VERSION}</p>
+          {showBuildTag ? (
+            <p className="mt-3 font-mono text-[10px] text-slate-400">Build {APP_VERSION}</p>
+          ) : null}
         </div>
       </aside>
       <div className="min-w-0 flex-1">

@@ -21,6 +21,53 @@ export function verifyPassword(pw: string, hash: string) {
   return bcrypt.compare(pw, hash);
 }
 
+/**
+ * Generates the account password for a company/partner created during
+ * first-touch request/application submission — nobody has to invent a
+ * password mid-conversion-form. ~96 bits of entropy, URL/copy-paste safe.
+ */
+export function generateAccessPassword() {
+  return crypto.randomBytes(12).toString("base64url");
+}
+
+// One-time-reveal cookie: holds the freshly generated account password in
+// plaintext just long enough for the confirmation page to show it once. The
+// DB only ever stores the bcrypt hash — mirrors the 2FA backup-codes reveal
+// pattern in src/app/actions/security.ts.
+const ACCESS_REVEAL_COOKIE = "inrp2p_access_reveal";
+const ACCESS_REVEAL_MINUTES = 15;
+
+export async function setAccessReveal(email: string, password: string, path: string) {
+  const jar = await cookies();
+  jar.set(ACCESS_REVEAL_COOKIE, JSON.stringify({ email, password }), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path,
+    maxAge: ACCESS_REVEAL_MINUTES * 60,
+  });
+}
+
+export async function readAccessReveal(): Promise<{ email: string; password: string } | null> {
+  const jar = await cookies();
+  const raw = jar.get(ACCESS_REVEAL_COOKIE)?.value;
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.email === "string" && typeof parsed.password === "string") {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearAccessReveal() {
+  const jar = await cookies();
+  jar.delete(ACCESS_REVEAL_COOKIE);
+}
+
 export async function createSession(userId: string) {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
