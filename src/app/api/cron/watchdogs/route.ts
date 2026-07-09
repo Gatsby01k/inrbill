@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { runRevenueOverdueWatchdog, runSlaWatchdog } from "@/lib/watchdogs";
+import {
+  runFollowUpWatchdog,
+  runRevenueOverdueWatchdog,
+  runRevenueUninvoicedWatchdog,
+  runSlaWatchdog,
+} from "@/lib/watchdogs";
 
 // Vercel Cron hits this on schedule (see vercel.json). Protected by
 // CRON_SECRET so it can't be triggered by anyone who finds the URL — Vercel
@@ -16,7 +21,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [sla, revenue] = await Promise.all([
+  const [sla, revenue, followUp, uninvoiced] = await Promise.all([
     runSlaWatchdog().catch((err) => {
       console.error("runSlaWatchdog failed", err);
       return { checked: 0, sent: 0, error: true };
@@ -25,7 +30,22 @@ export async function GET(req: NextRequest) {
       console.error("runRevenueOverdueWatchdog failed", err);
       return { checked: 0, sent: 0, error: true };
     }),
+    runFollowUpWatchdog().catch((err) => {
+      console.error("runFollowUpWatchdog failed", err);
+      return { checked: 0, sent: 0, error: true };
+    }),
+    runRevenueUninvoicedWatchdog().catch((err) => {
+      console.error("runRevenueUninvoicedWatchdog failed", err);
+      return { checked: 0, sent: 0, error: true };
+    }),
   ]);
 
-  return NextResponse.json({ ok: true, sla, revenue, ranAt: new Date().toISOString() });
+  return NextResponse.json({
+    ok: true,
+    sla,
+    revenue,
+    followUp,
+    uninvoiced,
+    ranAt: new Date().toISOString(),
+  });
 }

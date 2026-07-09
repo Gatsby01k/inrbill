@@ -66,6 +66,10 @@ export async function createPaymentLink(
     currency: "INR",
     description: input.description.slice(0, 2000),
     reference_id: input.referenceId.slice(0, 40),
+    // Explicit, not just the default — the webhook handler trusts that a
+    // "paid" link was paid in full, so partial payment must never be
+    // possible on a link this code creates.
+    accept_partial: false,
     // Deliberately not auto-notifying — an operator reviews and sends the
     // link themselves (email, Telegram, WhatsApp), keeping a human in the
     // loop before any payment request goes out to a customer.

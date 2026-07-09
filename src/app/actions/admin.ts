@@ -520,7 +520,7 @@ export async function createRevenuePaymentLink(fd: FormData) {
     fail(
       fd,
       fallback,
-      "Couldn't create a Razorpay payment link — check RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are set correctly.",
+      "Couldn't create a Razorpay payment link — check RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are set correctly, or try again in a moment.",
     );
   }
 

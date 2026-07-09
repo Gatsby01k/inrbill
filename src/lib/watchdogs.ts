@@ -1,7 +1,7 @@
 import type { Direction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
-import { directionLabel } from "@/lib/format";
+import { directionLabel, statusLabel } from "@/lib/format";
 import { rankPartners, type MatchSuggestion } from "@/lib/matching";
 import { sendTelegramAlert } from "@/lib/telegram";
 
@@ -111,7 +111,108 @@ export async function runRevenueOverdueWatchdog() {
   return { checked: overdue.length, sent };
 }
 
-/* ── 3. Coverage-gap watchdog ─────────────────────────────────────────────
+/* ── 3. Follow-up-due watchdog ─────────────────────────────────────────────
+   followUpDate has been readable on the operator dashboard all along ("due
+   today" list) but only if someone opens /admin and looks. This pushes the
+   same query to Telegram. Dedup key includes the follow-up date itself (not
+   just the introduction id) — so if an operator pushes the date forward
+   after acting on it, a fresh alert can still fire for the new date instead
+   of staying silenced forever by the first alert. */
+
+export async function runFollowUpWatchdog() {
+  const now = new Date();
+  const due = await db.introduction.findMany({
+    where: { followUpDate: { lte: now }, status: { notIn: ["SUCCESSFUL", "FAILED"] } },
+    select: {
+      id: true,
+      followUpDate: true,
+      status: true,
+      match: {
+        select: {
+          id: true,
+          requestId: true,
+          request: { select: { reference: true } },
+          partner: { select: { displayName: true } },
+        },
+      },
+    },
+  });
+
+  let sent = 0;
+  for (const intro of due) {
+    if (!intro.followUpDate) continue;
+    const dateKey = intro.followUpDate.toISOString().slice(0, 10);
+    const action = `watchdog.followup_due:${dateKey}`;
+    if (await alreadyAlerted(action, intro.id)) continue;
+
+    const days = Math.round((now.getTime() - intro.followUpDate.getTime()) / 86_400_000);
+    const ok = await sendTelegramAlert(
+      `📌 <b>Follow-up due</b>\n${intro.match.request.reference} — ${intro.match.partner.displayName}\n` +
+        `Still ${statusLabel(intro.status)}. Follow-up was due ${days > 0 ? `${days}d ago` : "today"}.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "Introduction",
+      entityId: intro.id,
+      actorLabel: "Watchdog",
+      requestId: intro.match.requestId,
+      matchId: intro.match.id,
+      meta: { followUpDate: dateKey, status: intro.status },
+    });
+    sent++;
+  }
+  return { checked: due.length, sent };
+}
+
+/* ── 4. Agreed-but-not-invoiced watchdog ──────────────────────────────────
+   A fee can sit "AGREED" indefinitely if nobody remembers to invoice it —
+   there's no separate agreedAt timestamp, so updatedAt (bumped on every
+   status write) is used as a proxy for "when it became AGREED". */
+
+const REVENUE_AGREED_STALE_DAYS = 5;
+
+export async function runRevenueUninvoicedWatchdog() {
+  const cutoff = new Date(Date.now() - REVENUE_AGREED_STALE_DAYS * 24 * 60 * 60 * 1000);
+  const stale = await db.revenueRecord.findMany({
+    where: { status: "AGREED", updatedAt: { lte: cutoff } },
+    select: {
+      id: true,
+      amount: true,
+      currency: true,
+      updatedAt: true,
+      requestId: true,
+      request: { select: { reference: true } },
+    },
+  });
+
+  let sent = 0;
+  for (const rev of stale) {
+    const action = "watchdog.revenue_uninvoiced";
+    if (await alreadyAlerted(action, rev.id)) continue;
+
+    const days = Math.round((Date.now() - rev.updatedAt.getTime()) / 86_400_000);
+    const ok = await sendTelegramAlert(
+      `🧾 <b>Agreed, not invoiced</b>\n${rev.request.reference} — ₹${rev.amount.toString()} ${rev.currency}\n` +
+        `Agreed ${days}d ago, no invoice sent yet.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "RevenueRecord",
+      entityId: rev.id,
+      actorLabel: "Watchdog",
+      requestId: rev.requestId,
+      meta: { daysSinceAgreed: days },
+    });
+    sent++;
+  }
+  return { checked: stale.length, sent };
+}
+
+/* ── 5. Coverage-gap watchdog ─────────────────────────────────────────────
    Not cron-driven — fired synchronously the moment a request is created,
    reusing the same scoreMatch() the admin "suggested partners" panel uses.
    If nobody in the network can plausibly fill this, operations should know
