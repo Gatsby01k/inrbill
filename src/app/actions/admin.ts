@@ -20,6 +20,7 @@ import {
   noteSchema,
   partnerStatusSchema,
   requestStatusSchema,
+  retainerSchema,
   revenueSchema,
   revenueStatusSchema,
 } from "@/lib/schemas";
@@ -494,7 +495,87 @@ export async function updateRevenueStatus(fd: FormData) {
       meta: { from: existing.status, to: status.data },
     });
   }
-  done(fd, `/admin/requests/${existing.requestId}`);
+  done(fd, existing.requestId ? `/admin/requests/${existing.requestId}` : "/admin/revenue");
+}
+
+/**
+ * Turns a monthly retainer on/off for a company and sets its billing terms.
+ * The retainer-renewal watchdog (src/lib/watchdogs.ts) reads retainerActive/
+ * retainerNextRenewal on its own schedule and creates the actual RevenueRecord
+ * each cycle — this action only owns the company-level configuration.
+ */
+export async function updateCompanyRetainer(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const companyId = s(fd, "companyId");
+  const fallback = companyId ? `/admin/requests` : "/admin/revenue";
+  if (!companyId) fail(fd, fallback, "Company not found.");
+
+  const company = await db.companyProfile.findUnique({ where: { id: companyId } });
+  if (!company) fail(fd, fallback, "Company not found.");
+
+  const parsed = retainerSchema.safeParse({
+    retainerActive: s(fd, "retainerActive") === "on",
+    retainerAmount: s(fd, "retainerAmount"),
+    retainerCurrency: s(fd, "retainerCurrency"),
+    retainerDayOfMonth: s(fd, "retainerDayOfMonth"),
+  });
+  if (!parsed.success) fail(fd, fallback, "Enter a valid retainer amount, currency and billing day.");
+
+  if (!parsed.data.retainerActive) {
+    await db.companyProfile.update({
+      where: { id: companyId },
+      data: { retainerActive: false },
+    });
+    await audit({
+      action: "company.retainer_disabled",
+      entityType: "CompanyProfile",
+      entityId: companyId,
+      actorId: user.id,
+      actorLabel: "Operator",
+      meta: {},
+    });
+    done(fd, fallback);
+  }
+
+  if (!parsed.data.retainerAmount || !parsed.data.retainerCurrency || !parsed.data.retainerDayOfMonth) {
+    fail(fd, fallback, "Amount, currency and billing day are all required to activate a retainer.");
+  }
+
+  const dayOfMonth = parsed.data.retainerDayOfMonth;
+  const wasActive = company.retainerActive;
+  const dayChanged = company.retainerDayOfMonth !== dayOfMonth;
+
+  let nextRenewal = company.retainerNextRenewal;
+  if (!wasActive || !nextRenewal || dayChanged) {
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), dayOfMonth, 9, 0, 0);
+    nextRenewal = thisMonth > now ? thisMonth : new Date(now.getFullYear(), now.getMonth() + 1, dayOfMonth, 9, 0, 0);
+  }
+
+  await db.companyProfile.update({
+    where: { id: companyId },
+    data: {
+      retainerActive: true,
+      retainerAmount: parsed.data.retainerAmount,
+      retainerCurrency: parsed.data.retainerCurrency,
+      retainerDayOfMonth: dayOfMonth,
+      retainerNextRenewal: nextRenewal,
+    },
+  });
+  await audit({
+    action: "company.retainer_updated",
+    entityType: "CompanyProfile",
+    entityId: companyId,
+    actorId: user.id,
+    actorLabel: "Operator",
+    meta: {
+      amount: parsed.data.retainerAmount,
+      currency: parsed.data.retainerCurrency,
+      dayOfMonth,
+      nextRenewal: nextRenewal.toISOString(),
+    },
+  });
+  done(fd, fallback);
 }
 
 /**
@@ -516,6 +597,7 @@ export async function createRevenuePaymentLink(fd: FormData) {
     where: { id: revenueId },
     include: {
       request: { include: { company: { include: { user: { select: { email: true } } } } } },
+      company: { include: { user: { select: { email: true } } } },
     },
   });
   if (!existing) fail(fd, fallback, "Revenue record not found.");
@@ -529,9 +611,13 @@ export async function createRevenuePaymentLink(fd: FormData) {
     fail(fd, fallback, "This revenue record is no longer collectible — change its status first.");
   }
 
+  // Retainer revenue (no linked request) bills the company directly instead.
+  const billTo = existing.request?.company ?? existing.company;
+  if (!billTo) fail(fd, fallback, "This revenue record has no linked request or company to bill.");
+
   const description = [
     revenueTypeLabel(existing.type),
-    `Request ${existing.request.reference}`,
+    existing.request ? `Request ${existing.request.reference}` : `Retainer — ${billTo.companyName}`,
     existing.basis,
   ]
     .filter(Boolean)
@@ -541,8 +627,8 @@ export async function createRevenuePaymentLink(fd: FormData) {
     amountRupees: Number(existing.amount),
     description,
     referenceId: existing.id,
-    customerName: existing.payerName ?? existing.request.company.companyName,
-    customerEmail: existing.request.company.user.email,
+    customerName: existing.payerName ?? billTo.companyName,
+    customerEmail: billTo.user.email,
   });
 
   if (!link) {
@@ -592,7 +678,7 @@ export async function createRevenueCryptoInvoice(fd: FormData) {
 
   const existing = await db.revenueRecord.findUnique({
     where: { id: revenueId },
-    include: { request: true },
+    include: { request: true, company: true },
   });
   if (!existing) fail(fd, fallback, "Revenue record not found.");
 
@@ -607,7 +693,9 @@ export async function createRevenueCryptoInvoice(fd: FormData) {
 
   const description = [
     revenueTypeLabel(existing.type),
-    `Request ${existing.request.reference}`,
+    existing.request
+      ? `Request ${existing.request.reference}`
+      : `Retainer — ${existing.company?.companyName ?? existing.payerName ?? "company"}`,
     existing.basis,
   ]
     .filter(Boolean)

@@ -148,6 +148,13 @@ export const revenueSchema = z.object({
   dueDate: optionalTrimmed(20),
 });
 
+export const retainerSchema = z.object({
+  retainerActive: z.coerce.boolean(),
+  retainerAmount: z.coerce.number().positive("Amount must be positive").max(1_000_000_000_000).optional(),
+  retainerCurrency: pick(CURRENCIES, "Select currency").optional(),
+  retainerDayOfMonth: z.coerce.number().int().min(1, "Day 1–28").max(28, "Day 1–28").optional(),
+});
+
 export const matchDecisionSchema = z.object({
   confidenceScore: z.coerce.number().int().min(0).max(100).optional(),
   nextAction: optionalTrimmed(300),

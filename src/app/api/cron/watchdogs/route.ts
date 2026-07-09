@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { logError } from "@/lib/error-log";
 import {
   runFollowUpWatchdog,
+  runRetainerRenewalWatchdog,
   runRevenueOverdueWatchdog,
   runRevenueUninvoicedWatchdog,
   runSlaWatchdog,
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [sla, revenue, followUp, uninvoiced] = await Promise.all([
+  const [sla, revenue, followUp, uninvoiced, retainer] = await Promise.all([
     runSlaWatchdog().catch(async (err) => {
       await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
@@ -39,6 +40,10 @@ export async function GET(req: NextRequest) {
       await logError({ error: err, source: "cron:runRevenueUninvoicedWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
+    runRetainerRenewalWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runRetainerRenewalWatchdog", severity: "ERROR" });
+      return { checked: 0, sent: 0, error: true };
+    }),
   ]);
 
   return NextResponse.json({
@@ -47,6 +52,7 @@ export async function GET(req: NextRequest) {
     revenue,
     followUp,
     uninvoiced,
+    retainer,
     ranAt: new Date().toISOString(),
   });
 }

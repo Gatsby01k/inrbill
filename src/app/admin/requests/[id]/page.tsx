@@ -10,6 +10,7 @@ import {
   createRevenueCryptoInvoice,
   createRevenuePaymentLink,
   toggleMatchRelease,
+  updateCompanyRetainer,
   updateIntroductionOutcome,
   updateIntroductionStatus,
   updateMatchDecision,
@@ -753,6 +754,72 @@ export default async function AdminRequestDetailPage({
               {request.company.telegram ? <KV label="Telegram">{request.company.telegram}</KV> : null}
               {request.company.phone ? <KV label="Phone">{request.company.phone}</KV> : null}
             </dl>
+          </div>
+
+          <div className="card p-5">
+            <SectionTitle title="Monthly retainer" />
+            {request.company.retainerActive && request.company.retainerAmount ? (
+              <p className="mb-3 text-[13px] leading-relaxed text-slate-600">
+                Active — {money(request.company.retainerAmount.toString(), request.company.retainerCurrency ?? "INR")}/mo
+                {request.company.retainerNextRenewal
+                  ? `, next ${fmtDate(request.company.retainerNextRenewal)}`
+                  : ""}
+                .
+              </p>
+            ) : (
+              <p className="mb-3 text-[13px] leading-relaxed text-slate-500">
+                Not on a retainer — recurring fee billed independently of any single request.
+              </p>
+            )}
+            <Disclosure label={request.company.retainerActive ? "Edit retainer" : "Set up a retainer"}>
+              <form action={updateCompanyRetainer} className="space-y-3">
+                <input type="hidden" name="companyId" value={request.company.id} />
+                <input type="hidden" name="back" value={back} />
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="retainerActive"
+                    defaultChecked={request.company.retainerActive}
+                    className="h-4 w-4 rounded border-black/20"
+                  />
+                  Retainer active
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    name="retainerAmount"
+                    min="0"
+                    step="0.01"
+                    defaultValue={request.company.retainerAmount?.toString() ?? ""}
+                    placeholder="Amount"
+                    className="input h-9 text-xs"
+                  />
+                  <select
+                    name="retainerCurrency"
+                    defaultValue={request.company.retainerCurrency ?? "INR"}
+                    className="input h-9 text-xs"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <input
+                  type="number"
+                  name="retainerDayOfMonth"
+                  min="1"
+                  max="28"
+                  defaultValue={request.company.retainerDayOfMonth ?? 1}
+                  placeholder="Billing day (1–28)"
+                  className="input h-9 text-xs"
+                />
+                <SubmitButton className="btn btn-ghost btn-sm w-full" pendingLabel="Saving…">
+                  Save retainer
+                </SubmitButton>
+              </form>
+            </Disclosure>
           </div>
 
           <div className="card p-5">

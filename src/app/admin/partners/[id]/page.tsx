@@ -11,9 +11,11 @@ import {
   NoteList,
 } from "@/components/workspace/records";
 import { Timeline } from "@/components/workspace/timeline";
+import { TrackRecordCard } from "@/components/workspace/track-record";
 import { db } from "@/lib/db";
 import { auditLabel, directionLabel, fmtDate, statusLabel } from "@/lib/format";
 import { COMPLIANCE_FLAG_OPTIONS, PARTNER_STATUSES } from "@/lib/options";
+import { getPartnerTrackRecord } from "@/lib/reputation";
 
 export const metadata: Metadata = { title: "Partner detail" };
 
@@ -46,11 +48,14 @@ export default async function AdminPartnerDetailPage({
   });
   if (!partner) notFound();
 
-  const timeline = await db.auditLog.findMany({
-    where: { partnerId: id },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const [timeline, trackRecord] = await Promise.all([
+    db.auditLog.findMany({
+      where: { partnerId: id },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    getPartnerTrackRecord(id),
+  ]);
 
   const back = `/admin/partners/${id}`;
 
@@ -255,6 +260,10 @@ export default async function AdminPartnerDetailPage({
 
         {/* ── Right rail ── */}
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
+          <div className="card p-5">
+            <TrackRecordCard record={trackRecord} title="Track record" />
+          </div>
+
           <div className="card p-5">
             <SectionTitle title="Verification status" />
             <form action={updatePartnerStatus} className="flex items-center gap-2">

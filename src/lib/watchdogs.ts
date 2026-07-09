@@ -83,6 +83,7 @@ export async function runRevenueOverdueWatchdog() {
       dueDate: true,
       requestId: true,
       request: { select: { reference: true } },
+      company: { select: { companyName: true } },
     },
   });
 
@@ -91,9 +92,10 @@ export async function runRevenueOverdueWatchdog() {
     const action = "watchdog.revenue_overdue";
     if (await alreadyAlerted(action, rev.id)) continue;
 
+    const label = rev.request?.reference ?? `Retainer — ${rev.company?.companyName ?? "company"}`;
     const days = rev.dueDate ? Math.round((now.getTime() - rev.dueDate.getTime()) / 86_400_000) : 0;
     const ok = await sendTelegramAlert(
-      `💸 <b>Revenue overdue</b>\n${rev.request.reference} — ₹${rev.amount.toString()} ${rev.currency}\n` +
+      `💸 <b>Revenue overdue</b>\n${label} — ₹${rev.amount.toString()} ${rev.currency}\n` +
         `${days}d past due date, still not marked paid.`,
     );
     if (!ok) continue;
@@ -184,6 +186,7 @@ export async function runRevenueUninvoicedWatchdog() {
       updatedAt: true,
       requestId: true,
       request: { select: { reference: true } },
+      company: { select: { companyName: true } },
     },
   });
 
@@ -192,9 +195,10 @@ export async function runRevenueUninvoicedWatchdog() {
     const action = "watchdog.revenue_uninvoiced";
     if (await alreadyAlerted(action, rev.id)) continue;
 
+    const label = rev.request?.reference ?? `Retainer — ${rev.company?.companyName ?? "company"}`;
     const days = Math.round((Date.now() - rev.updatedAt.getTime()) / 86_400_000);
     const ok = await sendTelegramAlert(
-      `🧾 <b>Agreed, not invoiced</b>\n${rev.request.reference} — ₹${rev.amount.toString()} ${rev.currency}\n` +
+      `🧾 <b>Agreed, not invoiced</b>\n${label} — ₹${rev.amount.toString()} ${rev.currency}\n` +
         `Agreed ${days}d ago, no invoice sent yet.`,
     );
     if (!ok) continue;
@@ -212,7 +216,94 @@ export async function runRevenueUninvoicedWatchdog() {
   return { checked: stale.length, sent };
 }
 
-/* ── 5. Coverage-gap watchdog ─────────────────────────────────────────────
+/* ── 5. Retainer-renewal watchdog ─────────────────────────────────────────
+   Monthly retainer billing lives on CompanyProfile (retainerActive/
+   retainerAmount/retainerNextRenewal), independent of any single request —
+   this is the recurring-revenue counterpart to Task #57. When a company's
+   retainerNextRenewal comes due, this creates a POTENTIAL RevenueRecord tied
+   to the company directly (no requestId) and rolls the renewal date forward
+   a month, so operations never has to remember to re-invoice manually. */
+
+function advanceRetainerDate(from: Date, dayOfMonth: number): Date {
+  // Roll to the same day next month, clamped to that month's real length
+  // (e.g. dayOfMonth=31 in a 30-day month lands on the 30th, not Dec 1st).
+  const next = new Date(from.getFullYear(), from.getMonth() + 1, 1);
+  const daysInNextMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+  next.setDate(Math.min(dayOfMonth, daysInNextMonth));
+  return next;
+}
+
+export async function runRetainerRenewalWatchdog() {
+  const now = new Date();
+  const due = await db.companyProfile.findMany({
+    where: {
+      retainerActive: true,
+      retainerNextRenewal: { lte: now },
+      retainerAmount: { not: null },
+    },
+    select: {
+      id: true,
+      companyName: true,
+      retainerAmount: true,
+      retainerCurrency: true,
+      retainerDayOfMonth: true,
+      retainerNextRenewal: true,
+    },
+  });
+
+  let sent = 0;
+  for (const company of due) {
+    if (!company.retainerAmount || !company.retainerNextRenewal) continue;
+    const dateKey = company.retainerNextRenewal.toISOString().slice(0, 10);
+    const action = `watchdog.retainer_renewal:${dateKey}`;
+    if (await alreadyAlerted(action, company.id)) continue;
+
+    const currency = company.retainerCurrency ?? "INR";
+    const monthLabel = company.retainerNextRenewal.toLocaleDateString("en-IN", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const record = await db.revenueRecord.create({
+      data: {
+        companyId: company.id,
+        amount: company.retainerAmount,
+        currency,
+        type: "MONTHLY_RETAINER",
+        payerType: "Company",
+        payerName: company.companyName,
+        basis: `Monthly retainer — ${monthLabel}`,
+        status: "POTENTIAL",
+        dueDate: company.retainerNextRenewal,
+      },
+    });
+
+    const dayOfMonth = company.retainerDayOfMonth ?? company.retainerNextRenewal.getDate();
+    const nextRenewal = advanceRetainerDate(company.retainerNextRenewal, dayOfMonth);
+    await db.companyProfile.update({
+      where: { id: company.id },
+      data: { retainerNextRenewal: nextRenewal },
+    });
+
+    const ok = await sendTelegramAlert(
+      `🔁 <b>Retainer due</b>\n${company.companyName} — ${company.retainerAmount.toString()} ${currency}\n` +
+        `${monthLabel} retainer invoice created. Next renewal ${nextRenewal.toISOString().slice(0, 10)}.`,
+    );
+    void ok; // best-effort notify; the revenue record itself is the source of truth
+
+    await audit({
+      action,
+      entityType: "RevenueRecord",
+      entityId: record.id,
+      actorLabel: "Watchdog",
+      meta: { companyId: company.id, amount: company.retainerAmount.toString(), currency, nextRenewal: nextRenewal.toISOString() },
+    });
+    sent++;
+  }
+  return { checked: due.length, sent };
+}
+
+/* ── 6. Coverage-gap watchdog ─────────────────────────────────────────────
    Not cron-driven — fired synchronously the moment a request is created,
    reusing the same scoreMatch() the admin "suggested partners" panel uses.
    If nobody in the network can plausibly fill this, operations should know

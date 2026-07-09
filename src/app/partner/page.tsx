@@ -10,9 +10,11 @@ import {
   NoteList,
 } from "@/components/workspace/records";
 import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
+import { TrackRecordCard } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel, fmtDate } from "@/lib/format";
+import { getPartnerTrackRecord } from "@/lib/reputation";
 import { TELEGRAM_BOT_USERNAME } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Partner overview" };
@@ -57,6 +59,8 @@ export default async function PartnerOverviewPage({
     },
   });
   if (!partner) redirect("/login");
+
+  const trackRecord = await getPartnerTrackRecord(partner.id);
 
   return (
     <>
@@ -117,6 +121,14 @@ export default async function PartnerOverviewPage({
                       <StatusBadge status={m.status} />
                       {m.introductions[0] ? <StatusBadge status={m.introductions[0].status} /> : null}
                       <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
+                    </div>
+                    <div className="mt-2">
+                      <Link
+                        href={`/partner/matches/${m.id}`}
+                        className="text-xs font-medium text-gold-600 hover:underline"
+                      >
+                        Open deal room →
+                      </Link>
                     </div>
                     <dl className="kv mt-3 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
                       <KV label="Daily volume">{m.request.dailyVolumeBand}</KV>
@@ -180,6 +192,9 @@ export default async function PartnerOverviewPage({
             telegramLinkCode={user.telegramLinkCode}
             botUsername={TELEGRAM_BOT_USERNAME || undefined}
           />
+          <div className="card p-5">
+            <TrackRecordCard record={trackRecord} title="Your track record" />
+          </div>
           <div className="card p-5">
             <SectionTitle title="Declared coverage" />
             <dl className="space-y-3">

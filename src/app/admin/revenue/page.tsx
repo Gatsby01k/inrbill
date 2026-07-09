@@ -20,6 +20,7 @@ export default async function AdminRevenuePage({
     db.revenueRecord.findMany({
       include: {
         request: { include: { company: true } },
+        company: true,
         match: { include: { partner: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -83,14 +84,22 @@ export default async function AdminRevenuePage({
                   <tr key={r.id}>
                     <td className="whitespace-nowrap text-xs text-slate-500">{fmtDate(r.createdAt)}</td>
                     <td>
-                      <Link
-                        href={`/admin/requests/${r.requestId}`}
-                        className="font-mono text-xs text-gold-700 hover:underline"
-                      >
-                        {r.request.reference}
-                      </Link>
+                      {r.request ? (
+                        <Link
+                          href={`/admin/requests/${r.requestId}`}
+                          className="font-mono text-xs text-gold-700 hover:underline"
+                        >
+                          {r.request.reference}
+                        </Link>
+                      ) : (
+                        <span className="chip border-gold-500/25 bg-gold-500/[0.06] text-[10px] text-gold-700">
+                          Retainer
+                        </span>
+                      )}
                     </td>
-                    <td className="font-medium text-slate-800">{r.request.company.companyName}</td>
+                    <td className="font-medium text-slate-800">
+                      {r.request ? r.request.company.companyName : (r.company?.companyName ?? "—")}
+                    </td>
                     <td className="text-xs">{r.match ? r.match.partner.displayName : "—"}</td>
                     <td className="text-xs">{revenueTypeLabel(r.type)}</td>
                     <td className="max-w-40 text-xs">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { addCompanyDocument, addCompanyNote } from "@/app/actions/portal";
 import { BackLink, EmptyState, FormError, KV, SectionTitle, StatusBadge } from "@/components/ui";
@@ -9,9 +10,11 @@ import {
   NoteList,
 } from "@/components/workspace/records";
 import { Timeline } from "@/components/workspace/timeline";
+import { TrackRecordBadge } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { auditLabel, cn, directionLabel, fmtDate, requestTypeLabel, statusLabel } from "@/lib/format";
+import { getPartnerTrackRecords } from "@/lib/reputation";
 
 export const metadata: Metadata = { title: "Request" };
 
@@ -52,6 +55,8 @@ export default async function CompanyRequestDetailPage({
     },
   });
   if (!request || request.companyId !== user.company.id) notFound();
+
+  const trackRecords = await getPartnerTrackRecords(request.matches.map((m) => m.partnerId));
 
   const rawTimeline = await db.auditLog.findMany({
     where: { requestId: id },
@@ -147,6 +152,25 @@ export default async function CompanyRequestDetailPage({
                       <p className="text-sm font-semibold text-slate-900">{m.partner.displayName}</p>
                       <StatusBadge status={m.status} />
                       {m.introductions[0] ? <StatusBadge status={m.introductions[0].status} /> : null}
+                      <Link
+                        href={`/company/matches/${m.id}`}
+                        className="ml-auto text-xs font-medium text-gold-600 hover:underline"
+                      >
+                        Open deal room →
+                      </Link>
+                    </div>
+                    <div className="mt-2">
+                      <TrackRecordBadge
+                        record={
+                          trackRecords.get(m.partnerId) ?? {
+                            totalIntroductions: 0,
+                            successfulIntroductions: 0,
+                            failedIntroductions: 0,
+                            successRate: null,
+                            avgResponseHours: null,
+                          }
+                        }
+                      />
                     </div>
                     <dl className="kv mt-3 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
                       <KV label="Directions">
