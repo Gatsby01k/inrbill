@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fmtDate, requestTypeLabel } from "@/lib/format";
+import { TELEGRAM_BOT_USERNAME } from "@/lib/site";
 
 export const metadata: Metadata = { title: "My requests" };
 
@@ -88,6 +90,14 @@ export default async function CompanyHomePage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-6">
+        <TelegramConnectCard
+          telegramChatId={user.telegramChatId}
+          telegramLinkCode={user.telegramLinkCode}
+          botUsername={TELEGRAM_BOT_USERNAME || undefined}
+        />
       </div>
 
       <div className="card mt-6 p-5">

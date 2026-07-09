@@ -219,7 +219,10 @@ export async function runRevenueUninvoicedWatchdog() {
    in seconds, not whenever someone happens to open the request. Never
    throws — a failure here must not break the company's submission flow. */
 
-const COVERAGE_GAP_SCORE_THRESHOLD = 35;
+// Exported so the public confirmation pages can use the exact same bar for
+// "does this partner plausibly fit" as the internal coverage-gap alert —
+// one definition of "good enough," not two that can drift apart.
+export const COVERAGE_GAP_SCORE_THRESHOLD = 35;
 
 type CoverageGapRequest = {
   id: string;

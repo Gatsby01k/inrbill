@@ -66,8 +66,8 @@ const STEP_OF_FIELD: Record<string, number> = {
   telegram: 0,
   phone: 0,
   experienceBand: 0,
-  email: 0,
-  password: 0,
+  email: 3,
+  password: 3,
   directions: 1,
   banks: 1,
   methods: 1,
@@ -134,6 +134,11 @@ function readSnap(form: HTMLFormElement | null): Snap {
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
+const DRAFT_KEY = "inrp2p-apply-draft-v1";
+
+/** Everything except password — a password is never written to localStorage. */
+const DRAFT_FIELDS = TEXT_FIELDS.filter((k) => k !== "password");
+
 export function ApplyForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(
     submitPartnerApplication,
@@ -144,6 +149,8 @@ export function ApplyForm() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [snap, setSnap] = useState<Snap>(emptySnap);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -164,6 +171,65 @@ export function ApplyForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
+  // Restore a locally saved draft once, on first mount — closing the tab
+  // mid-application shouldn't cost someone their 4 minutes of work. Never
+  // restores the password field, since that's never persisted in the first
+  // place (see persistDraft below).
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Record<string, string | string[]>;
+      let touched = false;
+      for (const [name, value] of Object.entries(saved)) {
+        if (Array.isArray(value)) {
+          form
+            .querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)
+            .forEach((cb) => {
+              cb.checked = value.includes(cb.value);
+            });
+          touched = true;
+        } else {
+          const el = form.elements.namedItem(name);
+          if (el && "value" in el) {
+            (el as unknown as { value: string }).value = value;
+            touched = true;
+          }
+        }
+      }
+      if (touched) {
+        setSnap(readSnap(form));
+        setDraftRestored(true);
+        // They got at least this far before — no reason to make them
+        // re-clear each step's validity gate just to look at their own data.
+        setMaxStep(STEPS.length - 1);
+      }
+    } catch {
+      /* corrupt or unavailable storage — start clean */
+    }
+  }, []);
+
+  function persistDraft(form: HTMLFormElement) {
+    try {
+      const fd = new FormData(form);
+      const obj: Record<string, string | string[]> = {};
+      for (const k of DRAFT_FIELDS) {
+        const v = fd.get(k);
+        if (typeof v === "string" && v) obj[k] = v;
+      }
+      for (const k of LIST_FIELDS) {
+        const vals = fd.getAll(k).map(String);
+        if (vals.length) obj[k] = vals;
+      }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(obj));
+      setDraftSaved(true);
+    } catch {
+      /* storage unavailable — skip autosave */
+    }
+  }
+
   // Move focus to the first field of whichever step just became visible —
   // keyboard and fast typists shouldn't have to reach for the mouse.
   useEffect(() => {
@@ -175,7 +241,9 @@ export function ApplyForm() {
   }, [step]);
 
   function handleFormChange() {
-    setSnap(readSnap(formRef.current));
+    const form = formRef.current;
+    setSnap(readSnap(form));
+    if (form) persistDraft(form);
   }
 
   function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
@@ -189,9 +257,7 @@ export function ApplyForm() {
   const stepValid = [
     snap.displayName.trim().length >= 2 &&
       snap.contactName.trim().length >= 2 &&
-      snap.experienceBand !== "" &&
-      EMAIL_RE.test(snap.email) &&
-      snap.password.length >= 10,
+      snap.experienceBand !== "",
     snap.directions.length > 0 &&
       snap.banks.length > 0 &&
       snap.methods.length > 0 &&
@@ -200,7 +266,7 @@ export function ApplyForm() {
       snap.workingHours.trim().length >= 2 &&
       snap.jurisdictions.trim().length >= 2,
     true,
-    true,
+    EMAIL_RE.test(snap.email) && snap.password.length >= 10,
   ];
 
   const checklist = [
@@ -307,33 +373,12 @@ export function ApplyForm() {
               </div>
             </FormSection>
 
-            <FormSection
-              title="Workspace access"
-              sub="Creates your partner workspace so you can watch verification and matches land — no separate signup later."
-            >
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Email" error={fe.email}>
-                  <input name="email" type="email" required className="input" placeholder="you@desk.com" />
-                </Field>
-                <Field label="Password" error={fe.password} hint="Minimum 10 characters">
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={10}
-                    className="input"
-                    placeholder="••••••••••"
-                  />
-                </Field>
-              </div>
-            </FormSection>
-
             <StepFooter
               backDisabled
               nextDisabled={!stepValid[0]}
               nextLabel="Continue to coverage"
               onNext={goNext}
-              hint={!stepValid[0] ? "Fill in name, contact, experience, email and a password to continue." : undefined}
+              hint={!stepValid[0] ? "Fill in name, contact and experience to continue." : undefined}
             />
           </div>
 
@@ -427,6 +472,27 @@ export function ApplyForm() {
           {/* Step 3 — Review */}
           <div ref={stepRef3} className={cn(step !== 3 && "hidden")}>
             <FormSection
+              title="Create your workspace"
+              sub="This creates your partner login so you can watch verification and matches land — nothing is sent until you submit below."
+            >
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Email" error={fe.email}>
+                  <input name="email" type="email" required className="input" placeholder="you@desk.com" />
+                </Field>
+                <Field label="Password" error={fe.password} hint="Minimum 10 characters">
+                  <input
+                    name="password"
+                    type="password"
+                    required
+                    minLength={10}
+                    className="input"
+                    placeholder="••••••••••"
+                  />
+                </Field>
+              </div>
+            </FormSection>
+
+            <FormSection
               title="Review before you send it"
               sub="This is exactly what operations will see. Fix anything now — editing later means re-review."
             >
@@ -437,8 +503,6 @@ export function ApplyForm() {
                 <ReviewRow label="Telegram" value={snap.telegram} />
                 <ReviewRow label="Phone" value={snap.phone} />
                 <ReviewRow label="Experience" value={snap.experienceBand} />
-                <ReviewRow label="Email" value={snap.email} />
-                <ReviewRow label="Password" value={snap.password ? "Set ✓" : ""} />
               </ReviewSection>
 
               <ReviewSection title="Coverage & capacity" onEdit={() => goToStep(1)}>
@@ -515,6 +579,11 @@ export function ApplyForm() {
               </li>
             ))}
           </ul>
+          {draftRestored || draftSaved ? (
+            <p className="mt-3 text-[10.5px] text-slate-400">
+              {draftRestored && !draftSaved ? "Draft restored from this device" : "Draft saved on this device"}
+            </p>
+          ) : null}
         </div>
 
         <div className="card p-5">

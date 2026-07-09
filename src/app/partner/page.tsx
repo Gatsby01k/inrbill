@@ -9,9 +9,11 @@ import {
   NoteComposer,
   NoteList,
 } from "@/components/workspace/records";
+import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel, fmtDate } from "@/lib/format";
+import { TELEGRAM_BOT_USERNAME } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Partner overview" };
 
@@ -173,6 +175,11 @@ export default async function PartnerOverviewPage({
 
         {/* Rail */}
         <div className="space-y-5">
+          <TelegramConnectCard
+            telegramChatId={user.telegramChatId}
+            telegramLinkCode={user.telegramLinkCode}
+            botUsername={TELEGRAM_BOT_USERNAME || undefined}
+          />
           <div className="card p-5">
             <SectionTitle title="Declared coverage" />
             <dl className="space-y-3">

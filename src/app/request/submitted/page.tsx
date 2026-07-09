@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearDraft } from "@/components/forms/clear-draft";
 import { FormShell } from "@/components/site/form-shell";
+import { db } from "@/lib/db";
+import { directionLabel } from "@/lib/format";
+import { rankPartners } from "@/lib/matching";
 import { CONTACT_EMAIL } from "@/lib/options";
+import { COVERAGE_GAP_SCORE_THRESHOLD } from "@/lib/watchdogs";
 
 export const metadata: Metadata = { title: "Request received" };
 
@@ -21,12 +25,47 @@ const NEXT_STEPS = [
   },
 ];
 
+/**
+ * Live "does this actually stand a chance" preview — reuses the exact same
+ * scoring the admin coverage-gap watchdog uses, so the number shown here
+ * can never say something rosier than what operations itself would trust.
+ * Never throws: a scoring/DB hiccup just hides this card, it never breaks
+ * the confirmation page a company is looking at right after submitting.
+ */
+async function getMatchPreview(reference: string) {
+  try {
+    const request = await db.liquidityRequest.findUnique({
+      where: { reference },
+      select: {
+        direction: true,
+        banks: true,
+        methods: true,
+        dailyVolumeBand: true,
+        jurisdiction: true,
+        countriesInvolved: true,
+      },
+    });
+    if (!request) return null;
+
+    const eligiblePartners = await db.partnerProfile.findMany({
+      where: { status: { in: ["VERIFIED", "LIMITED"] }, directions: { has: request.direction } },
+    });
+    const ranked = rankPartners(request, eligiblePartners, Math.max(eligiblePartners.length, 1));
+    const count = ranked.filter((r) => r.score >= COVERAGE_GAP_SCORE_THRESHOLD).length;
+    return { count, direction: request.direction };
+  } catch (err) {
+    console.error("getMatchPreview failed", err);
+    return null;
+  }
+}
+
 export default async function RequestSubmittedPage({
   searchParams,
 }: {
   searchParams: Promise<{ ref?: string }>;
 }) {
   const { ref } = await searchParams;
+  const matchPreview = ref && ref !== "received" ? await getMatchPreview(ref) : null;
   return (
     <FormShell
       eyebrow="Request received"
@@ -46,6 +85,26 @@ export default async function RequestSubmittedPage({
             <Link href="/company" className="btn btn-gold btn-sm">
               Open company workspace
             </Link>
+          </div>
+        ) : null}
+
+        {matchPreview ? (
+          <div className="card flex items-start gap-3.5 border-leaf-500/25 bg-leaf-500/[0.06] px-6 py-5">
+            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-leaf-500/15 text-leaf-700">
+              ✓
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                {matchPreview.count > 0
+                  ? `${matchPreview.count} reviewed ${matchPreview.count === 1 ? "partner" : "partners"} already cover ${directionLabel(matchPreview.direction)}`
+                  : `No reviewed partner on ${directionLabel(matchPreview.direction)} yet`}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-500">
+                {matchPreview.count > 0
+                  ? "This isn't a guarantee — operations still reviews and shortlists manually — but there's real coverage on your corridor today."
+                  : "You'll be first in line the moment one is verified on this exact corridor — this happens continuously, not on a fixed schedule."}
+              </p>
+            </div>
           </div>
         ) : null}
 

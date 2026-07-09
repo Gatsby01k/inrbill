@@ -1,9 +1,10 @@
 "use server";
 
+import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
-import { requireRole } from "@/lib/auth";
+import { getSession, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { documentSchema, noteSchema, partnerOpsSchema } from "@/lib/schemas";
 
@@ -226,5 +227,43 @@ export async function updatePartnerOps(fd: FormData) {
       meta: { changed },
     });
   }
+  finish(path);
+}
+
+/* ── Telegram notifications (company + partner) ──────────────────────────────
+   Available to any logged-in company or partner user — the link lives on
+   the User row, not the profile, since it's about "who's logged in", not
+   which side of the network they're on. */
+
+function workspacePath(role: string) {
+  return role === "PARTNER" ? "/partner" : "/company";
+}
+
+/**
+ * Generates a fresh one-time code and shows it in the workspace. The user
+ * sends it as a plain message to the Telegram bot; the bot webhook resolves
+ * it back to this exact User row and fills in telegramChatId. Regenerating
+ * a code doesn't disconnect an already-linked chat — only a successful new
+ * link (or explicit disconnect) replaces it.
+ */
+export async function connectTelegram() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const path = workspacePath(session.user.role);
+
+  const code = `LINK-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  await db.user.update({ where: { id: session.user.id }, data: { telegramLinkCode: code } });
+  finish(path);
+}
+
+export async function disconnectTelegram() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const path = workspacePath(session.user.role);
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { telegramChatId: null, telegramLinkCode: null },
+  });
   finish(path);
 }

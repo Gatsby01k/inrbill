@@ -28,3 +28,10 @@ export const APP_VERSION =
   process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
   process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
   "dev";
+
+/**
+ * Public @handle of the notifications bot (no @), used only to build a
+ * clickable https://t.me/<handle> link in the workspace "Connect Telegram"
+ * card. Optional — the card falls back to plain-text instructions if unset.
+ */
+export const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? "";

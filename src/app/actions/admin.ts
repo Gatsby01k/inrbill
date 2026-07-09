@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { revenueTypeLabel } from "@/lib/format";
 import { createCryptoInvoice } from "@/lib/nowpayments";
 import { createPaymentLink } from "@/lib/razorpay";
+import { notifyUser } from "@/lib/telegram";
 import {
   documentSchema,
   introductionCreateSchema,
@@ -101,6 +102,18 @@ export async function updatePartnerStatus(fd: FormData) {
       partnerId,
       meta: { from: existing.status, to: status.data },
     });
+    if ((status.data === "VERIFIED" || status.data === "LIMITED") && existing.status !== status.data) {
+      // Awaited (not fire-and-forget) — a serverless function can be frozen
+      // the instant it returns, so an un-awaited push can simply never send.
+      // notifyUser never throws (it's internally try/caught), so this can't
+      // block the actual status update from completing.
+      await notifyUser(
+        existing.userId,
+        status.data === "VERIFIED"
+          ? "✅ <b>You're verified</b>\nYour partner profile is now fully verified and eligible for matching on INRP2P."
+          : "🟡 <b>Limited verification set</b>\nYour partner profile now has Limited status and is eligible for matching, with some caveats — check your workspace for details.",
+      );
+    }
   }
   done(fd, `/admin/partners/${partnerId}`);
 }
@@ -306,7 +319,7 @@ export async function updateIntroductionStatus(fd: FormData) {
 
   const existing = await db.introduction.findUnique({
     where: { id: introId },
-    include: { match: true },
+    include: { match: { include: { request: { include: { company: true } }, partner: true } } },
   });
   if (!existing) fail(fd, "/admin/matches", "Introduction not found.");
 
@@ -333,6 +346,21 @@ export async function updateIntroductionStatus(fd: FormData) {
       matchId: existing.matchId,
       meta: { from: existing.status, to: status.data },
     });
+    if (status.data === "SENT" && existing.status !== "SENT") {
+      // Both sides find out the moment it happens, not whenever they next
+      // happen to open their workspace. Awaited for the same reason as the
+      // partner-verification push above — never throws, never blocks.
+      await Promise.all([
+        notifyUser(
+          existing.match.request.company.userId,
+          `🤝 <b>You've been introduced</b>\nRequest ${existing.match.request.reference} — a partner introduction just went out. Check your workspace for details.`,
+        ),
+        notifyUser(
+          existing.match.partner.userId,
+          `🤝 <b>New introduction</b>\nYou've just been introduced for request ${existing.match.request.reference}. Check your workspace for details.`,
+        ),
+      ]);
+    }
   }
   done(fd, `/admin/requests/${existing.match.requestId}`);
 }

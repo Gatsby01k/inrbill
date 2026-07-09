@@ -130,6 +130,13 @@ model User {
   name         String
   role         Role
   createdAt    DateTime @default(now())
+  // Personal Telegram push notifications (matches, introductions,
+  // verification) — opt-in, separate from the internal ops alert chat.
+  // Telegram won't let a bot message someone who hasn't messaged it first,
+  // so linking works via a one-time code the user sends to the bot; the
+  // webhook resolves that code back to this row and fills in the chat id.
+  telegramChatId   String?
+  telegramLinkCode String? @unique
 
   sessions Session[]
   company  CompanyProfile?
