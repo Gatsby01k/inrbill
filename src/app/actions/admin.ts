@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { revenueTypeLabel } from "@/lib/format";
+import { createPaymentLink } from "@/lib/razorpay";
 import {
   documentSchema,
   introductionCreateSchema,
@@ -464,6 +466,86 @@ export async function updateRevenueStatus(fd: FormData) {
     });
   }
   done(fd, `/admin/requests/${existing.requestId}`);
+}
+
+/**
+ * Generates a Razorpay Payment Link for one of INRP2P's own service-fee
+ * RevenueRecords and stores the result. This is strictly about collecting
+ * INRP2P's own fee — it never represents or moves the underlying P2P trade
+ * funds between company and partner. Idempotent: if a link already exists
+ * on the record, this just returns to the page without calling Razorpay
+ * again. The manual `updateRevenueStatus` action above remains the fallback
+ * path for bank-transfer payments that don't go through Razorpay at all.
+ */
+export async function createRevenuePaymentLink(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const revenueId = s(fd, "revenueId");
+  const fallback = "/admin/revenue";
+  if (!revenueId) fail(fd, fallback, "Revenue record not found.");
+
+  const existing = await db.revenueRecord.findUnique({
+    where: { id: revenueId },
+    include: {
+      request: { include: { company: { include: { user: { select: { email: true } } } } } },
+    },
+  });
+  if (!existing) fail(fd, fallback, "Revenue record not found.");
+
+  if (existing.paymentLinkUrl) done(fd, fallback);
+
+  if (existing.currency !== "INR") {
+    fail(fd, fallback, "Razorpay payment links only support INR — this record is in a different currency.");
+  }
+  if (["PAID", "CANCELLED", "LOST", "WAIVED"].includes(existing.status)) {
+    fail(fd, fallback, "This revenue record is no longer collectible — change its status first.");
+  }
+
+  const description = [
+    revenueTypeLabel(existing.type),
+    `Request ${existing.request.reference}`,
+    existing.basis,
+  ]
+    .filter(Boolean)
+    .join(" — ");
+
+  const link = await createPaymentLink({
+    amountRupees: Number(existing.amount),
+    description,
+    referenceId: existing.id,
+    customerName: existing.payerName ?? existing.request.company.companyName,
+    customerEmail: existing.request.company.user.email,
+  });
+
+  if (!link) {
+    fail(
+      fd,
+      fallback,
+      "Couldn't create a Razorpay payment link — check RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are set correctly.",
+    );
+  }
+
+  await db.revenueRecord.update({
+    where: { id: revenueId },
+    data: {
+      paymentLinkId: link.id,
+      paymentLinkUrl: link.shortUrl,
+      status: ["POTENTIAL", "QUOTED", "AGREED"].includes(existing.status) ? "INVOICED" : existing.status,
+      invoicedAt: existing.invoicedAt ?? new Date(),
+    },
+  });
+
+  await audit({
+    action: "revenue.payment_link_created",
+    entityType: "RevenueRecord",
+    entityId: revenueId,
+    actorId: user.id,
+    actorLabel: "Operator",
+    requestId: existing.requestId,
+    matchId: existing.matchId,
+    meta: { paymentLinkId: link.id, amount: existing.amount.toString(), currency: existing.currency },
+  });
+
+  done(fd, fallback);
 }
 
 /* ── Notes & documents ────────────────────────────────────────────────────── */

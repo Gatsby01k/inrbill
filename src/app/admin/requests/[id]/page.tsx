@@ -7,6 +7,7 @@ import {
   addRevenue,
   createIntroduction,
   createMatch,
+  createRevenuePaymentLink,
   toggleMatchRelease,
   updateIntroductionOutcome,
   updateIntroductionStatus,
@@ -43,6 +44,7 @@ import {
   statusLabel,
 } from "@/lib/format";
 import { rankPartners } from "@/lib/matching";
+import { isRazorpayConfigured } from "@/lib/razorpay";
 import {
   CURRENCIES,
   INTRO_CHANNELS,
@@ -553,6 +555,34 @@ export default async function AdminRequestDetailPage({
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
+                    {r.paymentLinkUrl ? (
+                      <div className="flex basis-full items-center gap-2 rounded-md border border-gold-600/20 bg-gold-500/[0.06] px-2.5 py-1.5 text-xs">
+                        <span className="font-medium text-slate-700">Razorpay link:</span>
+                        <a
+                          href={r.paymentLinkUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-gold-700 underline decoration-gold-600/40 underline-offset-2 hover:text-gold-800"
+                        >
+                          {r.paymentLinkUrl}
+                        </a>
+                        {r.paymentRef ? (
+                          <span className="text-[11px] text-slate-400">· paid ({r.paymentRef})</span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">· share this with the payer</span>
+                        )}
+                      </div>
+                    ) : isRazorpayConfigured() &&
+                      r.currency === "INR" &&
+                      !["PAID", "CANCELLED", "LOST", "WAIVED"].includes(r.status) ? (
+                      <form action={createRevenuePaymentLink} className="flex basis-full items-center">
+                        <input type="hidden" name="revenueId" value={r.id} />
+                        <input type="hidden" name="back" value={back} />
+                        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Generating…">
+                          Generate Razorpay payment link
+                        </SubmitButton>
+                      </form>
+                    ) : null}
                     <form action={updateRevenueStatus} className="ml-auto flex items-center gap-2">
                       <input type="hidden" name="revenueId" value={r.id} />
                       <input type="hidden" name="back" value={back} />

@@ -305,10 +305,16 @@ model RevenueRecord {
   dueDate    DateTime?
   invoicedAt DateTime?
   paidAt     DateTime?
+  // Razorpay Payment Links — collection of INRP2P's own service fee only,
+  // never the underlying P2P trade funds between company and partner.
+  paymentLinkId  String? // Razorpay's plink_xxx id
+  paymentLinkUrl String? // short_url — shareable link sent to the payer
+  paymentRef     String? // Razorpay's pay_xxx id once the link is paid
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
   @@index([status])
+  @@index([paymentLinkId])
 }
 
 // ── Notes & documents ────────────────────────────────────────────────────────
