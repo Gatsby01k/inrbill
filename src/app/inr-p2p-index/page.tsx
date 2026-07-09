@@ -6,7 +6,7 @@ import { EmbedBadgeSection } from "@/components/site/embed-badge-section";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteNav } from "@/components/site/nav";
 import { EmptyState, Stat } from "@/components/ui";
-import { getLiquidityIndexSnapshot } from "@/lib/liquidity-index";
+import { getLiquidityIndexSnapshot, getRateIndexSnapshot } from "@/lib/liquidity-index";
 import { BANK_OPTIONS, DIRECTION_OPTIONS, METHOD_OPTIONS } from "@/lib/options";
 import { SITE_URL } from "@/lib/site";
 
@@ -15,9 +15,9 @@ import { SITE_URL } from "@/lib/site";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "INR P2P & USDT-INR Liquidity Index — Live Network Coverage",
+  title: "INR P2P & USDT-INR Liquidity Index — Coverage & Reference Rate",
   description:
-    "A live, honest snapshot of the INRP2P network: which INR↔USDT and INR payout corridors, banks and rails are currently covered by reviewed liquidity partners. Not a rate feed — a coverage index, refreshed hourly.",
+    "A live, honest snapshot of the INRP2P network: which INR↔USDT and INR payout corridors, banks and rails are currently covered by reviewed liquidity partners, plus a reference rate range built from real closed deals — not asks, not quotes.",
   alternates: { canonical: "/inr-p2p-index" },
 };
 
@@ -25,6 +25,10 @@ const INDEX_FAQ = [
   {
     q: "Is this a live USDT/INR exchange rate?",
     a: "No. INRP2P is not an exchange and does not publish or guarantee a rate. This index shows which corridors, banks and rails reviewed partners currently cover — a coverage snapshot, not a price feed. Pricing is agreed directly between the introduced parties.",
+  },
+  {
+    q: "Where does the reference rate below come from?",
+    a: "It's built from effective settlement rates that operations records when a real introduction closes — never a quote, never an ask price. We only publish a range once enough deals have closed on a corridor recently, so a single outlier can't skew it.",
   },
   {
     q: "How often does this index update?",
@@ -37,15 +41,10 @@ const INDEX_FAQ = [
 ];
 
 export default async function LiquidityIndexPage() {
-  const {
-    total,
-    verified,
-    corridors,
-    corridorsCovered,
-    banksCovered,
-    methodsCovered,
-    updatedOn,
-  } = await getLiquidityIndexSnapshot();
+  const [
+    { total, verified, corridors, corridorsCovered, banksCovered, methodsCovered, updatedOn },
+    rate,
+  ] = await Promise.all([getLiquidityIndexSnapshot(), getRateIndexSnapshot()]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -64,6 +63,7 @@ export default async function LiquidityIndexPage() {
           "Bank coverage",
           "Payment rail coverage",
           "Verified partner count",
+          "INR/USDT reference settlement rate range",
         ],
       },
       {
@@ -181,6 +181,39 @@ export default async function LiquidityIndexPage() {
                 )}
               </Reveal>
             ))}
+          </div>
+
+          {/* Reference rate */}
+          <div className="mt-12">
+            <p className="eyebrow text-gold-700">
+              Reference rate · closed deals, last {rate.windowDays} days
+            </p>
+            {rate.entries.length ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {rate.entries.map((r, i) => (
+                  <Reveal key={r.direction} index={i} className="card p-5">
+                    <p className="text-[13px] font-semibold text-slate-900">{r.label}</p>
+                    <p className="tnum mt-2 text-[22px] font-semibold text-slate-900">
+                      ₹{r.min.toFixed(2)} – ₹{r.max.toFixed(2)}
+                    </p>
+                    <p className="mt-1 text-[11.5px] text-slate-500">
+                      Median ₹{r.median.toFixed(2)}/USDT · {r.count} closed deal{r.count === 1 ? "" : "s"}
+                    </p>
+                  </Reveal>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4">
+                <EmptyState
+                  title="Not enough closed deals yet"
+                  body={`A range only publishes once at least ${rate.minSample} deals close on a corridor within ${rate.windowDays} days — real numbers, not a guess.`}
+                />
+              </div>
+            )}
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+              Effective settlement rates from closed introductions, not asks or quotes. Not a price feed, not
+              investment advice, not a guarantee — see the FAQ below.
+            </p>
           </div>
 
           {/* Mini FAQ */}

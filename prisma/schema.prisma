@@ -276,6 +276,11 @@ model Introduction {
   followUpDate DateTime?
   sentAt      DateTime?
   respondedAt DateTime?
+  // Optional, admin-entered effective settlement rate (INR per 1 USDT) for
+  // closed INR_TO_USDT / USDT_TO_INR deals — feeds the public reference-rate
+  // index. Never required, never touches INR_PAYOUTS (no conversion rate
+  // concept there), and is aggregated, not published per-deal.
+  settledRate Decimal?           @db.Decimal(10, 4)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 

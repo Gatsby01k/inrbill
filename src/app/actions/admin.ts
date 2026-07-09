@@ -340,20 +340,30 @@ export async function updateIntroductionOutcome(fd: FormData) {
   const parsed = introOutcomeSchema.safeParse({
     outcome: s(fd, "outcome"),
     followUpDate: s(fd, "followUpDate"),
+    settledRate: s(fd, "settledRate") || undefined,
   });
   if (!introId || !parsed.success) fail(fd, "/admin/matches", "Invalid introduction update.");
 
   const existing = await db.introduction.findUnique({
     where: { id: introId },
-    include: { match: true },
+    include: { match: { include: { request: true } } },
   });
   if (!existing) fail(fd, "/admin/matches", "Introduction not found.");
+
+  // Rate only means something on a real conversion corridor — silently drop
+  // it rather than let a stray value land against an INR_PAYOUTS deal.
+  const direction = existing.match.request.direction;
+  const settledRate =
+    parsed.data.settledRate != null && (direction === "INR_TO_USDT" || direction === "USDT_TO_INR")
+      ? parsed.data.settledRate
+      : null;
 
   await db.introduction.update({
     where: { id: introId },
     data: {
       outcome: parsed.data.outcome,
       followUpDate: parsed.data.followUpDate ? new Date(parsed.data.followUpDate) : null,
+      settledRate,
     },
   });
   await audit({
@@ -365,7 +375,7 @@ export async function updateIntroductionOutcome(fd: FormData) {
     requestId: existing.match.requestId,
     partnerId: existing.match.partnerId,
     matchId: existing.matchId,
-    meta: { outcome: parsed.data.outcome, followUpDate: parsed.data.followUpDate },
+    meta: { outcome: parsed.data.outcome, followUpDate: parsed.data.followUpDate, settledRate },
   });
   done(fd, `/admin/requests/${existing.match.requestId}`);
 }

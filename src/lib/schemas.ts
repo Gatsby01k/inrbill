@@ -149,6 +149,10 @@ export const matchDecisionSchema = z.object({
 export const introOutcomeSchema = z.object({
   outcome: optionalTrimmed(1000),
   followUpDate: optionalTrimmed(20),
+  // Effective settlement rate, INR per 1 USDT — only meaningful for closed
+  // INR_TO_USDT / USDT_TO_INR deals, never required. Feeds the aggregated,
+  // gated public reference-rate index — never published per-deal.
+  settledRate: z.coerce.number().positive().max(1000).optional(),
 });
 
 export const matchCreateSchema = z.object({

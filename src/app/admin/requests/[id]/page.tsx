@@ -333,6 +333,11 @@ export default async function AdminRequestDetailPage({
                             {intro.outcome ? (
                               <span className="w-full text-xs text-slate-500">Outcome: {intro.outcome}</span>
                             ) : null}
+                            {intro.settledRate != null ? (
+                              <span className="text-xs text-leaf-700">
+                                Settled ₹{intro.settledRate.toString()}/USDT
+                              </span>
+                            ) : null}
                             <form action={updateIntroductionStatus} className="ml-auto flex items-center gap-2">
                               <input type="hidden" name="introductionId" value={intro.id} />
                               <input type="hidden" name="back" value={back} />
@@ -373,6 +378,17 @@ export default async function AdminRequestDetailPage({
                                 className="input h-8 min-w-40 flex-1 py-0 text-xs"
                                 placeholder="Outcome notes"
                               />
+                              {request.direction === "INR_TO_USDT" || request.direction === "USDT_TO_INR" ? (
+                                <input
+                                  name="settledRate"
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  defaultValue={intro.settledRate?.toString() ?? ""}
+                                  className="input h-8 w-32 py-0 text-xs"
+                                  placeholder="₹/USDT settled"
+                                />
+                              ) : null}
                               <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="…">
                                 Save follow-up
                               </SubmitButton>

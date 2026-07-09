@@ -60,3 +60,71 @@ export async function getLiquidityIndexSnapshot(): Promise<LiquidityIndexSnapsho
     updatedOn: new Date().toISOString().slice(0, 10),
   };
 }
+
+// ── Reference rate index ─────────────────────────────────────────────────────
+// Aggregated from admin-entered settlement rates on closed introductions.
+// Never shown per-deal, never shown below a minimum sample size — an empty
+// or single-data-point "index" would be worse than no index at all.
+
+const RATE_WINDOW_DAYS = 14;
+const RATE_MIN_SAMPLE = 3;
+
+const RATE_CORRIDOR_LABELS: Partial<Record<Direction, string>> = {
+  INR_TO_USDT: "INR → USDT",
+  USDT_TO_INR: "USDT → INR",
+};
+
+export type RateIndexEntry = {
+  direction: Direction;
+  label: string;
+  count: number;
+  min: number;
+  max: number;
+  median: number;
+};
+
+export type RateIndexSnapshot = {
+  entries: RateIndexEntry[];
+  windowDays: number;
+  minSample: number;
+};
+
+export async function getRateIndexSnapshot(): Promise<RateIndexSnapshot> {
+  const since = new Date(Date.now() - RATE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
+  const rows = await db.introduction.findMany({
+    where: { settledRate: { not: null }, updatedAt: { gte: since } },
+    select: {
+      settledRate: true,
+      match: { select: { request: { select: { direction: true } } } },
+    },
+  });
+
+  const byDirection = new Map<Direction, number[]>();
+  for (const row of rows) {
+    if (row.settledRate == null) continue;
+    const direction = row.match.request.direction;
+    if (!(direction in RATE_CORRIDOR_LABELS)) continue;
+    const list = byDirection.get(direction) ?? [];
+    list.push(Number(row.settledRate));
+    byDirection.set(direction, list);
+  }
+
+  const entries: RateIndexEntry[] = [];
+  for (const direction of Object.keys(RATE_CORRIDOR_LABELS) as Direction[]) {
+    const values = (byDirection.get(direction) ?? []).slice().sort((a, b) => a - b);
+    if (values.length < RATE_MIN_SAMPLE) continue;
+    const mid = Math.floor(values.length / 2);
+    const median = values.length % 2 === 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+    entries.push({
+      direction,
+      label: RATE_CORRIDOR_LABELS[direction]!,
+      count: values.length,
+      min: values[0],
+      max: values[values.length - 1],
+      median,
+    });
+  }
+
+  return { entries, windowDays: RATE_WINDOW_DAYS, minSample: RATE_MIN_SAMPLE };
+}
