@@ -11,6 +11,7 @@ import {
   partnerApplicationSchema,
   type ActionState,
 } from "@/lib/schemas";
+import { checkCoverageGap } from "@/lib/watchdogs";
 import type { Direction, RequestType, Urgency } from "@prisma/client";
 
 function str(formData: FormData, key: string) {
@@ -167,6 +168,12 @@ export async function submitCompanyRequest(
     requestId: request.id,
     meta: { reference, requestType: data.requestType },
   });
+
+  // Fire-and-forget-safe: never throws, never delays or blocks submission.
+  // Reuses the same scoring the admin "suggested partners" panel runs, just
+  // triggered the moment the request exists instead of whenever someone
+  // happens to open it.
+  await checkCoverageGap(request);
 
   if (!loggedInCompany && userId) await createSession(userId);
   redirect(`/request/submitted?ref=${encodeURIComponent(reference)}`);
