@@ -23,7 +23,7 @@ export default function FeesPage() {
       eyebrow="Commercial terms"
       title="Fees"
       sub="How INRP2P is compensated for review, matching and introduction — nothing else."
-      updated="8 July 2026"
+      updated="9 July 2026"
     >
       <p>
         INRP2P charges for the coordination work it does — review, matching and introduction —
@@ -58,9 +58,13 @@ export default function FeesPage() {
 
       <h2>Billing today</h2>
       <p>
-        At this stage, revenue is tracked internally by network operations (potential, quoted,
-        agreed, invoiced, paid) and settled outside the platform by direct invoice. INRP2P does
-        not currently process card, bank or crypto payments through the site itself.
+        Revenue is tracked internally by network operations through a clear lifecycle
+        (potential, quoted, agreed, invoiced, paid). For INRP2P&apos;s own coordination fees
+        listed above, we may send a secure payment link — processed by a licensed third-party
+        payment gateway — or invoice you directly for bank transfer, whichever is more
+        convenient. This applies only to INRP2P&apos;s own fees. INRP2P never processes, holds
+        or routes the funds exchanged between introduced parties themselves — that settlement
+        always happens directly between you and the other party, entirely outside the platform.
       </p>
 
       <h2>Changes to fees</h2>
