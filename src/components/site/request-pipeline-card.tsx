@@ -7,24 +7,33 @@ import { cn } from "@/lib/format";
 const STAGES = ["Submitted", "Reviewed", "Matched", "Introduced"] as const;
 const STAGE_MS = 2200;
 const PARTNER_COUNT = 7;
+const STAR_COUNT = 44;
 
 const GOLD = "255,153,51";
 const LEAF = "23,138,56";
 
 type Node = { angle: number; x: number; y: number; depth: number; scale: number; pulse: number };
 type Particle = { from: number; to: number; t: number; speed: number; color: string };
+type Ripple = { x: number; y: number; r: number; alpha: number; color: string };
+type Star = { fx: number; fy: number; r: number; phase: number };
 
 /**
- * Hero visual, rebuilt a third time on direct feedback that a stepper list
- * (even styled as an audit log) still read as flat and static. This is a
- * canvas particle network: a center "you" node, an orbit of partner nodes
- * projected as a tilted 3D ring (a cheap perspective trick — nodes further
- * "back" in the rotation render smaller/dimmer, nodes "forward" render
- * bigger/brighter, sorted and drawn back-to-front every frame), faint mesh
- * lines between them, and small glowing packets continuously flowing in
- * from partners and — periodically — a bright packet flowing out to a
- * partner that lights up (the "match" moment). The ring also tilts toward
- * the cursor for real parallax, same lerped-follow technique as HeroRing.
+ * Hero visual — a canvas particle network, not a DOM stepper. Center "you"
+ * node, an orbit of partner nodes projected as a tilted 3D ring (nodes
+ * further "back" in the rotation render smaller/dimmer, "forward" render
+ * bigger/brighter, sorted and drawn back-to-front every frame — the piece
+ * that actually sells the depth), tilting toward the cursor for real
+ * parallax (same lerped-follow technique as HeroRing).
+ *
+ * Layered on top for the "premium" pass: additive ("lighter") blending on
+ * every glow so overlapping light actually brightens instead of just
+ * alpha-stacking (real bloom, not a blur filter); a faint twinkling
+ * starfield for depth behind the ring; a slow-breathing halo behind the
+ * center node; comet trails behind traveling particles instead of bare
+ * dots; and an expanding, fading ripple ring fired at the exact moment a
+ * particle completes its journey (arrival at center, or — gold, the
+ * "match" packet — arrival at a partner).
+ *
  * No new dependency — canvas is a native browser API, no WebGL. Falls back
  * to a single static frame under prefers-reduced-motion. Stage labels
  * below keep the plain-English explanation the visual alone doesn't carry.
@@ -74,6 +83,15 @@ export function RequestPipelineCard() {
       pulse: 0,
     }));
     const particles: Particle[] = [];
+    const ripples: Ripple[] = [];
+    // Fractional (0..1) positions so the field scales with the card on
+    // resize without needing to regenerate.
+    const stars: Star[] = Array.from({ length: STAR_COUNT }, () => ({
+      fx: Math.random(),
+      fy: Math.random(),
+      r: 0.4 + Math.random() * 0.8,
+      phase: Math.random() * Math.PI * 2,
+    }));
 
     // Pointer-driven tilt, lerped toward the target each frame — same
     // technique as HeroRing, applied here to an actual 3D-ish projection
@@ -108,7 +126,7 @@ export function RequestPipelineCard() {
         n.depth = depth;
         n.scale = 0.55 + ((depth + 1) / 2) * 0.85;
       });
-      return { cx, cy };
+      return { cx, cy, rx, ry };
     }
 
     function drawStatic() {
@@ -147,10 +165,12 @@ export function RequestPipelineCard() {
     }
 
     let raf = 0;
+    let clock = 0;
     let spawnTimer = 0;
     let matchTimer = 40;
 
     function frame() {
+      clock += 0.02;
       curTiltX += (targetTiltX - curTiltX) * 0.06;
       curTiltY += (targetTiltY - curTiltY) * 0.06;
 
@@ -158,16 +178,35 @@ export function RequestPipelineCard() {
         n.angle += 0.0009;
         n.pulse = Math.max(0, n.pulse - 0.018);
       });
-      const { cx, cy } = layout();
+      const { cx, cy, rx, ry } = layout();
 
       // Translucent overlay instead of a hard clear — leaves a soft trail
       // behind moving particles rather than a flat repaint every frame.
       ctx!.fillStyle = "rgba(11,18,32,0.32)";
       ctx!.fillRect(0, 0, width, height);
 
+      // Twinkling starfield, additive so overlaps brighten instead of
+      // washing out.
+      ctx!.globalCompositeOperation = "lighter";
+      stars.forEach((s) => {
+        const tw = 0.1 + ((Math.sin(clock * 0.6 + s.phase) + 1) / 2) * 0.3;
+        ctx!.beginPath();
+        ctx!.fillStyle = `rgba(255,255,255,${tw})`;
+        ctx!.arc(s.fx * width, s.fy * height, s.r, 0, Math.PI * 2);
+        ctx!.fill();
+      });
+      ctx!.globalCompositeOperation = "source-over";
+
+      // Orbit path itself, faint — grounds the ring as an actual object
+      // rather than just implying it through the node positions.
+      ctx!.beginPath();
+      ctx!.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx!.strokeStyle = "rgba(255,255,255,0.055)";
+      ctx!.lineWidth = 1;
+      ctx!.stroke();
+
       // Faint mesh between neighbouring partner nodes (ring order, not
       // draw order — the connections themselves don't change with tilt).
-      ctx!.lineWidth = 1;
       nodes.forEach((n, i) => {
         const next = nodes[(i + 1) % nodes.length];
         const meshDepth = (n.depth + next.depth) / 2;
@@ -200,27 +239,52 @@ export function RequestPipelineCard() {
         particles.push({ from: -1, to: idx, t: 0, speed: 0.011, color: GOLD });
       }
 
+      // Particles: additive comet trails (a short fan of fading dots
+      // behind the current position) instead of a single bare dot.
+      ctx!.globalCompositeOperation = "lighter";
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.t += p.speed;
         const a = p.from === -1 ? { x: cx, y: cy } : nodes[p.from];
         const b = p.to === -1 ? { x: cx, y: cy } : nodes[p.to];
-        const x = a.x + (b.x - a.x) * p.t;
-        const y = a.y + (b.y - a.y) * p.t;
 
-        ctx!.beginPath();
-        ctx!.fillStyle = `rgba(${p.color},0.95)`;
-        ctx!.shadowColor = `rgba(${p.color},0.85)`;
-        ctx!.shadowBlur = 9;
-        ctx!.arc(x, y, 2.3, 0, Math.PI * 2);
-        ctx!.fill();
+        for (let k = 4; k >= 0; k--) {
+          const tt = Math.max(0, Math.min(1, p.t - k * 0.045));
+          const x = a.x + (b.x - a.x) * tt;
+          const y = a.y + (b.y - a.y) * tt;
+          const fade = 1 - k / 5;
+          ctx!.beginPath();
+          ctx!.fillStyle = `rgba(${p.color},${0.85 * fade})`;
+          ctx!.shadowColor = `rgba(${p.color},0.8)`;
+          ctx!.shadowBlur = 8 * fade;
+          ctx!.arc(x, y, 2.2 * fade, 0, Math.PI * 2);
+          ctx!.fill();
+        }
         ctx!.shadowBlur = 0;
 
         if (p.t >= 1) {
+          const arrival = p.to === -1 ? { x: cx, y: cy } : nodes[p.to];
+          ripples.push({ x: arrival.x, y: arrival.y, r: 2, alpha: 0.55, color: p.color });
           if (p.to === -1 && p.from !== -1) nodes[p.from].pulse = 1;
           if (p.from === -1 && p.to !== -1) nodes[p.to].pulse = 1;
           particles.splice(i, 1);
         }
+      }
+
+      // Expanding, fading confirmation rings at arrival points.
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.r += 0.7;
+        r.alpha -= 0.022;
+        if (r.alpha <= 0) {
+          ripples.splice(i, 1);
+          continue;
+        }
+        ctx!.beginPath();
+        ctx!.strokeStyle = `rgba(${r.color},${r.alpha})`;
+        ctx!.lineWidth = 1.4;
+        ctx!.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+        ctx!.stroke();
       }
 
       // Back-to-front so front-of-ring nodes visually sit above the mesh
@@ -240,6 +304,16 @@ export function RequestPipelineCard() {
           ctx!.shadowBlur = 0;
         });
 
+      // Slow-breathing halo behind the center node, then the node itself.
+      const haloR = 22 + Math.sin(clock * 0.9) * 6;
+      const halo = ctx!.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+      halo.addColorStop(0, `rgba(${GOLD},0.22)`);
+      halo.addColorStop(1, `rgba(${GOLD},0)`);
+      ctx!.fillStyle = halo;
+      ctx!.beginPath();
+      ctx!.arc(cx, cy, haloR, 0, Math.PI * 2);
+      ctx!.fill();
+
       ctx!.beginPath();
       ctx!.fillStyle = `rgba(${GOLD},0.95)`;
       ctx!.shadowColor = `rgba(${GOLD},0.75)`;
@@ -247,6 +321,7 @@ export function RequestPipelineCard() {
       ctx!.arc(cx, cy, 5, 0, Math.PI * 2);
       ctx!.fill();
       ctx!.shadowBlur = 0;
+      ctx!.globalCompositeOperation = "source-over";
 
       raf = requestAnimationFrame(frame);
     }
