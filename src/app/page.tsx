@@ -79,6 +79,14 @@ const FACTS = [
   { value: "3", label: "Corridors: INR→USDT, USDT→INR, INR payouts" },
 ];
 
+// Real infrastructure INRP2P is actually wired into for its OWN service-fee
+// invoicing (see src/lib/razorpay.ts, src/lib/nowpayments.ts) — not vanity
+// logos, and never the liquidity deal itself (that still settles directly
+// between company and partner, no custody, same as everywhere else on this
+// page). Append here as more get integrated — the ticker below just maps
+// over this list, nothing else to touch.
+const POWERED_BY = ["Razorpay", "NOWPayments"];
+
 const COMPANY_POINTS = [
   "Coverage across INR → USDT, USDT → INR and INR payouts",
   "Every partner verified for capacity, banking coverage and compliance",
@@ -347,15 +355,11 @@ export default async function LandingPage() {
             <Ticker
               items={[
                 "India's liquidity, reviewed.",
-                ...corridors
-                  .filter((c) => c.activePartners > 0)
-                  .map(
-                    (c) =>
-                      `${c.directionLabel} · ${c.activePartners} active partner${c.activePartners === 1 ? "" : "s"}`,
-                  ),
+                ...POWERED_BY.map((p) => `Service fees invoiced via ${p} — never the deal itself`),
                 "24–48h first response — not “soon.”",
                 "₹0 held in custody — funds never pass through INRP2P",
                 "Every request and every application manually reviewed",
+                "3 corridors: INR→USDT, USDT→INR, INR payouts",
               ]}
             />
           </div>
