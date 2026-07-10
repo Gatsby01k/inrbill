@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
-import { Counter, KineticText, PhysicsText, Reveal } from "@/components/motion";
+import { Counter, KineticText, Reveal } from "@/components/motion";
 import { AiConcierge } from "@/components/site/ai-concierge";
 import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
@@ -250,7 +250,7 @@ export default async function LandingPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <Reveal>
               <p className="eyebrow">INRP2P — private, reviewed network</p>
-              <PhysicsText
+              <KineticText
                 as="h1"
                 text="India's liquidity, reviewed."
                 highlight={["reviewed"]}

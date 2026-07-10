@@ -9,8 +9,9 @@ const STAGE_MS = 2200;
 const PARTNER_COUNT = 7;
 const STAR_COUNT = 44;
 
-const GOLD = "255,153,51";
-const LEAF = "23,138,56";
+const GOLD = "255,153,51"; // gold-500
+const GOLD_DEEP = "193,95,10"; // gold-700 — the stick, so it reads as brand metal, not a random brown prop
+const LEAF = "23,138,56"; // leaf-500
 
 type Node = { angle: number; x: number; y: number; depth: number; scale: number; pulse: number };
 type Particle = { from: number; to: number; t: number; speed: number; color: string };
@@ -254,7 +255,7 @@ export function RequestPipelineCard() {
       ctx!.ellipse(cx, cy, rx * 0.9, ry * 0.9, 0, 0, Math.PI * 2);
       ctx!.strokeStyle = "rgba(255,255,255,0.04)";
       ctx!.stroke();
-      const TREAD_COUNT = 28;
+      const TREAD_COUNT = 24;
       ctx!.strokeStyle = "rgba(255,255,255,0.09)";
       ctx!.lineWidth = 1.4;
       for (let i = 0; i < TREAD_COUNT; i++) {
@@ -283,7 +284,7 @@ export function RequestPipelineCard() {
         const handleY = contactY + (dirY / dirLen) * 26;
 
         ctx!.globalCompositeOperation = "source-over";
-        ctx!.strokeStyle = `rgba(201,144,74,${0.75 * pushStrength})`;
+        ctx!.strokeStyle = `rgba(${GOLD_DEEP},${0.75 * pushStrength})`;
         ctx!.lineWidth = 2.4;
         ctx!.lineCap = "round";
         ctx!.beginPath();
