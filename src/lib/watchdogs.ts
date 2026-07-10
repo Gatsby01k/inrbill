@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { directionLabel, statusLabel } from "@/lib/format";
 import { rankPartners, type MatchSuggestion } from "@/lib/matching";
 import { notify } from "@/lib/notify";
+import { referrerLabel } from "@/lib/referral";
 import { findDuplicateContactGroups, groupKey } from "@/lib/risk-radar";
 import { sendTelegramAlert } from "@/lib/telegram";
 
@@ -616,4 +617,75 @@ export async function runDuplicateRiskWatchdog() {
     sent++;
   }
   return { checked: groups.length, sent };
+}
+
+/* ── 10. Referral-reward watchdog ─────────────────────────────────────────
+   src/lib/referral.ts deliberately never auto-credits money — the actual
+   discount/payout is a human call, same as every other financial action on
+   this platform. This just makes sure ops finds out the moment it's owed,
+   instead of relying on someone to remember to check. Fires once per
+   referred account (company or partner) the moment they have any
+   SUCCESSFUL introduction — dedup on the account's own id, so a second,
+   third, etc. closed deal from the same referred account never re-fires. */
+
+export async function runReferralRewardWatchdog() {
+  const [companies, partners] = await Promise.all([
+    db.companyProfile.findMany({
+      where: {
+        referredByCode: { not: null },
+        requests: { some: { matches: { some: { introductions: { some: { status: "SUCCESSFUL" } } } } } },
+      },
+      select: { id: true, companyName: true, referredByCode: true },
+    }),
+    db.partnerProfile.findMany({
+      where: {
+        referredByCode: { not: null },
+        matches: { some: { introductions: { some: { status: "SUCCESSFUL" } } } },
+      },
+      select: { id: true, displayName: true, referredByCode: true },
+    }),
+  ]);
+
+  const action = "watchdog.referral_reward";
+  let sent = 0;
+
+  for (const c of companies) {
+    if (await alreadyAlerted(action, c.id)) continue;
+    const referrer = await referrerLabel(c.referredByCode);
+    const ok = await sendTelegramAlert(
+      `🎉 <b>Referral reward due</b>\nCompany ${c.companyName} — referred by ${referrer}\n` +
+        `Their first deal just closed. Apply the referral reward manually — nothing is auto-credited.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "CompanyProfile",
+      entityId: c.id,
+      actorLabel: "Watchdog",
+      meta: { referredByCode: c.referredByCode, referrer },
+    });
+    sent++;
+  }
+
+  for (const p of partners) {
+    if (await alreadyAlerted(action, p.id)) continue;
+    const referrer = await referrerLabel(p.referredByCode);
+    const ok = await sendTelegramAlert(
+      `🎉 <b>Referral reward due</b>\nPartner ${p.displayName} — referred by ${referrer}\n` +
+        `Their first deal just closed. Apply the referral reward manually — nothing is auto-credited.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "PartnerProfile",
+      entityId: p.id,
+      actorLabel: "Watchdog",
+      meta: { referredByCode: p.referredByCode, referrer },
+    });
+    sent++;
+  }
+
+  return { checked: companies.length + partners.length, sent };
 }

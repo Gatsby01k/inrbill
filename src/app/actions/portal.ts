@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { getSession, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { assignCompanyReferralCode, assignPartnerReferralCode } from "@/lib/referral";
 import { documentSchema, noteSchema, partnerOpsSchema } from "@/lib/schemas";
 
 function s(fd: FormData, key: string) {
@@ -265,5 +266,26 @@ export async function disconnectTelegram() {
     where: { id: session.user.id },
     data: { telegramChatId: null, telegramLinkCode: null },
   });
+  finish(path);
+}
+
+/* ── Referral program (company + partner) ─────────────────────────────────
+   Accounts created after src/lib/referral.ts shipped get a code
+   automatically at signup. This backfills a code, on demand, for anyone who
+   signed up before that — a one-time button in the referral card, not
+   something that runs silently on every page load. */
+
+export async function generateReferralCode() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const path = workspacePath(session.user.role);
+
+  if (session.user.role === "PARTNER") {
+    const partner = await db.partnerProfile.findUnique({ where: { userId: session.user.id } });
+    if (partner && !partner.referralCode) await assignPartnerReferralCode(partner.id);
+  } else {
+    const company = await db.companyProfile.findUnique({ where: { userId: session.user.id } });
+    if (company && !company.referralCode) await assignCompanyReferralCode(company.id);
+  }
   finish(path);
 }

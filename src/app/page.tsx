@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
 import { Counter, Reveal } from "@/components/motion";
+import { AiConcierge } from "@/components/site/ai-concierge";
 import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
@@ -658,6 +659,7 @@ export default async function LandingPage() {
         </section>
       </main>
       <SiteFooter />
+      <AiConcierge />
     </div>
   );
 }

@@ -234,6 +234,15 @@ model CompanyProfile {
   retainerDayOfMonth   Int?
   retainerNextRenewal  DateTime?
 
+  // Referral program (see src/lib/referral.ts) — referralCode is this
+  // company's own shareable code (generated once, at signup), referredByCode
+  // is the code they arrived with, if any (captured from ?ref= via cookie,
+  // see src/lib/referral-capture.ts). Both nullable: referredByCode is
+  // usually null (most signups aren't referred), and referralCode is only
+  // ever null for accounts created before this feature existed.
+  referralCode     String? @unique
+  referredByCode   String?
+
   requests LiquidityRequest[]
   revenues RevenueRecord[]
 }
@@ -321,6 +330,11 @@ model PartnerProfile {
   // background pass completes (or forever, if AI isn't configured).
   aiTriageNote String?
   aiFlagged    Boolean?
+
+  // Referral program — see the matching fields on CompanyProfile above for
+  // the full explanation. Same shape on both sides of the marketplace.
+  referralCode   String? @unique
+  referredByCode String?
 
   matches   Match[]
   notesList Note[]

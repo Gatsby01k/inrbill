@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { addPartnerDocument, addPartnerNote } from "@/app/actions/portal";
+import { addPartnerDocument, addPartnerNote, generateReferralCode } from "@/app/actions/portal";
+import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, FormError, KV, PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
 import {
   DocumentComposer,
@@ -9,12 +10,14 @@ import {
   NoteComposer,
   NoteList,
 } from "@/components/workspace/records";
+import { ReferralCard, type ReferredAccountRow } from "@/components/workspace/referral-card";
 import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
 import { TrackRecordCard } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
 import { deriveMatchStage, dealStageHint } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
 import { directionLabel, fmtDate } from "@/lib/format";
+import { listReferredPartners, referralUrl } from "@/lib/referral";
 import { getPartnerTrackRecord } from "@/lib/reputation";
 import { TELEGRAM_BOT_USERNAME } from "@/lib/site";
 
@@ -66,6 +69,15 @@ export default async function PartnerOverviewPage({
   if (!partner) redirect("/login");
 
   const trackRecord = await getPartnerTrackRecord(partner.id);
+
+  const referredRows: ReferredAccountRow[] = partner.referralCode
+    ? (await listReferredPartners(partner.referralCode)).map((p) => ({
+        id: p.id,
+        label: p.displayName,
+        createdAt: p.createdAt.toISOString(),
+        dealClosed: p.matches.some((m) => m.introductions.some((i) => i.status === "SUCCESSFUL")),
+      }))
+    : [];
 
   return (
     <>
@@ -209,6 +221,28 @@ export default async function PartnerOverviewPage({
             telegramLinkCode={user.telegramLinkCode}
             botUsername={TELEGRAM_BOT_USERNAME || undefined}
           />
+          {partner.referralCode ? (
+            <ReferralCard
+              url={referralUrl("apply", partner.referralCode)}
+              code={partner.referralCode}
+              referred={referredRows}
+            />
+          ) : (
+            <div className="card p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                Refer someone
+              </p>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
+                Get your own shareable link — anyone who signs up through it is on record as
+                your referral from day one.
+              </p>
+              <form action={generateReferralCode} className="mt-3">
+                <SubmitButton className="btn btn-gold btn-sm" pendingLabel="Generating…">
+                  Get my link
+                </SubmitButton>
+              </form>
+            </div>
+          )}
           <div className="card p-5">
             <TrackRecordCard record={trackRecord} title="Your track record" />
           </div>

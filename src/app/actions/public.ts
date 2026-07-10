@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { audit, nextReference } from "@/lib/audit";
@@ -14,6 +15,12 @@ import {
 import { runFullTriagePipeline, runPartnerTriagePipeline } from "@/lib/ai-triage";
 import { db } from "@/lib/db";
 import {
+  assignCompanyReferralCode,
+  assignPartnerReferralCode,
+  REFERRAL_COOKIE,
+  resolveReferralCode,
+} from "@/lib/referral";
+import {
   companyRequestSchema,
   emailOnlySchema,
   flattenErrors,
@@ -22,6 +29,15 @@ import {
 } from "@/lib/schemas";
 import { autoSuggestMatches, checkCoverageGap } from "@/lib/watchdogs";
 import type { Direction, RequestType, Urgency } from "@prisma/client";
+
+/** Reads the referral cookie (set client-side by ReferralCapture off a
+    ?ref= URL param) and confirms it actually belongs to a real account
+    before trusting it — never null-defends the caller into storing a
+    cookie's raw contents unchecked. */
+async function referredByCode(): Promise<string | null> {
+  const raw = (await cookies()).get(REFERRAL_COOKIE)?.value ?? null;
+  return resolveReferralCode(raw);
+}
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
@@ -122,6 +138,7 @@ export async function submitCompanyRequest(
     // on the confirmation page, right after the account is already signed in.
     const plainPassword = generateAccessPassword();
     const passwordHash = await hashPassword(plainPassword);
+    const referredBy = await referredByCode();
     const created = await db.user.create({
       data: {
         email: account.data.email,
@@ -137,6 +154,7 @@ export async function submitCompanyRequest(
             contactRole: data.contactRole,
             telegram: data.telegram,
             phone: data.phone,
+            referredByCode: referredBy,
           },
         },
       },
@@ -145,6 +163,10 @@ export async function submitCompanyRequest(
     companyId = created.company!.id;
     userId = created.id;
     newAccessCredentials = { email: account.data.email, password: plainPassword };
+    // A single fast update, awaited directly (not after()) so the referral
+    // code already exists by the time this account's workspace renders its
+    // "your referral link" card.
+    await assignCompanyReferralCode(companyId);
   }
 
   const reference = await nextReference("request");
@@ -262,6 +284,7 @@ export async function submitPartnerApplication(
   const plainPassword = generateAccessPassword();
   const passwordHash = await hashPassword(plainPassword);
   const reference = await nextReference("partner");
+  const referredBy = await referredByCode();
 
   const created = await db.user.create({
     data: {
@@ -295,6 +318,7 @@ export async function submitPartnerApplication(
           references: data.references,
           riskNotes: data.riskNotes,
           additionalComments: data.additionalComments,
+          referredByCode: referredBy,
         },
       },
     },
@@ -310,6 +334,11 @@ export async function submitPartnerApplication(
     partnerId: created.partner!.id,
     meta: { reference },
   });
+
+  // A single fast update, awaited directly so the referral code already
+  // exists by the time this account's workspace renders its "your referral
+  // link" card.
+  await assignPartnerReferralCode(created.partner!.id);
 
   // Same after()-scheduled AI pre-flight pattern as company requests — runs
   // once the response (this action's redirect) has already gone out, so the

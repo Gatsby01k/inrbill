@@ -11,6 +11,7 @@ import {
   FormSection,
 } from "@/components/ui";
 import { cn } from "@/lib/format";
+import { applyFieldsToForm, partnerFormPrefill } from "@/lib/form-prefill";
 import {
   BANK_OPTIONS,
   CAPACITY_BANDS,
@@ -166,43 +167,37 @@ export function ApplyForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Restore a locally saved draft once, on first mount — closing the tab
-  // mid-application shouldn't cost someone their 4 minutes of work. There's
-  // no password field to worry about — the account password is generated
+  // Restore a locally saved draft, then layer on any query-param prefill
+  // (?experienceBand=…, ?directions=…, etc.) from a referral link or a
+  // programmatic SEO corridor page — see src/lib/form-prefill.ts. Prefill
+  // wins field-by-field over a stale draft. Closing the tab mid-application
+  // shouldn't cost someone their 4 minutes of work either way. There's no
+  // password field to worry about — the account password is generated
   // server-side on submit and never typed here at all.
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
+    let saved: Record<string, string | string[]> = {};
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Record<string, string | string[]>;
-      let touched = false;
-      for (const [name, value] of Object.entries(saved)) {
-        if (Array.isArray(value)) {
-          form
-            .querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)
-            .forEach((cb) => {
-              cb.checked = value.includes(cb.value);
-            });
-          touched = true;
-        } else {
-          const el = form.elements.namedItem(name);
-          if (el && "value" in el) {
-            (el as unknown as { value: string }).value = value;
-            touched = true;
-          }
-        }
-      }
-      if (touched) {
-        setSnap(readSnap(form));
-        setDraftRestored(true);
-        // They got at least this far before — no reason to make them
-        // re-clear each step's validity gate just to look at their own data.
-        setMaxStep(STEPS.length - 1);
-      }
+      if (raw) saved = JSON.parse(raw);
     } catch {
       /* corrupt or unavailable storage — start clean */
+    }
+    let prefill: Record<string, string | string[]> = {};
+    try {
+      prefill = partnerFormPrefill(new URLSearchParams(window.location.search));
+    } catch {
+      /* malformed URL — ignore */
+    }
+    const touched = applyFieldsToForm(form, { ...saved, ...prefill });
+    if (touched) {
+      setSnap(readSnap(form));
+      setDraftRestored(true);
+      // They got at least this far before (or arrived with a head start) —
+      // no reason to make them re-clear each step's validity gate just to
+      // look at their own data.
+      setMaxStep(STEPS.length - 1);
     }
   }, []);
 

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { CORRIDOR_SLUGS } from "@/lib/corridor-page";
 import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -6,6 +7,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}/inr-p2p-index`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${SITE_URL}/corridors`, lastModified: now, changeFrequency: "hourly", priority: 0.85 },
+    ...CORRIDOR_SLUGS.map((slug) => ({
+      url: `${SITE_URL}/corridors/${slug}`,
+      lastModified: now,
+      changeFrequency: "hourly" as const,
+      priority: 0.85,
+    })),
     { url: `${SITE_URL}/request`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/apply`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/how-it-works`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },

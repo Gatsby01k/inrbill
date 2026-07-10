@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { submitCompanyRequest } from "@/app/actions/public";
 import { SubmitButton } from "@/components/submit-button";
 import { CheckboxGrid, Field, FormError, RadioCards } from "@/components/ui";
+import { applyFieldsToForm, requestFormPrefill } from "@/lib/form-prefill";
 import { cn } from "@/lib/format";
 import {
   BANK_OPTIONS,
@@ -177,39 +178,32 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
   const lastStep = fields.length - 1;
   const fe = { ...(state.fieldErrors ?? {}), ...localErrors };
 
-  /* Restore locally saved draft once. */
+  /* Restore a locally saved draft, then layer on any query-param prefill
+     (?requestType=…, ?dailyVolumeBand=…, etc.) from a referral link, the AI
+     concierge chat, or a programmatic SEO corridor page — see
+     src/lib/form-prefill.ts. Prefill wins field-by-field over a stale
+     draft, since clicking a link like that is a fresher, more specific
+     signal of intent than whatever was typed in a previous visit. */
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
+    let saved: Record<string, string | string[]> = {};
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as Record<string, string | string[]>;
-      let touched = false;
-      for (const [name, value] of Object.entries(saved)) {
-        if (Array.isArray(value)) {
-          form
-            .querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)
-            .forEach((cb) => {
-              cb.checked = value.includes(cb.value);
-            });
-          touched = true;
-        } else {
-          const el = form.elements.namedItem(name);
-          if (el && "value" in el) {
-            // HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement or RadioNodeList —
-            // all expose a writable string `value`.
-            (el as unknown as { value: string }).value = value;
-            touched = true;
-          }
-        }
-      }
-      if (touched) {
-        setSnap(readSnap(new FormData(form)));
-        setDraftRestored(true);
-      }
+      if (raw) saved = JSON.parse(raw);
     } catch {
       /* corrupt or unavailable storage — start clean */
+    }
+    let prefill: Record<string, string | string[]> = {};
+    try {
+      prefill = requestFormPrefill(new URLSearchParams(window.location.search));
+    } catch {
+      /* malformed URL — ignore */
+    }
+    const touched = applyFieldsToForm(form, { ...saved, ...prefill });
+    if (touched) {
+      setSnap(readSnap(new FormData(form)));
+      setDraftRestored(true);
     }
   }, []);
 

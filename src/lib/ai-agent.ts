@@ -5,6 +5,7 @@
 // answer. Same raw-fetch approach as ai.ts, no SDK installed.
 
 import { AI_TOOLS, runAiTool } from "@/lib/ai-tools";
+import { CONCIERGE_SYSTEM_PROMPT } from "@/lib/ai-prompts";
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
@@ -86,4 +87,50 @@ export async function runCopilotTurn(
   }
 
   return { text: "Reached the tool-call limit without a final answer — try a narrower question.", toolsUsed };
+}
+
+/**
+ * Public landing-page concierge — multi-turn like runCopilotTurn above, but
+ * deliberately simpler: no tools, no agentic loop, just one Claude call per
+ * visitor turn using CONCIERGE_SYSTEM_PROMPT's CONTINUE/READY marker
+ * contract (src/lib/ai-prompts.ts). Kept as its own function rather than a
+ * generic "tools optional" parameter on runCopilotTurn because the two have
+ * meaningfully different trust boundaries — this one talks to anonymous
+ * public traffic, that one is admin-only — and keeping them syntactically
+ * separate makes that boundary harder to accidentally blur later.
+ */
+export async function runConciergeTurn(history: CopilotTurn[]): Promise<string> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) {
+    return "CONTINUE\n\nChat isn't available right now — please use the contact links below instead.";
+  }
+
+  const messages = history.map((h) => ({ role: h.role, content: h.text }));
+
+  try {
+    const res = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
+        max_tokens: 400,
+        system: CONCIERGE_SYSTEM_PROMPT,
+        messages,
+      }),
+    });
+    if (!res.ok) {
+      console.error("Concierge call failed", res.status, await res.text());
+      return "CONTINUE\n\nSomething went wrong on our end — please try again in a moment.";
+    }
+    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const block = data.content?.find((c) => c.type === "text" && typeof c.text === "string");
+    return block?.text?.trim() || "CONTINUE\n\nCould you say that again?";
+  } catch (err) {
+    console.error("Concierge call failed", err);
+    return "CONTINUE\n\nSomething went wrong on our end — please try again in a moment.";
+  }
 }

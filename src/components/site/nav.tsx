@@ -16,6 +16,9 @@ export async function SiteNav() {
           <Link href="/#how-it-works" className="transition-colors hover:text-slate-900">
             How it works
           </Link>
+          <Link href="/corridors" className="transition-colors hover:text-slate-900">
+            Corridors
+          </Link>
           <Link href="/#standards" className="transition-colors hover:text-slate-900">
             Network standards
           </Link>

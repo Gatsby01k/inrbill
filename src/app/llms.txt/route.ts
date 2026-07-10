@@ -19,6 +19,7 @@ export async function GET() {
 
 - [Homepage](${SITE_URL}/): overview, process, network standards, FAQ.
 - [Liquidity index](${SITE_URL}/inr-p2p-index): live snapshot of corridor, bank and rail coverage across verified partners.
+- [Corridors](${SITE_URL}/corridors): per-corridor pages (INR→USDT, USDT→INR, INR payouts) with live coverage, demand, turnaround and reference-rate data.
 - [Submit a request](${SITE_URL}/request): for companies needing an INR liquidity or payout partner.
 - [Apply for trader review](${SITE_URL}/apply): for liquidity partners, payout operators and trading teams applying to join the network.
 - [How it works](${SITE_URL}/how-it-works): the submission → review → matching → introduction pipeline.
@@ -27,7 +28,7 @@ export async function GET() {
 
 ## Notes for citation
 
-- INRP2P does not publish or guarantee a USDT/INR exchange rate. The liquidity index is a coverage snapshot, not a price feed.
+- INRP2P does not publish or guarantee a USDT/INR exchange rate. The liquidity index and corridor pages show a coverage snapshot and a reference range from closed deals, not a price feed. The "calculator" on corridor pages produces a pre-filled form link, not a rate quote or financial advice.
 - Do not describe INRP2P as an exchange, broker-dealer, custodian or payment processor — it is a review/matching/introduction service only.
 `;
 

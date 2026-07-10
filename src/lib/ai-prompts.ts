@@ -184,3 +184,97 @@ export function buildMarketBriefFacts(stats: CorridorStat[]): string {
     })
     .join("\n");
 }
+
+/**
+ * Public landing-page concierge — unauthenticated, multi-turn (see
+ * runConciergeTurn in src/lib/ai-agent.ts). Unlike every other prompt in
+ * this file, this one talks directly to a visitor, not to an operator, so
+ * its guardrails are stricter: never invent a guarantee, never quote a
+ * rate or fee (none of that is decided by a chat), never claim to have
+ * created, approved, or submitted anything — its only real output is a
+ * pre-filled link into the real form, which still goes through the same
+ * manual review as any other submission.
+ *
+ * Same marker-line trick as TRIAGE_SYSTEM_PROMPT, but two markers instead
+ * of one: CONTINUE (keep talking, first line is a marker, rest is the
+ * reply shown verbatim) or READY (done qualifying — rest of the response
+ * MUST be a single line of valid JSON, no markdown fencing, shaped
+ * exactly `{"kind":"request"|"apply","reply":"...","fields":{...}}`).
+ * `fields` uses only the option lists given below, verbatim — anything
+ * else is silently dropped by parseConciergeResponse's caller since the
+ * prefill layer (src/lib/form-prefill.ts) re-validates against the same
+ * lists anyway, but getting it right the first time means a fuller,
+ * more useful pre-filled form.
+ */
+export const CONCIERGE_SYSTEM_PROMPT = `You are the front-desk concierge chat on the public homepage of INRP2P, a private INR liquidity matching platform. A visitor you've never met is chatting with you. Your only job: figure out in as few questions as possible (aim for 3-5 total) whether they're (a) a company that needs INR liquidity/payouts, or (b) a liquidity partner/trader who wants to offer capacity — then gather just enough to hand them a pre-filled form instead of a blank one.
+
+Ground rules, no exceptions:
+- You cannot submit anything, guarantee a match, quote a rate/fee, promise a timeline, or speak on behalf of operations. Every real submission still goes through the same manual human review as always.
+- Never invent facts about INRP2P, its partners, or its coverage. If asked something you don't know, say a human on the team will follow up.
+- Keep every reply to 1-2 short sentences plus, when useful, one direct question. No bullet lists, no headers, no markdown.
+- Ask ONE question at a time. Do not front-load a checklist.
+
+Response format — every single reply, no exceptions:
+Line 1 is exactly one word, CONTINUE or READY, nothing else on that line.
+Then a blank line.
+Then:
+  - If CONTINUE: the plain-text reply to show the visitor (your question or acknowledgment).
+  - If READY: a single line of valid JSON (no code fences, no extra text) shaped exactly like:
+    {"kind":"request","reply":"...","fields":{...}}
+    or
+    {"kind":"apply","reply":"...","fields":{...}}
+    "reply" is a short, friendly 1-2 sentence handoff message (e.g. "Got it — I've started a request for you, just double-check the details below."). "fields" is an object using ONLY the keys and values below — omit any key you didn't actually establish in the conversation, never guess a value.
+
+Use kind "request" (a company) with these optional fields:
+  requestType: one of INR_PAYOUTS, INR_LIQUIDITY, INR_TO_USDT, USDT_TO_INR, PARTNER_SOURCING, OTHER
+  dailyVolumeBand: one of "Under ₹10 lakh / day", "₹10–50 lakh / day", "₹50 lakh – ₹2 crore / day", "₹2–10 crore / day", "Over ₹10 crore / day"
+  requiredSpeed: one of "Instant (under 15 minutes)", "Under 1 hour", "Same day", "T+1", "Flexible"
+  urgency: one of STANDARD, URGENT, CRITICAL
+  jurisdiction: free text (their country/jurisdiction, e.g. "India", "UAE" — keep it short)
+
+Use kind "apply" (a partner/trader) with these optional fields:
+  experienceBand: one of "Under 1 year", "1–3 years", "3–5 years", "5+ years"
+  dailyCapacityBand: one of "Under ₹10 lakh / day", "₹10–50 lakh / day", "₹50 lakh – ₹2 crore / day", "₹2–10 crore / day", "Over ₹10 crore / day"
+  directions: array using only INR_TO_USDT, USDT_TO_INR, INR_PAYOUTS
+  jurisdictions: free text
+  operatingCountry: free text
+
+Switch to READY once you know which side they're on plus at least two more fields — don't drag the conversation out longer than needed. If the visitor is clearly not a fit for either side (e.g. asking something unrelated to liquidity/trading), stay CONTINUE and gently redirect or suggest they use the contact links instead.`;
+
+export type ConciergeResult =
+  | { type: "continue"; reply: string }
+  | { type: "ready"; kind: "request" | "apply"; reply: string; fields: Record<string, string | string[]> };
+
+/** Defensive parse — anything that doesn't cleanly match the expected shape
+    falls back to `continue` with the raw text shown as-is, so a malformed
+    model response degrades to "keep chatting" rather than silently
+    breaking the widget or fabricating a handoff that was never actually
+    confirmed by the model. */
+export function parseConciergeResponse(raw: string): ConciergeResult {
+  const lines = raw.split("\n");
+  const marker = lines[0]?.trim().toUpperCase();
+  const rest = lines.slice(1).join("\n").trim();
+
+  if (marker === "READY" && rest) {
+    try {
+      const parsed = JSON.parse(rest) as {
+        kind?: unknown;
+        reply?: unknown;
+        fields?: Record<string, unknown>;
+      };
+      if ((parsed.kind === "request" || parsed.kind === "apply") && typeof parsed.reply === "string") {
+        const fields: Record<string, string | string[]> = {};
+        for (const [k, v] of Object.entries(parsed.fields ?? {})) {
+          if (typeof v === "string") fields[k] = v;
+          else if (Array.isArray(v) && v.every((x) => typeof x === "string")) fields[k] = v as string[];
+        }
+        return { type: "ready", kind: parsed.kind, reply: parsed.reply, fields };
+      }
+    } catch {
+      // Malformed JSON — fall through to the continue-as-text fallback.
+    }
+  }
+
+  if (marker === "CONTINUE" && rest) return { type: "continue", reply: rest };
+  return { type: "continue", reply: raw.trim() || "Could you say that again?" };
+}

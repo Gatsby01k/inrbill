@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Inter, Newsreader } from "next/font/google";
+import { ReferralCapture } from "@/components/site/referral-capture";
 import { GA_MEASUREMENT_ID, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -64,7 +65,10 @@ export default function RootLayout({
           </Script>
         </head>
       ) : null}
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <ReferralCapture />
+        {children}
+      </body>
     </html>
   );
 }

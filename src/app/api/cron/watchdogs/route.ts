@@ -4,6 +4,7 @@ import {
   runDuplicateRiskWatchdog,
   runFollowUpWatchdog,
   runIntroductionReminderWatchdog,
+  runReferralRewardWatchdog,
   runRetainerRenewalWatchdog,
   runRevenueOverdueWatchdog,
   runRevenueUninvoicedWatchdog,
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions, introReminders, duplicateRisk] =
+  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions, introReminders, duplicateRisk, referralRewards] =
     await Promise.all([
     runSlaWatchdog().catch(async (err) => {
       await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
@@ -60,6 +61,10 @@ export async function GET(req: NextRequest) {
       await logError({ error: err, source: "cron:runDuplicateRiskWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
+    runReferralRewardWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runReferralRewardWatchdog", severity: "ERROR" });
+      return { checked: 0, sent: 0, error: true };
+    }),
   ]);
 
   return NextResponse.json({
@@ -72,6 +77,7 @@ export async function GET(req: NextRequest) {
     staleSuggestions,
     introReminders,
     duplicateRisk,
+    referralRewards,
     ranAt: new Date().toISOString(),
   });
 }

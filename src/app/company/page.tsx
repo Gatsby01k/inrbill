@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { generateReferralCode } from "@/app/actions/portal";
+import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { ReferralCard, type ReferredAccountRow } from "@/components/workspace/referral-card";
 import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fmtDate, requestTypeLabel } from "@/lib/format";
+import { listReferredCompanies, referralUrl } from "@/lib/referral";
 import { TELEGRAM_BOT_USERNAME } from "@/lib/site";
 
 export const metadata: Metadata = { title: "My requests" };
@@ -21,6 +25,17 @@ export default async function CompanyHomePage() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  const referredRows: ReferredAccountRow[] = user.company.referralCode
+    ? (await listReferredCompanies(user.company.referralCode)).map((c) => ({
+        id: c.id,
+        label: c.companyName,
+        createdAt: c.createdAt.toISOString(),
+        dealClosed: c.requests.some((r) =>
+          r.matches.some((m) => m.introductions.some((i) => i.status === "SUCCESSFUL")),
+        ),
+      }))
+    : [];
 
   return (
     <>
@@ -92,12 +107,34 @@ export default async function CompanyHomePage() {
         )}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
         <TelegramConnectCard
           telegramChatId={user.telegramChatId}
           telegramLinkCode={user.telegramLinkCode}
           botUsername={TELEGRAM_BOT_USERNAME || undefined}
         />
+        {user.company.referralCode ? (
+          <ReferralCard
+            url={referralUrl("request", user.company.referralCode)}
+            code={user.company.referralCode}
+            referred={referredRows}
+          />
+        ) : (
+          <div className="card p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Refer someone
+            </p>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
+              Get your own shareable link — anyone who signs up through it is on record as your
+              referral from day one.
+            </p>
+            <form action={generateReferralCode} className="mt-3">
+              <SubmitButton className="btn btn-gold btn-sm" pendingLabel="Generating…">
+                Get my link
+              </SubmitButton>
+            </form>
+          </div>
+        )}
       </div>
 
       <div className="card mt-6 p-5">

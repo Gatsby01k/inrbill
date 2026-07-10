@@ -38,6 +38,9 @@ export function SiteFooter() {
                 <Link href="/inr-p2p-index" className="transition-colors hover:text-white">
                   Liquidity index
                 </Link>
+                <Link href="/corridors" className="transition-colors hover:text-white">
+                  Corridors
+                </Link>
                 <Link href="/how-it-works" className="transition-colors hover:text-white">
                   How it works
                 </Link>
