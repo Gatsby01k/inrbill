@@ -110,6 +110,10 @@ const config: Config = {
           "40%": { transform: "scale(1.18)" },
           "100%": { transform: "scale(1)" },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         reveal: "reveal 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both",
@@ -122,6 +126,7 @@ const config: Config = {
         "gradient-shift": "gradientShift 6s ease infinite",
         "march-ants": "marchAnts 1.2s linear infinite",
         "count-pulse": "countPulse 0.4s ease-out",
+        marquee: "marquee 32s linear infinite",
       },
     },
   },

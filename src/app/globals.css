@@ -141,6 +141,55 @@
   .tnum {
     font-feature-settings: "tnum";
   }
+  /* Animated saffron→green gradient text, reuses the existing
+     gradient-shift keyframe (previously registered but unused). Sparingly —
+     one or two words per page, never a whole sentence. */
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-gold-600 via-gold-400 to-leaf-500 bg-clip-text text-transparent;
+    background-size: 200% 200%;
+  }
+
+  /* ── Spotlight hover (cursor-following glow) ──────────────────
+     Paired with SpotlightCard (src/components/site/spotlight-card.tsx),
+     which sets --mx/--my in px via onMouseMove. Pure CSS otherwise — the
+     glow is a ::before layer so it never affects layout or interferes with
+     the existing .card hover lift/shadow transition. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 153, 51, 0.16),
+      transparent 72%
+    );
+    transition: opacity 0.4s ease;
+  }
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+  .spotlight > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Marquee ticker ───────────────────────────────────────── */
+  /* The animation itself is applied via the animate-marquee Tailwind
+     utility (registered in tailwind.config.ts) directly in the component,
+     not here — a class only referenced from raw CSS, never as a literal
+     utility class in JSX, risks Tailwind's content scanner never emitting
+     its @keyframes block. This rule only handles the hover-to-pause. */
+  .marquee-viewport:hover .marquee-track {
+    animation-play-state: paused;
+  }
 
   /* ── Form controls ────────────────────────────────────────── */
   .input {

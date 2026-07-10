@@ -8,6 +8,8 @@ import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
+import { SpotlightCard } from "@/components/site/spotlight-card";
+import { Ticker } from "@/components/site/ticker";
 import { CORRIDOR_SLUGS } from "@/lib/corridor-page";
 import { db } from "@/lib/db";
 import { buildCorridorStats } from "@/lib/market-intelligence";
@@ -37,6 +39,39 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
+
+const PROBLEM_PAIRS = [
+  {
+    old: "Random brokers",
+    oldDetail: "Introductions from people with no accountability for who they connect you to.",
+    fix: "Every partner manually reviewed",
+    fixDetail: "A real person checks entity, capacity and compliance before any introduction.",
+  },
+  {
+    old: "Public Telegram noise",
+    oldDetail: "Rates and \"capacity\" posted in open groups, impossible to verify.",
+    fix: "Declared coverage, actually verified",
+    fixDetail: "Banks, rails and capacity are checked, not just claimed in a chat.",
+  },
+  {
+    old: "Unknown counterparties",
+    oldDetail: "No entity checks, no KYB, no way to size real risk before you engage.",
+    fix: "Entity and KYB checked first",
+    fixDetail: "You never see a name until entity and compliance checks are done.",
+  },
+  {
+    old: "No review trail",
+    oldDetail: "Nothing documented — if a deal goes wrong, there is no record of who vetted whom.",
+    fix: "Append-only audit trail",
+    fixDetail: "Every submission, decision and status change is recorded, end to end.",
+  },
+  {
+    old: "Poor follow-up",
+    oldDetail: "Interest goes cold. No one owns the introduction through to a real conversation.",
+    fix: "One person owns your request",
+    fixDetail: "First response within 24–48h, tracked through to a qualified introduction.",
+  },
+];
 
 const FACTS = [
   { value: "24–48h", label: "First response on every request" },
@@ -217,8 +252,9 @@ export default async function LandingPage() {
               <p className="eyebrow">Private reviewed network</p>
               <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-900 sm:text-[3.15rem]">
                 Stop searching for INR payout
-                <br className="hidden sm:block" /> and liquidity partners in
-                random chats.
+                <br className="hidden sm:block" /> and{" "}
+                <span className="text-gradient-brand animate-gradient-shift">liquidity partners</span>{" "}
+                in random chats.
               </h1>
               <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-600">
                 INRP2P is a private, reviewed network for INR payout and liquidity
@@ -307,6 +343,20 @@ export default async function LandingPage() {
               </Link>
             </Reveal>
           </div>
+
+          <div className="mt-14">
+            <Ticker
+              items={[
+                ...corridors.map(
+                  (c) =>
+                    `${c.directionLabel} · ${c.activePartners} active partner${c.activePartners === 1 ? "" : "s"}`,
+                ),
+                "24–48h first response on every request",
+                "₹0 held in custody — funds never pass through INRP2P",
+                "Every request and every application manually reviewed",
+              ]}
+            />
+          </div>
         </section>
 
         {/* ── Problem ── */}
@@ -321,18 +371,51 @@ export default async function LandingPage() {
               brokers, public Telegram groups and forwarded contacts — with no way
               to tell who is actually reviewed.
             </p>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-              {[
-                { t: "Random brokers", d: "Introductions from people with no accountability for who they connect you to." },
-                { t: "Public Telegram noise", d: "Rates and \"capacity\" posted in open groups, impossible to verify." },
-                { t: "Unknown counterparties", d: "No entity checks, no KYB, no way to size real risk before you engage." },
-                { t: "No review trail", d: "Nothing documented — if a deal goes wrong, there is no record of who vetted whom." },
-                { t: "Poor follow-up", d: "Interest goes cold. No one owns the introduction through to a real conversation." },
-              ].map((p, i) => (
-                <Reveal key={p.t} index={i} className="card h-full p-5">
-                  <span className="mb-2 block h-1 w-6 rounded-full bg-rose-400/70" />
-                  <p className="text-[13px] font-semibold text-slate-900">{p.t}</p>
-                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{p.d}</p>
+            <div className="mt-10 flex items-center gap-6 px-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Old way
+              </p>
+              <span className="h-px flex-1 bg-gradient-to-r from-rose-300/40 to-transparent" />
+              <span aria-hidden className="text-slate-300">
+                →
+              </span>
+              <span className="h-px flex-1 bg-gradient-to-l from-leaf-400/40 to-transparent" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-leaf-600">
+                With INRP2P
+              </p>
+            </div>
+            <div className="mt-4 space-y-3">
+              {PROBLEM_PAIRS.map((p, i) => (
+                <Reveal key={p.old} index={i}>
+                  <SpotlightCard className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+                    <div className="flex flex-1 items-start gap-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-rose-300/60 bg-rose-50 text-[10px] text-rose-500">
+                        ✕
+                      </span>
+                      <div>
+                        <p className="text-[12.5px] font-semibold text-slate-500 line-through decoration-rose-300/70">
+                          {p.old}
+                        </p>
+                        <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-400">
+                          {p.oldDetail}
+                        </p>
+                      </div>
+                    </div>
+                    <span aria-hidden className="hidden shrink-0 text-slate-300 sm:block">
+                      →
+                    </span>
+                    <div className="flex flex-1 items-start gap-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-leaf-400/50 bg-leaf-50 text-[10px] text-leaf-600">
+                        ✓
+                      </span>
+                      <div>
+                        <p className="text-[12.5px] font-semibold text-slate-900">{p.fix}</p>
+                        <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">
+                          {p.fixDetail}
+                        </p>
+                      </div>
+                    </div>
+                  </SpotlightCard>
                 </Reveal>
               ))}
             </div>
@@ -342,45 +425,43 @@ export default async function LandingPage() {
         {/* ── Two sides ── */}
         <section className="band-white py-24">
           <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
-            <Reveal
-              index={0}
-              className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
-            >
-              <p className="eyebrow">For companies</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                Get INR liquidity from verified partners.
-              </h2>
-              <ul className="mt-5 space-y-3">
-                {COMPANY_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
-                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/request" className="btn btn-ghost btn-sm mt-6">
-                Submit a request →
-              </Link>
+            <Reveal index={0}>
+              <SpotlightCard className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                <p className="eyebrow">For companies</p>
+                <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
+                  Get INR liquidity from verified partners.
+                </h2>
+                <ul className="mt-5 space-y-3">
+                  {COMPANY_POINTS.map((t) => (
+                    <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
+                      <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-gold-500/70" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/request" className="btn btn-ghost btn-sm mt-6">
+                  Submit a request →
+                </Link>
+              </SpotlightCard>
             </Reveal>
-            <Reveal
-              index={1}
-              className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
-            >
-              <p className="eyebrow text-leaf-600">For liquidity partners</p>
-              <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                Receive qualified demand without going public.
-              </h2>
-              <ul className="mt-5 space-y-3">
-                {PARTNER_POINTS.map((t) => (
-                  <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
-                    <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-leaf-500/70" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/apply" className="btn btn-ghost btn-sm mt-6">
-                Apply to join →
-              </Link>
+            <Reveal index={1}>
+              <SpotlightCard className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                <p className="eyebrow text-leaf-600">For liquidity partners</p>
+                <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
+                  Receive qualified demand without going public.
+                </h2>
+                <ul className="mt-5 space-y-3">
+                  {PARTNER_POINTS.map((t) => (
+                    <li key={t} className="flex gap-3 text-[13.5px] leading-relaxed text-slate-600">
+                      <span className="mt-[8px] h-1 w-3 shrink-0 rounded-full bg-leaf-500/70" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/apply" className="btn btn-ghost btn-sm mt-6">
+                  Apply to join →
+                </Link>
+              </SpotlightCard>
             </Reveal>
           </div>
         </section>
@@ -405,35 +486,33 @@ export default async function LandingPage() {
             </div>
             <div className="mt-10 grid gap-5 sm:grid-cols-3">
               {corridors.map((c, i) => (
-                <Reveal
-                  key={c.slug}
-                  index={i}
-                  className="card flex h-full flex-col p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
-                >
-                  <p className="eyebrow text-leaf-600">{c.directionLabel}</p>
-                  <p className="tnum mt-3 text-[28px] font-semibold text-slate-900">
-                    {c.activePartners}
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    active reviewed partner{c.activePartners === 1 ? "" : "s"}
-                  </p>
-                  <div className="mt-4 flex items-center gap-2 text-[11.5px] text-slate-500">
-                    <span>
-                      {c.requestsLast14d} request{c.requestsLast14d === 1 ? "" : "s"} · 14d
-                    </span>
-                    {c.growthPct !== null ? (
-                      <span
-                        className={
-                          c.growthPct >= 0 ? "font-medium text-leaf-600" : "font-medium text-rose-500"
-                        }
-                      >
-                        {c.growthPct >= 0 ? "▲" : "▼"} {Math.abs(c.growthPct)}%
+                <Reveal key={c.slug} index={i}>
+                  <SpotlightCard className="card flex h-full flex-col p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                    <p className="eyebrow text-leaf-600">{c.directionLabel}</p>
+                    <p className="tnum mt-3 text-[28px] font-semibold text-slate-900">
+                      {c.activePartners}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      active reviewed partner{c.activePartners === 1 ? "" : "s"}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2 text-[11.5px] text-slate-500">
+                      <span>
+                        {c.requestsLast14d} request{c.requestsLast14d === 1 ? "" : "s"} · 14d
                       </span>
-                    ) : null}
-                  </div>
-                  <Link href={`/corridors/${c.slug}`} className="btn btn-ghost btn-sm mt-5">
-                    View corridor →
-                  </Link>
+                      {c.growthPct !== null ? (
+                        <span
+                          className={
+                            c.growthPct >= 0 ? "font-medium text-leaf-600" : "font-medium text-rose-500"
+                          }
+                        >
+                          {c.growthPct >= 0 ? "▲" : "▼"} {Math.abs(c.growthPct)}%
+                        </span>
+                      ) : null}
+                    </div>
+                    <Link href={`/corridors/${c.slug}`} className="btn btn-ghost btn-sm mt-5">
+                      View corridor →
+                    </Link>
+                  </SpotlightCard>
                 </Reveal>
               ))}
             </div>
@@ -467,16 +546,14 @@ export default async function LandingPage() {
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {PROCESS.map((s, i) => (
-                <Reveal
-                  key={s.t}
-                  index={i}
-                  className="card h-full p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
-                >
-                  <p className="font-mono text-[11px] tracking-wider text-gold-600 lg:hidden">
-                    0{i + 1}
-                  </p>
-                  <p className="text-[14.5px] font-semibold text-slate-900">{s.t}</p>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
+                <Reveal key={s.t} index={i}>
+                  <SpotlightCard className="card h-full p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                    <p className="font-mono text-[11px] tracking-wider text-gold-600 lg:hidden">
+                      0{i + 1}
+                    </p>
+                    <p className="text-[14.5px] font-semibold text-slate-900">{s.t}</p>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">{s.d}</p>
+                  </SpotlightCard>
                 </Reveal>
               ))}
             </div>
@@ -491,54 +568,58 @@ export default async function LandingPage() {
               Company flow &amp; partner flow
             </h2>
             <div className="mt-10 grid gap-5 lg:grid-cols-2">
-              <Reveal index={0} className="card p-6 sm:p-7">
-                <p className="eyebrow">Company</p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {["Submit request", "Manual review", "Matching", "Qualified introduction"].map((step, i, arr) => (
-                    <span key={step} className="flex items-center gap-2">
-                      <span className="chip border-gold-500/35 bg-gold-500/[0.08] text-gold-700">
-                        {step}
-                      </span>
-                      {i < arr.length - 1 ? (
-                        <span aria-hidden className="text-slate-300">
-                          →
+              <Reveal index={0}>
+                <SpotlightCard className="card p-6 sm:p-7">
+                  <p className="eyebrow">Company</p>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {["Submit request", "Manual review", "Matching", "Qualified introduction"].map((step, i, arr) => (
+                      <span key={step} className="flex items-center gap-2">
+                        <span className="chip border-gold-500/35 bg-gold-500/[0.08] text-gold-700">
+                          {step}
                         </span>
-                      ) : null}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
-                  One structured form, a real reviewer, and a shortlist built on your
-                  volume, banks and speed — not whoever answered first in a chat.
-                </p>
-                <Link href="/request" className="btn btn-ghost btn-sm mt-5">
-                  Submit company request →
-                </Link>
+                        {i < arr.length - 1 ? (
+                          <span aria-hidden className="text-slate-300">
+                            →
+                          </span>
+                        ) : null}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
+                    One structured form, a real reviewer, and a shortlist built on your
+                    volume, banks and speed — not whoever answered first in a chat.
+                  </p>
+                  <Link href="/request" className="btn btn-ghost btn-sm mt-5">
+                    Submit company request →
+                  </Link>
+                </SpotlightCard>
               </Reveal>
-              <Reveal index={1} className="card p-6 sm:p-7">
-                <p className="eyebrow text-leaf-600">Partner</p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {["Apply", "Manual review", "Verification", "Matched demand"].map((step, i, arr) => (
-                    <span key={step} className="flex items-center gap-2">
-                      <span className="chip border-leaf-400/40 bg-leaf-50 text-leaf-700">
-                        {step}
-                      </span>
-                      {i < arr.length - 1 ? (
-                        <span aria-hidden className="text-slate-300">
-                          →
+              <Reveal index={1}>
+                <SpotlightCard className="card p-6 sm:p-7">
+                  <p className="eyebrow text-leaf-600">Partner</p>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {["Apply", "Manual review", "Verification", "Matched demand"].map((step, i, arr) => (
+                      <span key={step} className="flex items-center gap-2">
+                        <span className="chip border-leaf-400/40 bg-leaf-50 text-leaf-700">
+                          {step}
                         </span>
-                      ) : null}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
-                  Declare your directions, capacity and coverage once. Verified
-                  status makes you eligible for qualified demand — no public
-                  listing, no cold inbound.
-                </p>
-                <Link href="/apply" className="btn btn-ghost btn-sm mt-5">
-                  Apply for Trader Review →
-                </Link>
+                        {i < arr.length - 1 ? (
+                          <span aria-hidden className="text-slate-300">
+                            →
+                          </span>
+                        ) : null}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-[12.5px] leading-relaxed text-slate-500">
+                    Declare your directions, capacity and coverage once. Verified
+                    status makes you eligible for qualified demand — no public
+                    listing, no cold inbound.
+                  </p>
+                  <Link href="/apply" className="btn btn-ghost btn-sm mt-5">
+                    Apply for Trader Review →
+                  </Link>
+                </SpotlightCard>
               </Reveal>
             </div>
           </div>
@@ -558,16 +639,18 @@ export default async function LandingPage() {
                 Full review framework →
               </Link>
             </div>
-            <div className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {STANDARDS.map((s, i) => (
-                <Reveal key={s.title} index={i} className="flex gap-3.5">
-                  <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[11px] text-leaf-600 animate-pop-in">
-                    ✓
-                  </span>
-                  <div>
-                    <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
-                  </div>
+                <Reveal key={s.title} index={i}>
+                  <SpotlightCard className="card flex h-full gap-3.5 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
+                    <span className="mt-0.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border border-leaf-400/50 bg-leaf-50 text-[12px] text-leaf-600 animate-pop-in">
+                      ✓
+                    </span>
+                    <div>
+                      <p className="text-[13.5px] font-semibold text-slate-900">{s.title}</p>
+                      <p className="mt-1 text-[12.5px] leading-relaxed text-slate-500">{s.text}</p>
+                    </div>
+                  </SpotlightCard>
                 </Reveal>
               ))}
             </div>
