@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AiCopilot } from "@/components/workspace/ai-copilot";
 import { CommandPalette } from "@/components/workspace/command-palette";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { requireRole } from "@/lib/auth";
@@ -14,6 +15,7 @@ export default async function AdminLayout({
   return (
     <>
       <CommandPalette />
+      <AiCopilot />
       <WorkspaceShell
         badge="Operations"
         badgeTone="gold"
