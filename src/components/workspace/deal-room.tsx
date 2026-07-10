@@ -1,7 +1,6 @@
 import type { IntroductionMessage } from "@prisma/client";
-import { postDealMessage } from "@/app/actions/dealroom";
-import { SubmitButton } from "@/components/submit-button";
 import { EmptyState } from "@/components/ui";
+import { DealComposer } from "@/components/workspace/deal-composer";
 import { cn, fmtDateTime } from "@/lib/format";
 
 /**
@@ -12,14 +11,18 @@ import { cn, fmtDateTime } from "@/lib/format";
  */
 export function DealRoom({
   matchId,
+  introductionId,
   messages,
   viewerSide,
   backHidden,
+  aiEnabled = false,
 }: {
   matchId: string;
+  introductionId: string;
   messages: IntroductionMessage[];
   viewerSide: "COMPANY" | "PARTNER" | "INTERNAL";
   backHidden?: Record<string, string>;
+  aiEnabled?: boolean;
 }) {
   return (
     <div>
@@ -64,21 +67,12 @@ export function DealRoom({
         />
       )}
 
-      <form action={postDealMessage} className="mt-4 flex items-end gap-2">
-        <input type="hidden" name="matchId" value={matchId} />
-        {backHidden
-          ? Object.entries(backHidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)
-          : null}
-        <textarea
-          name="body"
-          rows={2}
-          className="input flex-1 resize-none"
-          placeholder="Message the other side…"
-        />
-        <SubmitButton className="btn btn-gold btn-sm" pendingLabel="Sending…">
-          Send
-        </SubmitButton>
-      </form>
+      <DealComposer
+        matchId={matchId}
+        introductionId={introductionId}
+        backHidden={backHidden}
+        aiEnabled={aiEnabled}
+      />
     </div>
   );
 }

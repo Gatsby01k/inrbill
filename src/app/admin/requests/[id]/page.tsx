@@ -28,6 +28,8 @@ import {
   SectionTitle,
   StatusBadge,
 } from "@/components/ui";
+import { AiBriefingCard } from "@/components/workspace/ai-briefing";
+import { AiMatchExplanation } from "@/components/workspace/ai-match-explanation";
 import { Disclosure } from "@/components/workspace/disclosure";
 import { PipelineStepper } from "@/components/workspace/pipeline-stepper";
 import {
@@ -245,6 +247,7 @@ export default async function AdminRequestDetailPage({
                         {m.adminNote}
                       </p>
                     ) : null}
+                    <AiMatchExplanation matchId={m.id} initialExplanation={m.aiExplanation} />
 
                     {/* Stage + release, the two things that matter at a glance */}
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -736,6 +739,8 @@ export default async function AdminRequestDetailPage({
 
         {/* ── Right rail ── */}
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
+          <AiBriefingCard requestId={request.id} />
+
           <div className="card p-5">
             <SectionTitle title="Company" />
             <dl className="space-y-3">

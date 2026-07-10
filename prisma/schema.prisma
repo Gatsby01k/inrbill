@@ -305,6 +305,11 @@ model Match {
   adminNote         String?
   confidenceScore   Int?
   nextAction        String?
+  // AI-generated plain-language justification for this pairing — separate
+  // from adminNote (human-entered) and the ranking engine's `reasons` (not
+  // persisted, computed on the fly). Shown to both operations and the
+  // company. Null until an operator generates it once.
+  aiExplanation     String?
   releasedToCompany Boolean     @default(false)
   releasedToPartner Boolean     @default(false)
   createdAt         DateTime    @default(now())

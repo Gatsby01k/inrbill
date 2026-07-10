@@ -4,6 +4,7 @@ import { BackLink, FormError, KV, PageHeader, SectionTitle, StatusBadge } from "
 import { DealProgress, NextStepHint } from "@/components/workspace/deal-progress";
 import { DealRoom } from "@/components/workspace/deal-room";
 import { TrackRecordBadge } from "@/components/workspace/track-record";
+import { isAiConfigured } from "@/lib/ai";
 import { requireRole } from "@/lib/auth";
 import { deriveMatchStage } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
@@ -81,7 +82,13 @@ export default async function CompanyMatchPage({
           <div className="card p-5 sm:p-6">
             <SectionTitle title="Deal room" />
             {intro ? (
-              <DealRoom matchId={match.id} messages={messages} viewerSide="COMPANY" />
+              <DealRoom
+                matchId={match.id}
+                introductionId={intro.id}
+                messages={messages}
+                viewerSide="COMPANY"
+                aiEnabled={isAiConfigured()}
+              />
             ) : (
               <p className="text-[13px] text-slate-500">
                 Operations is preparing your introduction — this thread opens once it&apos;s sent.
@@ -96,6 +103,11 @@ export default async function CompanyMatchPage({
             <div className="mb-3">
               <TrackRecordBadge record={trackRecord} />
             </div>
+            {match.aiExplanation ? (
+              <p className="mb-3 rounded-lg border border-gold-500/20 bg-gold-500/[0.05] px-3 py-2 text-xs leading-relaxed text-slate-600">
+                ✨ {match.aiExplanation}
+              </p>
+            ) : null}
             <dl className="space-y-3">
               <KV label="Partner">{match.partner.displayName}</KV>
               <KV label="Capacity">{match.partner.dailyCapacityBand}</KV>

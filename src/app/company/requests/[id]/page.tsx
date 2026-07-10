@@ -144,6 +144,11 @@ export default async function CompanyRequestDetailPage({
                         }
                       />
                     </div>
+                    {m.aiExplanation ? (
+                      <p className="mt-2 rounded-lg border border-gold-500/20 bg-gold-500/[0.05] px-3 py-2 text-xs leading-relaxed text-slate-600">
+                        ✨ {m.aiExplanation}
+                      </p>
+                    ) : null}
                     <dl className="kv mt-3 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
                       <KV label="Directions">
                         {m.partner.directions.map((d) => directionLabel(d)).join(", ")}

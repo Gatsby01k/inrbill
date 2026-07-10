@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink, FormError, KV, PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
 import { DealProgress, NextStepHint } from "@/components/workspace/deal-progress";
 import { DealRoom } from "@/components/workspace/deal-room";
+import { isAiConfigured } from "@/lib/ai";
 import { requireRole } from "@/lib/auth";
 import { deriveMatchStage } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
@@ -76,7 +77,13 @@ export default async function PartnerMatchPage({
           <div className="card p-5 sm:p-6">
             <SectionTitle title="Deal room" />
             {intro ? (
-              <DealRoom matchId={match.id} messages={messages} viewerSide="PARTNER" />
+              <DealRoom
+                matchId={match.id}
+                introductionId={intro.id}
+                messages={messages}
+                viewerSide="PARTNER"
+                aiEnabled={isAiConfigured()}
+              />
             ) : (
               <p className="text-[13px] text-slate-500">
                 Operations is preparing your introduction — this thread opens once it&apos;s sent.
@@ -88,6 +95,11 @@ export default async function PartnerMatchPage({
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
           <div className="card p-5">
             <SectionTitle title="Company request" />
+            {match.aiExplanation ? (
+              <p className="mb-3 rounded-lg border border-gold-500/20 bg-gold-500/[0.05] px-3 py-2 text-xs leading-relaxed text-slate-600">
+                ✨ {match.aiExplanation}
+              </p>
+            ) : null}
             <dl className="space-y-3">
               <KV label="Daily volume">{match.request.dailyVolumeBand}</KV>
               <KV label="Monthly volume">{match.request.monthlyVolumeBand}</KV>
