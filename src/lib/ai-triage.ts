@@ -14,9 +14,11 @@ import { audit } from "@/lib/audit";
 import { callClaude, isAiConfigured } from "@/lib/ai";
 import {
   buildMatchExplanationFacts,
+  buildPartnerTriageFacts,
   buildTriageFacts,
   MATCH_EXPLANATION_SYSTEM_PROMPT,
   parseTriageResponse,
+  PARTNER_TRIAGE_SYSTEM_PROMPT,
   TRIAGE_SYSTEM_PROMPT,
 } from "@/lib/ai-prompts";
 import { db } from "@/lib/db";
@@ -116,4 +118,48 @@ export async function runFullTriagePipeline(requestId: string): Promise<void> {
   await runRequestTriage(requestId);
   await autoExplainTopMatches(requestId);
   await notifyIfFastTrackable(requestId);
+}
+
+// ── Partner-application side ──────────────────────────────────────────────
+// Same shape as the request pipeline above, mirrored for the other side of
+// the marketplace. There's no "matches" or "fast-track" concept for a fresh
+// partner application, so this is just the one triage step — but it reuses
+// the exact same prompt contract, parser, and persistence pattern so the two
+// pipelines can't drift apart.
+
+async function runPartnerTriage(partnerId: string): Promise<void> {
+  try {
+    const partner = await db.partnerProfile.findUnique({ where: { id: partnerId } });
+    if (!partner) return;
+
+    const raw = await callClaude(PARTNER_TRIAGE_SYSTEM_PROMPT, buildPartnerTriageFacts(partner), 350);
+    if (!raw) return;
+
+    const { flagged, note } = parseTriageResponse(raw);
+    await db.partnerProfile.update({ where: { id: partnerId }, data: { aiTriageNote: note, aiFlagged: flagged } });
+    await audit({
+      action: "partner.ai_triaged",
+      entityType: "PartnerProfile",
+      entityId: partnerId,
+      actorLabel: "AI Triage",
+      partnerId,
+      meta: { flagged, auto: true },
+    });
+
+    if (flagged) {
+      await sendTelegramAlert(
+        `🚩 <b>Partner application flagged</b>\n${partner.reference} — ${partner.displayName}. Worth a second look before verifying.`,
+      );
+    }
+  } catch (err) {
+    console.error("runPartnerTriage failed", err);
+  }
+}
+
+/** Entry point — call once, right after a partner application exists.
+    Degrades gracefully; if AI isn't configured this is a no-op and normal
+    manual review still works exactly as before. */
+export async function runPartnerTriagePipeline(partnerId: string): Promise<void> {
+  if (!isAiConfigured()) return;
+  await runPartnerTriage(partnerId);
 }

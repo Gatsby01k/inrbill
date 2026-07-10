@@ -315,6 +315,13 @@ model PartnerProfile {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
+  // AI pre-flight triage — generated automatically right after the partner
+  // applies (see runPartnerTriage in src/lib/ai-triage.ts), mirroring the
+  // same auto-triage LiquidityRequest gets on submission. Null until the
+  // background pass completes (or forever, if AI isn't configured).
+  aiTriageNote String?
+  aiFlagged    Boolean?
+
   matches   Match[]
   notesList Note[]
   documents DocumentRecord[]

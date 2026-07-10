@@ -11,7 +11,7 @@ import {
   hashPassword,
   setAccessReveal,
 } from "@/lib/auth";
-import { runFullTriagePipeline } from "@/lib/ai-triage";
+import { runFullTriagePipeline, runPartnerTriagePipeline } from "@/lib/ai-triage";
 import { db } from "@/lib/db";
 import {
   companyRequestSchema,
@@ -310,6 +310,13 @@ export async function submitPartnerApplication(
     partnerId: created.partner!.id,
     meta: { reference },
   });
+
+  // Same after()-scheduled AI pre-flight pattern as company requests — runs
+  // once the response (this action's redirect) has already gone out, so the
+  // applicant never waits on an LLM round-trip. By the time an operator
+  // opens the partners queue, most applications already have a vetting
+  // verdict attached.
+  after(() => runPartnerTriagePipeline(created.partner!.id));
 
   await createSession(created.id);
   await setAccessReveal(account.data.email, plainPassword, "/apply/submitted");

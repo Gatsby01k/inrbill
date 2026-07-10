@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { addDocument, addNote, updatePartnerStatus } from "@/app/actions/admin";
 import { SubmitButton } from "@/components/submit-button";
 import { BackLink, EmptyState, FormError, KV, SectionTitle, StatusBadge } from "@/components/ui";
+import { AiPartnerBriefingCard } from "@/components/workspace/ai-briefing";
 import {
   DocumentComposer,
   DocumentList,
@@ -260,6 +261,12 @@ export default async function AdminPartnerDetailPage({
 
         {/* ── Right rail ── */}
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
+          <AiPartnerBriefingCard
+            partnerId={partner.id}
+            initialNote={partner.aiTriageNote}
+            initialFlagged={partner.aiFlagged}
+          />
+
           <div className="card p-5">
             <TrackRecordCard record={trackRecord} title="Track record" />
           </div>

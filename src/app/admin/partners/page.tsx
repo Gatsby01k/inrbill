@@ -13,15 +13,17 @@ export const metadata: Metadata = { title: "Partners" };
 export default async function AdminPartnersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; ai?: string }>;
 }) {
-  const { status, q } = await searchParams;
+  const { status, q, ai } = await searchParams;
   const statusFilter = (PARTNER_STATUSES as readonly string[]).includes(status ?? "")
     ? (status as PartnerStatus)
     : undefined;
+  const aiFlaggedFilter = ai === "flagged";
 
   const where: Prisma.PartnerProfileWhereInput = {
     ...(statusFilter ? { status: statusFilter } : {}),
+    ...(aiFlaggedFilter ? { aiFlagged: true } : {}),
     ...(q
       ? {
           OR: [
@@ -61,6 +63,16 @@ export default async function AdminPartnersPage({
             {statusLabel(s)}
           </Link>
         ))}
+        <Link
+          href={`/admin/partners?${new URLSearchParams({
+            ...(statusFilter ? { status: statusFilter } : {}),
+            ...(aiFlaggedFilter ? {} : { ai: "flagged" }),
+          }).toString()}`}
+          className={cn("pill", aiFlaggedFilter && "pill-active")}
+          title="Applications the AI vetting pipeline flagged for a second look"
+        >
+          🚩 AI flagged
+        </Link>
         <form action="/admin/partners" className="ml-auto flex gap-2">
           {statusFilter ? <input type="hidden" name="status" value={statusFilter} /> : null}
           <input
@@ -86,6 +98,7 @@ export default async function AdminPartnersPage({
                   <th>Hours</th>
                   <th>Matches</th>
                   <th>Track record</th>
+                  <th>AI</th>
                   <th>Status</th>
                   <th>Applied</th>
                 </tr>
@@ -121,6 +134,19 @@ export default async function AdminPartnersPage({
                           }
                         }
                       />
+                    </td>
+                    <td>
+                      {p.aiFlagged === true ? (
+                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
+                          Flagged
+                        </span>
+                      ) : p.aiFlagged === false ? (
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
+                          Clear
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">—</span>
+                      )}
                     </td>
                     <td>
                       <StatusBadge status={p.status} />
