@@ -34,6 +34,13 @@ type Star = { fx: number; fy: number; r: number; phase: number };
  * particle completes its journey (arrival at center, or — gold, the
  * "match" packet — arrival at a partner).
  *
+ * The rim itself is styled as an actual tyre (inner/outer edge + rotating
+ * tread ticks), and the cursor doubles as the stick in the classic
+ * tyre-and-stick street game — get close enough to the rim and a stick
+ * fades in, touching the tyre at the nearest point and visibly speeding
+ * up the spin for as long as it's "pushing". Same idle spin either way,
+ * this is purely an interactive flourish.
+ *
  * No new dependency — canvas is a native browser API, no WebGL. Falls back
  * to a single static frame under prefers-reduced-motion. Stage labels
  * below keep the plain-English explanation the visual alone doesn't carry.
@@ -101,14 +108,29 @@ export function RequestPipelineCard() {
     let curTiltX = 0;
     let curTiltY = 0;
 
+    // The gilli-danda/tyre-and-stick read: raw pointer position (canvas
+    // CSS-pixel space) so the frame loop can find the point on the rim
+    // closest to the cursor and, if close enough, treat it as a stick
+    // "driving" the wheel — same street game where a stick keeps a rolled
+    // rim spinning. Distance-to-rim decides how hard it's "pushing".
+    let pointerX = 0;
+    let pointerY = 0;
+    let pointerActive = false;
+
     function onPointerMove(e: PointerEvent) {
       const rect = wrap!.getBoundingClientRect();
-      targetTiltY = ((e.clientX - rect.left) / rect.width - 0.5) * 1.1;
-      targetTiltX = ((e.clientY - rect.top) / rect.height - 0.5) * 0.7;
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      targetTiltY = px * 1.1;
+      targetTiltX = py * 0.7;
+      pointerX = e.clientX - rect.left;
+      pointerY = e.clientY - rect.top;
+      pointerActive = true;
     }
     function onPointerLeave() {
       targetTiltX = 0;
       targetTiltY = 0;
+      pointerActive = false;
     }
     wrap.addEventListener("pointermove", onPointerMove);
     wrap.addEventListener("pointerleave", onPointerLeave);
@@ -168,14 +190,37 @@ export function RequestPipelineCard() {
     let clock = 0;
     let spawnTimer = 0;
     let matchTimer = 40;
+    let pushStrength = 0;
+    let contactAngle = 0;
 
     function frame() {
       clock += 0.02;
       curTiltX += (targetTiltX - curTiltX) * 0.06;
       curTiltY += (targetTiltY - curTiltY) * 0.06;
 
+      // Where on the rim the "stick" is touching, and how hard — found
+      // using this frame's ellipse before nodes advance, so the drive
+      // speed below reflects what's actually about to be drawn.
+      const cx0 = width / 2;
+      const cy0 = height / 2;
+      const rx0 = Math.min(width, height) * 0.4;
+      const ry0 = rx0 * (0.3 + curTiltX * 0.22);
+      let targetPush = 0;
+      if (pointerActive && rx0 > 0) {
+        const a = Math.atan2((pointerY - cy0) / (ry0 || 1), (pointerX - cx0) / rx0);
+        const contactX = cx0 + Math.cos(a) * rx0;
+        const contactY = cy0 + Math.sin(a) * ry0;
+        const dist = Math.hypot(pointerX - contactX, pointerY - contactY);
+        targetPush = Math.max(0, 1 - dist / 70);
+        contactAngle = a;
+      }
+      pushStrength += (targetPush - pushStrength) * 0.12;
+
+      // Idle spin plus however hard the stick is currently driving it —
+      // literally "тez chalao" the tyre by keeping the cursor near the rim.
+      const drive = 0.0009 + pushStrength * 0.012;
       nodes.forEach((n) => {
-        n.angle += 0.0009;
+        n.angle += drive;
         n.pulse = Math.max(0, n.pulse - 0.018);
       });
       const { cx, cy, rx, ry } = layout();
@@ -197,13 +242,65 @@ export function RequestPipelineCard() {
       });
       ctx!.globalCompositeOperation = "source-over";
 
-      // Orbit path itself, faint — grounds the ring as an actual object
-      // rather than just implying it through the node positions.
+      // The ring drawn as an actual tyre — outer + inner rim plus rotating
+      // tread ticks between them — rather than a single bare ellipse.
+      // Grounds the "wheel" read the node-orbit was always implying.
+      ctx!.strokeStyle = "rgba(255,255,255,0.07)";
+      ctx!.lineWidth = 1;
       ctx!.beginPath();
       ctx!.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-      ctx!.strokeStyle = "rgba(255,255,255,0.055)";
-      ctx!.lineWidth = 1;
       ctx!.stroke();
+      ctx!.beginPath();
+      ctx!.ellipse(cx, cy, rx * 0.9, ry * 0.9, 0, 0, Math.PI * 2);
+      ctx!.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx!.stroke();
+      const TREAD_COUNT = 28;
+      ctx!.strokeStyle = "rgba(255,255,255,0.09)";
+      ctx!.lineWidth = 1.4;
+      for (let i = 0; i < TREAD_COUNT; i++) {
+        const a = (i / TREAD_COUNT) * Math.PI * 2 + curTiltY;
+        const x1 = cx + Math.cos(a) * rx * 0.9;
+        const y1 = cy + Math.sin(a) * ry * 0.9;
+        const x2 = cx + Math.cos(a) * rx;
+        const y2 = cy + Math.sin(a) * ry;
+        ctx!.beginPath();
+        ctx!.moveTo(x1, y1);
+        ctx!.lineTo(x2, y2);
+        ctx!.stroke();
+      }
+
+      // The stick — only drawn once the cursor is close enough to the rim
+      // to be "touching" it, fading in with pushStrength. Approaches from
+      // just outside the tyre toward the contact point, with a small
+      // bright spark where it makes contact.
+      if (pushStrength > 0.02) {
+        const contactX = cx + Math.cos(contactAngle) * rx;
+        const contactY = cy + Math.sin(contactAngle) * ry;
+        const dirX = contactX - cx || 1;
+        const dirY = contactY - cy || 1;
+        const dirLen = Math.hypot(dirX, dirY) || 1;
+        const handleX = contactX + (dirX / dirLen) * 26;
+        const handleY = contactY + (dirY / dirLen) * 26;
+
+        ctx!.globalCompositeOperation = "source-over";
+        ctx!.strokeStyle = `rgba(201,144,74,${0.75 * pushStrength})`;
+        ctx!.lineWidth = 2.4;
+        ctx!.lineCap = "round";
+        ctx!.beginPath();
+        ctx!.moveTo(handleX, handleY);
+        ctx!.lineTo(contactX, contactY);
+        ctx!.stroke();
+
+        ctx!.globalCompositeOperation = "lighter";
+        ctx!.beginPath();
+        ctx!.fillStyle = `rgba(${GOLD},${0.9 * pushStrength})`;
+        ctx!.shadowColor = `rgba(${GOLD},0.9)`;
+        ctx!.shadowBlur = 10 * pushStrength;
+        ctx!.arc(contactX, contactY, 2.4, 0, Math.PI * 2);
+        ctx!.fill();
+        ctx!.shadowBlur = 0;
+        ctx!.globalCompositeOperation = "source-over";
+      }
 
       // Faint mesh between neighbouring partner nodes (ring order, not
       // draw order — the connections themselves don't change with tilt).
