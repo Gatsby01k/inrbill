@@ -1,13 +1,15 @@
-// @ts-nocheck
-//
 // ─────────────────────────────────────────────────────────────────────────
 // NOT WIRED IN YET. This file imports "three", "@react-three/fiber",
 // "@react-three/drei" and "@react-three/postprocessing" — none of which
 // are installed in this project yet, so this sandbox (no npm registry
-// access) can neither install them nor type-check this file. The
-// @ts-nocheck above stops that from breaking `tsc`/`next build` in the
-// meantime; it does NOT mean the code is untested logic, just that the
-// module resolution can't be verified until the packages exist locally.
+// access) can neither install them nor type-check this file. It's kept
+// out of the build two ways: excluded in tsconfig.json's "exclude" and
+// in eslint.config.mjs's "ignores" (a `@ts-nocheck` here was tried first
+// and broke `next build`'s lint step — `@typescript-eslint/ban-ts-comment`
+// is an error-level rule in next/typescript, and Next lints the whole
+// project on every build regardless of what's actually imported, not
+// just changed files — so excluding the file at the config level is the
+// correct fix, not a comment inside it).
 //
 // To switch on:
 //   1. On your machine, in the project root:
@@ -16,7 +18,9 @@
 //        import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
 //      to:
 //        import { RequestPipelineCard } from "@/components/site/request-pipeline-card-3d";
-//   3. Delete the @ts-nocheck line above once `three`'s types resolve.
+//   3. Remove this file's entry from tsconfig.json's "exclude" array and
+//      from eslint.config.mjs's "ignores" array (both reference this
+//      exact path) so it's actually checked and linted going forward.
 //   4. npm run build to confirm, then deploy as usual.
 //
 // The old canvas-2D version (request-pipeline-card.tsx) is left untouched
