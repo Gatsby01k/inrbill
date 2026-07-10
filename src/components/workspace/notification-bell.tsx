@@ -13,7 +13,6 @@ type NotificationItem = {
   createdAt: string;
 };
 
-const POLL_MS = 20_000;
 const PANEL_WIDTH = 320;
 
 function timeAgo(iso: string): string {
@@ -25,9 +24,18 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-/** Live-ish (polling) in-app notification bell — shared by admin, company,
-    and partner workspaces via WorkspaceShell. Independent of Telegram: this
-    is the one place a user sees updates even if they never linked a chat.
+/** Live in-app notification bell — shared by admin, company, and partner
+    workspaces via WorkspaceShell. Independent of Telegram: this is the one
+    place a user sees updates even if they never linked a chat.
+
+    Updates arrive over Server-Sent Events (/api/notifications/stream)
+    instead of the old 20s-interval fetch loop — the server still checks the
+    database on an interval under the hood (see that route's own comment for
+    why: no pub/sub broker in this stack), but the client just holds one
+    connection open and reacts the moment something changes, typically
+    within a few seconds instead of up to 20. EventSource reconnects on its
+    own if the connection drops or the route's own max-duration timeout
+    closes it, so there's no manual retry logic needed here.
 
     The dropdown renders `fixed` and positions itself from the button's own
     on-screen coordinates (measured on open) rather than `absolute` inside
@@ -58,22 +66,24 @@ export function NotificationBell() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  async function poll() {
-    try {
-      const res = await fetch("/api/notifications");
-      if (!res.ok) return;
-      const data = await res.json();
-      setItems(data.items ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
-    } catch {
-      // Silent — the bell just doesn't update this tick.
-    }
-  }
-
   useEffect(() => {
-    poll();
-    const id = setInterval(poll, POLL_MS);
-    return () => clearInterval(id);
+    const es = new EventSource("/api/notifications/stream");
+    es.addEventListener("notifications", (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data) as {
+          items?: NotificationItem[];
+          unreadCount?: number;
+        };
+        setItems(data.items ?? []);
+        setUnreadCount(data.unreadCount ?? 0);
+      } catch {
+        // Malformed frame — the next tick self-corrects, nothing to do.
+      }
+    });
+    // No-op: EventSource retries the connection on its own after an error
+    // or the server-side max-duration close. Nothing to clean up per-retry.
+    es.onerror = () => {};
+    return () => es.close();
   }, []);
 
   useEffect(() => {

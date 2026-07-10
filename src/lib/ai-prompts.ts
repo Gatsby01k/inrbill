@@ -153,3 +153,34 @@ export function buildMatchExplanationFacts(
     `Partner banks: ${partner.banks.join(", ") || "none listed"} · methods: ${partner.methods.join(", ") || "none listed"}`,
   ].join("\n");
 }
+
+/**
+ * Turns the deterministic corridor stats from src/lib/market-intelligence.ts
+ * into a short written brief. The arithmetic (growth %, gap flags) is
+ * already done before this prompt ever runs — the model's only job is to
+ * turn numbers ops already computed into a readable recommendation, not to
+ * do the counting itself. Same philosophy as the triage prompts: the model
+ * reasons over facts, it never originates them.
+ */
+export const MARKET_BRIEF_SYSTEM_PROMPT = `You are a market-intelligence assistant for INRP2P, a private INR liquidity matching platform operating three corridors: INR→USDT, USDT→INR, and INR payouts.
+
+You're given, per corridor, the count of company requests in the last 14 days vs the 14 days before that, and the number of currently active (verified/limited) partners who cover that corridor.
+
+Write a short brief (4-6 sentences, no headers, no bullet points, plain prose) covering: which corridor(s) are growing fastest, which corridor(s) look under-supplied relative to demand (many requests, few covering partners), and one concrete recommendation (e.g. "prioritize recruiting USDT→INR partners" or "no supply action needed this cycle, all corridors covered"). Be specific with the numbers given. Do not invent data not present in the input. Do not discuss anything except what's in the input.`;
+
+export type CorridorStat = {
+  directionLabel: string;
+  requestsLast14d: number;
+  requestsPrior14d: number;
+  activePartners: number;
+};
+
+export function buildMarketBriefFacts(stats: CorridorStat[]): string {
+  return stats
+    .map((s) => {
+      const delta = s.requestsPrior14d === 0 ? null : Math.round(((s.requestsLast14d - s.requestsPrior14d) / s.requestsPrior14d) * 100);
+      const trend = delta === null ? "n/a (no prior-period baseline)" : `${delta > 0 ? "+" : ""}${delta}%`;
+      return `${s.directionLabel}: ${s.requestsLast14d} requests in the last 14 days (prior 14 days: ${s.requestsPrior14d}, change: ${trend}); ${s.activePartners} active partner(s) covering this corridor.`;
+    })
+    .join("\n");
+}

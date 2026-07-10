@@ -23,10 +23,12 @@ export default async function AdminLayout({
         showBuildTag
         nav={[
           { href: "/admin", label: "Dashboard", exact: true },
+          { href: "/admin/analytics", label: "Analytics" },
           { href: "/admin/requests", label: "Requests" },
           { href: "/admin/partners", label: "Partners" },
           { href: "/admin/matches", label: "Matches" },
           { href: "/admin/revenue", label: "Revenue" },
+          { href: "/admin/risk", label: "Risk radar" },
           { href: "/admin/audit", label: "Audit log" },
           { href: "/admin/errors", label: "Errors" },
           { href: "/admin/security", label: "Security" },

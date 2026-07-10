@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { directionLabel, statusLabel } from "@/lib/format";
 import { rankPartners, type MatchSuggestion } from "@/lib/matching";
 import { notify } from "@/lib/notify";
+import { findDuplicateContactGroups, groupKey } from "@/lib/risk-radar";
 import { sendTelegramAlert } from "@/lib/telegram";
 
 // Three watchdogs, one shared idea: don't rely on an operator noticing.
@@ -577,4 +578,42 @@ export async function runStaleSuggestionWatchdog() {
     sent++;
   }
   return { checked: stale.length, sent };
+}
+
+/* ── 8. Duplicate/self-dealing contact watchdog ──────────────────────────
+   Runs the deterministic cross-reference in src/lib/risk-radar.ts and
+   alerts ops about each duplicate group exactly once — same audit-log-as-
+   dedup-ledger trick as every other watchdog above, keyed on a stable hash
+   of the group's members (groupKey) instead of a single entity id, since a
+   duplicate finding is inherently about a pair, not one record. */
+
+export async function runDuplicateRiskWatchdog() {
+  const groups = await findDuplicateContactGroups();
+
+  let sent = 0;
+  for (const group of groups) {
+    const action = "watchdog.duplicate_contact";
+    const key = groupKey(group);
+    if (await alreadyAlerted(action, key)) continue;
+
+    const names = group.entities
+      .map((e) => `${e.kind === "company" ? "Company" : "Partner"} ${e.label}`)
+      .join(" ↔ ");
+    const icon = group.severity === "cross_side" ? "⚠️" : "🕵️";
+    const headline = group.severity === "cross_side" ? "Same contact on both sides" : "Duplicate contact";
+    const ok = await sendTelegramAlert(
+      `${icon} <b>${headline}</b>\n${names}\nShared ${group.field}: ${group.value}\nCheck /admin/risk before matching either.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "RiskGroup",
+      entityId: key,
+      actorLabel: "Watchdog",
+      meta: { field: group.field, severity: group.severity, entities: group.entities },
+    });
+    sent++;
+  }
+  return { checked: groups.length, sent };
 }
