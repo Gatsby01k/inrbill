@@ -13,6 +13,7 @@ type NotificationItem = {
 };
 
 const POLL_MS = 20_000;
+const PANEL_WIDTH = 320;
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -25,11 +26,20 @@ function timeAgo(iso: string): string {
 
 /** Live-ish (polling) in-app notification bell — shared by admin, company,
     and partner workspaces via WorkspaceShell. Independent of Telegram: this
-    is the one place a user sees updates even if they never linked a chat. */
+    is the one place a user sees updates even if they never linked a chat.
+
+    The dropdown renders `fixed` and positions itself from the button's own
+    on-screen coordinates (measured on open) rather than `absolute` inside
+    the shell's narrow sidebar column — a 320px panel anchored `absolute`
+    inside a 236px-wide sidebar has nowhere to lay out correctly and looks
+    broken. `fixed` + a measured position is the same approach already used
+    by the command palette and AI copilot overlays elsewhere in the shell. */
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   async function poll() {
@@ -52,15 +62,32 @@ export function NotificationBell() {
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
     }
     if (open) document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  async function openPanel() {
-    setOpen((v) => !v);
-    if (!open && unreadCount > 0) {
+  function openPanel() {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      setPos({
+        top: rect.bottom + 8,
+        right: Math.max(16, viewportWidth - rect.right),
+      });
+    }
+    const willOpen = !open;
+    setOpen(willOpen);
+    if (willOpen && unreadCount > 0) {
       setUnreadCount(0);
       setItems((prev) => prev.map((n) => ({ ...n, read: true })));
       fetch("/api/notifications/read", {
@@ -72,22 +99,27 @@ export function NotificationBell() {
   }
 
   return (
-    <div ref={panelRef} className="relative">
+    <>
       <button
+        ref={buttonRef}
         onClick={openPanel}
-        className="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-black/[0.04] hover:text-slate-700"
+        className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base leading-none text-slate-500 hover:bg-black/[0.04] hover:text-slate-700"
         aria-label="Notifications"
       >
-        🔔
+        <span className="leading-none">🔔</span>
         {unreadCount > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold text-white">
+          <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#F6F1E7] bg-rose-500 px-1 text-[9px] font-semibold leading-none text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}
       </button>
 
-      {open ? (
-        <div className="absolute right-0 top-10 z-50 max-h-96 w-80 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-xl">
+      {open && pos ? (
+        <div
+          ref={panelRef}
+          style={{ top: pos.top, right: pos.right, width: `min(${PANEL_WIDTH}px, calc(100vw - 2rem))` }}
+          className="fixed z-50 max-h-96 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl"
+        >
           <p className="border-b border-black/10 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             Notifications
           </p>
@@ -119,6 +151,6 @@ export function NotificationBell() {
           )}
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
