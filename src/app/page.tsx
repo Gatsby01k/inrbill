@@ -7,6 +7,7 @@ import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { PartnerLogos } from "@/components/site/partner-logos";
 import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
 import { SpotlightCard } from "@/components/site/spotlight-card";
 import { Ticker } from "@/components/site/ticker";
@@ -78,14 +79,6 @@ const FACTS = [
   { value: "Never", label: "Custody of your funds. They pass directly, partner to partner" },
   { value: "3", label: "Corridors: INR→USDT, USDT→INR, INR payouts" },
 ];
-
-// Real infrastructure INRP2P is actually wired into for its OWN service-fee
-// invoicing (see src/lib/razorpay.ts, src/lib/nowpayments.ts) — not vanity
-// logos, and never the liquidity deal itself (that still settles directly
-// between company and partner, no custody, same as everywhere else on this
-// page). Append here as more get integrated — the ticker below just maps
-// over this list, nothing else to touch.
-const POWERED_BY = ["Razorpay", "NOWPayments"];
 
 const COMPANY_POINTS = [
   "Coverage across INR → USDT, USDT → INR and INR payouts",
@@ -355,13 +348,16 @@ export default async function LandingPage() {
             <Ticker
               items={[
                 "India's liquidity, reviewed.",
-                ...POWERED_BY.map((p) => `Service fees invoiced via ${p} — never the deal itself`),
                 "24–48h first response — not “soon.”",
                 "Zero custody, always — funds never pass through INRP2P",
                 "Every request and every application manually reviewed",
                 "3 corridors: INR→USDT, USDT→INR, INR payouts",
               ]}
             />
+          </div>
+
+          <div className="mt-6">
+            <PartnerLogos />
           </div>
         </section>
 
