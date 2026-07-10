@@ -381,6 +381,19 @@
     animation-delay: calc(var(--reveal-i, 0) * 80ms);
   }
 
+  /* ── Kinetic word reveal (paired with the KineticText component) ──
+     Reuses revealScale — each word is its own inline-block span so the
+     translateY/scale in that keyframe applies per-word, not to the whole
+     line at once. --kw-i is set per span by the component. */
+  .kinetic-word {
+    display: inline-block;
+    opacity: 0;
+  }
+  [data-kinetic="in"] .kinetic-word {
+    animation: revealScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--kw-i, 0) * 70ms);
+  }
+
   /* ── Legal / long-form prose ──────────────────────────────── */
   .prose-legal h2 {
     @apply mt-10 text-[1.05rem] font-semibold tracking-[-0.01em] text-slate-900 first:mt-0;

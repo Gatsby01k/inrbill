@@ -61,6 +61,87 @@ export function Reveal({
   return <div {...revealProps}>{children}</div>;
 }
 
+/* ── KineticText ───────────────────────────────────────────────
+   Splits a short line into words and reveals them one at a time on
+   scroll-in (each word gets its own --kw-i-driven delay via the
+   .kinetic-word rule in globals.css — reuses the same revealScale
+   keyframe Reveal already uses, no new keyframe needed). Optionally
+   marks specific words with a gradient/italic treatment via
+   `highlight` — meant for one deliberate "money word" per line, not
+   a general-purpose rich-text renderer. Built for short headline-
+   length statements (a slogan, a manifesto line), not paragraphs. */
+
+type KineticTag = "h1" | "h2" | "p" | "div";
+
+export function KineticText({
+  text,
+  className,
+  wordClassName,
+  highlight,
+  highlightClassName = "text-gradient-brand animate-gradient-shift italic",
+  as = "p",
+}: {
+  text: string;
+  className?: string;
+  wordClassName?: string;
+  /** Bare words (no punctuation) to render with highlightClassName. */
+  highlight?: string[];
+  highlightClassName?: string;
+  as?: KineticTag;
+}) {
+  const ref = useRef<HTMLHeadingElement & HTMLParagraphElement & HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setInView(true);
+            io.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.4, rootMargin: "0px 0px -10% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const words = text.split(" ");
+  const content = words.map((w, i) => {
+    const bare = w.replace(/[.,!?]/g, "").toLowerCase();
+    const isHighlight = highlight?.some((h) => h.toLowerCase() === bare);
+    return (
+      <span
+        key={i}
+        className={cn("kinetic-word", wordClassName, isHighlight && highlightClassName)}
+        style={{ "--kw-i": i } as React.CSSProperties}
+      >
+        {w}
+        {i < words.length - 1 ? " " : ""}
+      </span>
+    );
+  });
+
+  const props = {
+    ref,
+    "data-kinetic": inView ? ("in" as const) : undefined,
+    className,
+  };
+
+  if (as === "h1") return <h1 {...props}>{content}</h1>;
+  if (as === "h2") return <h2 {...props}>{content}</h2>;
+  if (as === "div") return <div {...props}>{content}</div>;
+  return <p {...props}>{content}</p>;
+}
+
 /* ── Counter ───────────────────────────────────────────────────
    Animated count-up for integer stats. Renders the final value
    immediately for crawlers/no-JS, then animates client-side.    */

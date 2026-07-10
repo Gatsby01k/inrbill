@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
-import { Counter, Reveal } from "@/components/motion";
+import { Counter, KineticText, Reveal } from "@/components/motion";
 import { AiConcierge } from "@/components/site/ai-concierge";
 import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
@@ -34,7 +34,7 @@ const LIVE_STATS_THRESHOLD = 5;
 
 export const metadata: Metadata = {
   title: {
-    absolute: "INRP2P — Reviewed INR Liquidity Partners | INR ⇄ USDT & INR Payouts",
+    absolute: "INRP2P — India's Liquidity, Reviewed | INR ⇄ USDT & INR Payouts",
   },
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
@@ -74,8 +74,8 @@ const PROBLEM_PAIRS = [
 ];
 
 const FACTS = [
-  { value: "24–48h", label: "First response on every request" },
-  { value: "₹0", label: "Held in custody. Funds never pass through INRP2P" },
+  { value: "24–48h", label: "First response. Not “soon.”" },
+  { value: "₹0", label: "Held in custody, ever. Funds never pass through INRP2P" },
   { value: "3", label: "Corridors: INR→USDT, USDT→INR, INR payouts" },
 ];
 
@@ -249,19 +249,18 @@ export default async function LandingPage() {
 
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.12fr_0.88fr]">
             <Reveal>
-              <p className="eyebrow">Private reviewed network</p>
-              <h1 className="mt-5 font-display text-[2.5rem] font-medium leading-[1.08] tracking-[-0.012em] text-slate-900 sm:text-[3.15rem]">
-                Stop searching for INR payout
-                <br className="hidden sm:block" /> and{" "}
-                <span className="text-gradient-brand animate-gradient-shift">liquidity partners</span>{" "}
-                in random chats.
-              </h1>
+              <p className="eyebrow">INRP2P — private, reviewed network</p>
+              <KineticText
+                as="h1"
+                text="India's liquidity, reviewed."
+                highlight={["reviewed"]}
+                className="mt-5 font-display text-[2.85rem] font-medium leading-[1.06] tracking-[-0.018em] text-slate-900 sm:text-[3.75rem]"
+              />
               <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-slate-600">
-                INRP2P is a private, reviewed network for INR payout and liquidity
-                partner introductions — for INR to USDT, USDT to INR and INR
-                payouts. Submit your requirement, get a first response within 48
-                hours, and be introduced directly to a partner that fits. We never
-                hold your funds.
+                Every liquidity partner is manually reviewed before you ever see their
+                name — entity, banking coverage, capacity, compliance. We never touch
+                your money. No custody, no execution, ever. First response in
+                24–48 hours, for INR to USDT, USDT to INR and INR payouts.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {["INR → USDT", "USDT → INR", "INR payouts"].map((c) => (
@@ -347,11 +346,12 @@ export default async function LandingPage() {
           <div className="mt-14">
             <Ticker
               items={[
+                "India's liquidity, reviewed.",
                 ...corridors.map(
                   (c) =>
                     `${c.directionLabel} · ${c.activePartners} active partner${c.activePartners === 1 ? "" : "s"}`,
                 ),
-                "24–48h first response on every request",
+                "24–48h first response — not “soon.”",
                 "₹0 held in custody — funds never pass through INRP2P",
                 "Every request and every application manually reviewed",
               ]}
@@ -364,12 +364,13 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="eyebrow">The problem today</p>
             <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
-              INR liquidity deals are sourced the same way they were a decade ago.
+              A stranger in a chat, a rate that isn&apos;t real, and silence the moment it
+              matters.
             </h2>
             <p className="mt-4 max-w-2xl text-[13.5px] leading-relaxed text-slate-500">
-              Most teams still find INR payout and liquidity partners through cold
-              brokers, public Telegram groups and forwarded contacts — with no way
-              to tell who is actually reviewed.
+              That&apos;s still how most INR liquidity deals get made in India — cold
+              brokers, public Telegram groups, forwarded contacts. No way to check
+              who you&apos;re actually dealing with before you send money.
             </p>
             <div className="mt-10 flex items-center gap-6 px-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
@@ -429,7 +430,7 @@ export default async function LandingPage() {
               <SpotlightCard className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
                 <p className="eyebrow">For companies</p>
                 <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                  Get INR liquidity from verified partners.
+                  Liquidity you don&apos;t have to gamble on.
                 </h2>
                 <ul className="mt-5 space-y-3">
                   {COMPANY_POINTS.map((t) => (
@@ -448,7 +449,7 @@ export default async function LandingPage() {
               <SpotlightCard className="card h-full p-7 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
                 <p className="eyebrow text-leaf-600">For liquidity partners</p>
                 <h2 className="mt-3 font-display text-[1.55rem] font-medium leading-snug text-slate-900">
-                  Receive qualified demand without going public.
+                  Qualified demand. Never a public listing.
                 </h2>
                 <ul className="mt-5 space-y-3">
                   {PARTNER_POINTS.map((t) => (
@@ -667,10 +668,13 @@ export default async function LandingPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gold-400">
               Compliance position
             </p>
-            <h2 className="mt-4 max-w-3xl font-display text-[2rem] font-medium leading-snug text-white">
-              INRP2P never holds, moves or converts funds.
-            </h2>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KineticText
+              as="h2"
+              text="We never touch your money. Not once."
+              highlight={["once"]}
+              className="mt-4 max-w-3xl font-display text-[2.6rem] font-medium leading-[1.05] tracking-[-0.015em] text-white sm:text-[3.4rem]"
+            />
+            <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 "No custody of funds",
                 "No execution of payments or payouts",
