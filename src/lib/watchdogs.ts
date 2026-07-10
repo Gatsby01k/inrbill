@@ -3,7 +3,7 @@ import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { directionLabel, statusLabel } from "@/lib/format";
 import { rankPartners, type MatchSuggestion } from "@/lib/matching";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { notifyUser, sendTelegramAlert } from "@/lib/telegram";
 
 // Three watchdogs, one shared idea: don't rely on an operator noticing.
 // The audit log (already the system of record for every state change) also
@@ -434,6 +434,103 @@ export async function autoSuggestMatches(request: CoverageGapRequest) {
    never quietly creates a queue nobody reviews. */
 
 const STALE_SUGGESTION_HOURS = 48;
+
+/* ── 9. Introduction follow-up: reminder + escalation ─────────────────────
+   An introduction going out is only useful if someone actually talks. Rather
+   than depend on an operator manually chasing every SENT introduction, this
+   nudges whichever side has gone quiet in the deal room, then escalates to
+   ops if both sides stay completely silent past a harder deadline. */
+
+const INTRO_REMINDER_HOURS = 48;
+const INTRO_ESCALATION_HOURS = 24 * 7;
+
+export async function runIntroductionReminderWatchdog() {
+  const reminderCutoff = new Date(Date.now() - INTRO_REMINDER_HOURS * 60 * 60 * 1000);
+  const candidates = await db.introduction.findMany({
+    where: { status: "SENT", sentAt: { lte: reminderCutoff } },
+    select: {
+      id: true,
+      sentAt: true,
+      match: {
+        select: {
+          requestId: true,
+          partnerId: true,
+          request: { select: { reference: true, company: { select: { userId: true } } } },
+          partner: { select: { userId: true, displayName: true } },
+        },
+      },
+      messages: { select: { authorSide: true } },
+    },
+  });
+
+  let sent = 0;
+  for (const intro of candidates) {
+    if (!intro.sentAt) continue;
+    const hasCompanyMsg = intro.messages.some((m) => m.authorSide === "COMPANY");
+    const hasPartnerMsg = intro.messages.some((m) => m.authorSide === "PARTNER");
+    const hours = Math.round((Date.now() - intro.sentAt.getTime()) / 3_600_000);
+    const reference = intro.match.request.reference;
+
+    // Gentle nudge, once — only to whichever side(s) haven't spoken yet.
+    if (!hasCompanyMsg || !hasPartnerMsg) {
+      const reminderAction = "watchdog.intro_reminder";
+      if (!(await alreadyAlerted(reminderAction, intro.id))) {
+        await Promise.all([
+          !hasCompanyMsg
+            ? notifyUser(
+                intro.match.request.company.userId,
+                `👋 <b>Still there?</b>\n${reference} — you were introduced to ${intro.match.partner.displayName} ${hours}h ago. Open the deal room and say hello.`,
+              )
+            : Promise.resolve(false),
+          !hasPartnerMsg
+            ? notifyUser(
+                intro.match.partner.userId,
+                `👋 <b>Still there?</b>\n${reference} — you were introduced ${hours}h ago. Open the deal room and say hello.`,
+              )
+            : Promise.resolve(false),
+        ]);
+        await audit({
+          action: reminderAction,
+          entityType: "Introduction",
+          entityId: intro.id,
+          actorLabel: "Watchdog",
+          requestId: intro.match.requestId,
+          partnerId: intro.match.partnerId,
+          meta: { hoursElapsed: hours, hasCompanyMsg, hasPartnerMsg },
+        });
+        sent++;
+      }
+    }
+
+    // Harder escalation to ops if BOTH sides have stayed completely silent.
+    if (
+      !hasCompanyMsg &&
+      !hasPartnerMsg &&
+      intro.sentAt.getTime() <= Date.now() - INTRO_ESCALATION_HOURS * 60 * 60 * 1000
+    ) {
+      const escalationAction = "watchdog.intro_escalation";
+      if (!(await alreadyAlerted(escalationAction, intro.id))) {
+        const ok = await sendTelegramAlert(
+          `🚨 <b>Introduction gone quiet</b>\n${reference} — ${intro.match.partner.displayName}\n` +
+            `No messages from either side ${hours}h after introduction. Consider a manual check-in.`,
+        );
+        if (ok) {
+          await audit({
+            action: escalationAction,
+            entityType: "Introduction",
+            entityId: intro.id,
+            actorLabel: "Watchdog",
+            requestId: intro.match.requestId,
+            partnerId: intro.match.partnerId,
+            meta: { hoursElapsed: hours },
+          });
+          sent++;
+        }
+      }
+    }
+  }
+  return { checked: candidates.length, sent };
+}
 
 export async function runStaleSuggestionWatchdog() {
   const cutoff = new Date(Date.now() - STALE_SUGGESTION_HOURS * 60 * 60 * 1000);

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CommandPalette } from "@/components/workspace/command-palette";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { requireRole } from "@/lib/auth";
 
@@ -11,23 +12,26 @@ export default async function AdminLayout({
 }) {
   const user = await requireRole("ADMIN");
   return (
-    <WorkspaceShell
-      badge="Operations"
-      badgeTone="gold"
-      userLine={user.email}
-      showBuildTag
-      nav={[
-        { href: "/admin", label: "Dashboard", exact: true },
-        { href: "/admin/requests", label: "Requests" },
-        { href: "/admin/partners", label: "Partners" },
-        { href: "/admin/matches", label: "Matches" },
-        { href: "/admin/revenue", label: "Revenue" },
-        { href: "/admin/audit", label: "Audit log" },
-        { href: "/admin/errors", label: "Errors" },
-        { href: "/admin/security", label: "Security" },
-      ]}
-    >
-      {children}
-    </WorkspaceShell>
+    <>
+      <CommandPalette />
+      <WorkspaceShell
+        badge="Operations"
+        badgeTone="gold"
+        userLine={user.email}
+        showBuildTag
+        nav={[
+          { href: "/admin", label: "Dashboard", exact: true },
+          { href: "/admin/requests", label: "Requests" },
+          { href: "/admin/partners", label: "Partners" },
+          { href: "/admin/matches", label: "Matches" },
+          { href: "/admin/revenue", label: "Revenue" },
+          { href: "/admin/audit", label: "Audit log" },
+          { href: "/admin/errors", label: "Errors" },
+          { href: "/admin/security", label: "Security" },
+        ]}
+      >
+        {children}
+      </WorkspaceShell>
+    </>
   );
 }

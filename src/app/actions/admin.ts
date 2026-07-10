@@ -336,17 +336,19 @@ export async function createIntroduction(fd: FormData) {
  * auto-suggested one); every field it sets remains editable afterwards
  * through the normal per-step controls, so nothing here is a one-way door.
  */
-export async function approveAndIntroduce(fd: FormData) {
-  const user = await requireRole("ADMIN");
-  const matchId = s(fd, "matchId");
-  if (!matchId) fail(fd, "/admin/matches", "Match not found.");
-
+/**
+ * The actual work of "Approve & introduce", pulled out of the form action so
+ * it can also be driven in a loop by bulkApproveAndIntroduce without each
+ * iteration triggering Next's redirect() (which throws to unwind the
+ * request — fine once per form submit, not fine inside a for-loop). Returns
+ * false (never throws) for a missing match so a bulk caller can just skip it.
+ */
+async function approveAndIntroduceCore(matchId: string, actorId: string): Promise<boolean> {
   const match = await db.match.findUnique({
     where: { id: matchId },
     include: { request: { include: { company: true } }, partner: true, introductions: true },
   });
-  if (!match) fail(fd, "/admin/matches", "Match not found.");
-  const fallback = `/admin/requests/${match.requestId}`;
+  if (!match) return false;
 
   if (!match.releasedToCompany || !match.releasedToPartner) {
     await db.match.update({
@@ -357,7 +359,7 @@ export async function approveAndIntroduce(fd: FormData) {
       action: "match.release_changed",
       entityType: "Match",
       entityId: matchId,
-      actorId: user.id,
+      actorId,
       actorLabel: "Operator",
       requestId: match.requestId,
       partnerId: match.partnerId,
@@ -381,7 +383,7 @@ export async function approveAndIntroduce(fd: FormData) {
       action: "introduction.created",
       entityType: "Introduction",
       entityId: intro.id,
-      actorId: user.id,
+      actorId,
       actorLabel: "Operator",
       requestId: match.requestId,
       partnerId: match.partnerId,
@@ -390,11 +392,76 @@ export async function approveAndIntroduce(fd: FormData) {
     });
     await notifyIntroductionSentAndAdvanceRequest(
       { requestId: match.requestId, partnerId: match.partnerId, request: match.request, partner: match.partner },
-      user.id,
+      actorId,
     );
   }
 
-  done(fd, fallback);
+  return true;
+}
+
+export async function approveAndIntroduce(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const matchId = s(fd, "matchId");
+  if (!matchId) fail(fd, "/admin/matches", "Match not found.");
+
+  const fallback = `/admin/requests/${matchId}`;
+  const ok = await approveAndIntroduceCore(matchId, user.id);
+  if (!ok) fail(fd, "/admin/matches", "Match not found.");
+
+  const match = await db.match.findUnique({ where: { id: matchId }, select: { requestId: true } });
+  done(fd, match ? `/admin/requests/${match.requestId}` : fallback);
+}
+
+/** Same one-click flow as approveAndIntroduce, applied to every checked row
+    on the matches list in one submit — the bulk-review counterpart to
+    reviewing suggested matches one request at a time. */
+export async function bulkApproveAndIntroduce(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const matchIds = fd.getAll("matchIds").map(String).filter(Boolean);
+  const back = backPath(fd, "/admin/matches");
+  if (matchIds.length === 0) fail(fd, "/admin/matches", "No matches selected.");
+
+  let ok = 0;
+  for (const matchId of matchIds) {
+    try {
+      if (await approveAndIntroduceCore(matchId, user.id)) ok++;
+    } catch (err) {
+      console.error("bulkApproveAndIntroduce: failed for match", matchId, err);
+    }
+  }
+  revalidatePath(back);
+  redirect(ok === matchIds.length ? back : `${back}?error=${encodeURIComponent(`${ok}/${matchIds.length} approved — check the rest.`)}`);
+}
+
+/** Bulk-decline — the "no" counterpart to bulk approve, for suggestions that
+    clearly don't fit once an operator has scanned a batch of them. */
+export async function bulkDeclineMatches(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const matchIds = fd.getAll("matchIds").map(String).filter(Boolean);
+  const back = backPath(fd, "/admin/matches");
+  if (matchIds.length === 0) fail(fd, "/admin/matches", "No matches selected.");
+
+  const matches = await db.match.findMany({
+    where: { id: { in: matchIds } },
+    select: { id: true, status: true, requestId: true, partnerId: true },
+  });
+  for (const m of matches) {
+    if (m.status === "DECLINED") continue;
+    await db.match.update({ where: { id: m.id }, data: { status: "DECLINED" } });
+    await audit({
+      action: "match.status_changed",
+      entityType: "Match",
+      entityId: m.id,
+      actorId: user.id,
+      actorLabel: "Operator",
+      requestId: m.requestId,
+      partnerId: m.partnerId,
+      matchId: m.id,
+      meta: { from: m.status, to: "DECLINED", bulk: true },
+    });
+  }
+  revalidatePath(back);
+  redirect(back);
 }
 
 /**

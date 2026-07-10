@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { logError } from "@/lib/error-log";
 import {
   runFollowUpWatchdog,
+  runIntroductionReminderWatchdog,
   runRetainerRenewalWatchdog,
   runRevenueOverdueWatchdog,
   runRevenueUninvoicedWatchdog,
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions] = await Promise.all([
+  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions, introReminders] = await Promise.all([
     runSlaWatchdog().catch(async (err) => {
       await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
@@ -49,6 +50,10 @@ export async function GET(req: NextRequest) {
       await logError({ error: err, source: "cron:runStaleSuggestionWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
+    runIntroductionReminderWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runIntroductionReminderWatchdog", severity: "ERROR" });
+      return { checked: 0, sent: 0, error: true };
+    }),
   ]);
 
   return NextResponse.json({
@@ -59,6 +64,7 @@ export async function GET(req: NextRequest) {
     uninvoiced,
     retainer,
     staleSuggestions,
+    introReminders,
     ranAt: new Date().toISOString(),
   });
 }

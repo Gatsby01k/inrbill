@@ -9,16 +9,16 @@ import {
   NoteComposer,
   NoteList,
 } from "@/components/workspace/records";
+import { DealProgress, NextStepHint } from "@/components/workspace/deal-progress";
 import { Timeline } from "@/components/workspace/timeline";
 import { TrackRecordBadge } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
+import { deriveRequestStage } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
-import { auditLabel, cn, directionLabel, fmtDate, requestTypeLabel, statusLabel } from "@/lib/format";
+import { auditLabel, directionLabel, fmtDate, requestTypeLabel } from "@/lib/format";
 import { getPartnerTrackRecords } from "@/lib/reputation";
 
 export const metadata: Metadata = { title: "Request" };
-
-const STEPS = ["SUBMITTED", "IN_REVIEW", "MATCHING", "INTRODUCED", "CLOSED"] as const;
 
 function companyEventLabel(action: string, meta: unknown) {
   if (action === "match.release_changed") {
@@ -46,7 +46,11 @@ export default async function CompanyRequestDetailPage({
         where: { releasedToCompany: true },
         include: {
           partner: true,
-          introductions: { orderBy: { createdAt: "desc" }, take: 1 },
+          introductions: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            include: { _count: { select: { messages: true } } },
+          },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -72,7 +76,16 @@ export default async function CompanyRequestDetailPage({
     return false;
   });
 
-  const stepIndex = STEPS.indexOf(request.status as (typeof STEPS)[number]);
+  const stage = deriveRequestStage(
+    request.status,
+    request.matches.map((m) => ({
+      matchStatus: m.status,
+      releasedToCompany: true,
+      releasedToPartner: m.releasedToPartner,
+      introStatus: m.introductions[0]?.status ?? null,
+      hasMessages: (m.introductions[0]?._count.messages ?? 0) > 0,
+    })),
+  );
 
   return (
     <>
@@ -93,50 +106,9 @@ export default async function CompanyRequestDetailPage({
       ) : null}
 
       {/* Progress */}
-      <div className="card mb-5 p-5">
-        {request.status === "REJECTED" ? (
-          <p className="text-sm leading-relaxed text-rose-600">
-            This request was not accepted into matching. Check the notes below —
-            operations usually explains what would need to change for a resubmission.
-          </p>
-        ) : (
-          <ol className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
-            {STEPS.map((s, i) => {
-              const reached = stepIndex >= 0 && i <= stepIndex;
-              const current = i === stepIndex;
-              return (
-                <li key={s} className="flex items-center sm:flex-1">
-                  <span
-                    className={cn(
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-mono text-xs",
-                      reached
-                        ? "border-gold-500/60 bg-gold-500/15 text-gold-700"
-                        : "border-black/10 bg-black/[0.02] text-slate-400",
-                    )}
-                  >
-                    {i + 1}
-                  </span>
-                  <span
-                    className={cn(
-                      "ml-2.5 text-xs font-medium",
-                      current ? "text-gold-700" : reached ? "text-slate-700" : "text-slate-400",
-                    )}
-                  >
-                    {statusLabel(s)}
-                  </span>
-                  {i < STEPS.length - 1 ? (
-                    <span
-                      className={cn(
-                        "mx-3 hidden h-px flex-1 sm:block",
-                        i < stepIndex ? "bg-gold-500/40" : "bg-black/10",
-                      )}
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        )}
+      <div className="card mb-5 space-y-4 p-5">
+        <DealProgress stage={stage} />
+        <NextStepHint stage={stage} role="company" />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">

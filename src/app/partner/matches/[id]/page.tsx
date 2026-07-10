@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { BackLink, FormError, KV, PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
+import { DealProgress, NextStepHint } from "@/components/workspace/deal-progress";
 import { DealRoom } from "@/components/workspace/deal-room";
 import { requireRole } from "@/lib/auth";
+import { deriveMatchStage } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
 import { directionLabel, fmtDate } from "@/lib/format";
 
@@ -40,6 +42,14 @@ export default async function PartnerMatchPage({
       })
     : [];
 
+  const stage = deriveMatchStage({
+    matchStatus: match.status,
+    releasedToCompany: match.releasedToCompany,
+    releasedToPartner: match.releasedToPartner,
+    introStatus: intro?.status ?? null,
+    hasMessages: messages.length > 0,
+  });
+
   return (
     <>
       <BackLink href="/partner" label="Partner overview" />
@@ -55,6 +65,11 @@ export default async function PartnerMatchPage({
           <FormError message={error} />
         </div>
       ) : null}
+
+      <div className="card mb-5 space-y-4 p-5">
+        <DealProgress stage={stage} />
+        <NextStepHint stage={stage} role="partner" />
+      </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">

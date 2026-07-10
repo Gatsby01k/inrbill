@@ -12,6 +12,7 @@ import {
 import { TelegramConnectCard } from "@/components/workspace/telegram-connect";
 import { TrackRecordCard } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
+import { deriveMatchStage, dealStageHint } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
 import { directionLabel, fmtDate } from "@/lib/format";
 import { getPartnerTrackRecord } from "@/lib/reputation";
@@ -50,7 +51,11 @@ export default async function PartnerOverviewPage({
         where: { releasedToPartner: true },
         include: {
           request: true,
-          introductions: { orderBy: { createdAt: "desc" }, take: 1 },
+          introductions: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            include: { _count: { select: { messages: true } } },
+          },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -111,7 +116,15 @@ export default async function PartnerOverviewPage({
             <SectionTitle title="Matched requests" />
             {partner.matches.length ? (
               <div className="space-y-3">
-                {partner.matches.map((m) => (
+                {partner.matches.map((m) => {
+                  const stage = deriveMatchStage({
+                    matchStatus: m.status,
+                    releasedToCompany: true,
+                    releasedToPartner: true,
+                    introStatus: m.introductions[0]?.status ?? null,
+                    hasMessages: (m.introductions[0]?._count.messages ?? 0) > 0,
+                  });
+                  return (
                   <div key={m.id} className="rounded-xl border border-gold-500/20 bg-gold-500/[0.03] p-4">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <span className="font-mono text-xs text-gold-700">{m.request.reference}</span>
@@ -120,6 +133,9 @@ export default async function PartnerOverviewPage({
                       </p>
                       <StatusBadge status={m.status} />
                       {m.introductions[0] ? <StatusBadge status={m.introductions[0].status} /> : null}
+                      <span className="chip border-gold-500/30 bg-gold-500/10 text-gold-700">
+                        {dealStageHint(stage, "partner").title}
+                      </span>
                       <span className="ml-auto text-[11px] text-slate-400">{fmtDate(m.createdAt)}</span>
                     </div>
                     <div className="mt-2">
@@ -148,7 +164,8 @@ export default async function PartnerOverviewPage({
                       All terms and settlement are agreed directly between you and the company.
                     </p>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <EmptyState
