@@ -347,10 +347,12 @@ export default async function LandingPage() {
             <Ticker
               items={[
                 "India's liquidity, reviewed.",
-                ...corridors.map(
-                  (c) =>
-                    `${c.directionLabel} · ${c.activePartners} active partner${c.activePartners === 1 ? "" : "s"}`,
-                ),
+                ...corridors
+                  .filter((c) => c.activePartners > 0)
+                  .map(
+                    (c) =>
+                      `${c.directionLabel} · ${c.activePartners} active partner${c.activePartners === 1 ? "" : "s"}`,
+                  ),
                 "24–48h first response — not “soon.”",
                 "₹0 held in custody — funds never pass through INRP2P",
                 "Every request and every application manually reviewed",
@@ -490,26 +492,39 @@ export default async function LandingPage() {
                 <Reveal key={c.slug} index={i}>
                   <SpotlightCard className="card flex h-full flex-col p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised">
                     <p className="eyebrow text-leaf-600">{c.directionLabel}</p>
-                    <p className="tnum mt-3 text-[28px] font-semibold text-slate-900">
-                      {c.activePartners}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      active reviewed partner{c.activePartners === 1 ? "" : "s"}
-                    </p>
-                    <div className="mt-4 flex items-center gap-2 text-[11.5px] text-slate-500">
-                      <span>
-                        {c.requestsLast14d} request{c.requestsLast14d === 1 ? "" : "s"} · 14d
-                      </span>
-                      {c.growthPct !== null ? (
-                        <span
-                          className={
-                            c.growthPct >= 0 ? "font-medium text-leaf-600" : "font-medium text-rose-500"
-                          }
-                        >
-                          {c.growthPct >= 0 ? "▲" : "▼"} {Math.abs(c.growthPct)}%
-                        </span>
-                      ) : null}
-                    </div>
+                    {c.activePartners > 0 ? (
+                      <>
+                        <p className="tnum mt-3 text-[28px] font-semibold text-slate-900">
+                          {c.activePartners}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          active reviewed partner{c.activePartners === 1 ? "" : "s"}
+                        </p>
+                        <div className="mt-4 flex items-center gap-2 text-[11.5px] text-slate-500">
+                          <span>
+                            {c.requestsLast14d} request{c.requestsLast14d === 1 ? "" : "s"} · 14d
+                          </span>
+                          {c.growthPct !== null ? (
+                            <span
+                              className={
+                                c.growthPct >= 0
+                                  ? "font-medium text-leaf-600"
+                                  : "font-medium text-rose-500"
+                              }
+                            >
+                              {c.growthPct >= 0 ? "▲" : "▼"} {Math.abs(c.growthPct)}%
+                            </span>
+                          ) : null}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-3 flex-1">
+                        <p className="text-[13px] font-semibold text-slate-900">Coverage building</p>
+                        <p className="mt-1 text-[12px] leading-relaxed text-slate-500">
+                          No verified partner on this corridor yet. Be the first.
+                        </p>
+                      </div>
+                    )}
                     <Link href={`/corridors/${c.slug}`} className="btn btn-ghost btn-sm mt-5">
                       View corridor →
                     </Link>
