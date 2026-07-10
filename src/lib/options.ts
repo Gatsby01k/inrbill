@@ -174,7 +174,7 @@ export const REVENUE_STATUSES = [
 export const NOTE_VISIBILITIES = ["INTERNAL", "COMPANY", "PARTNER"] as const;
 
 export const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "network@inrp2p.example";
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "info@inrp2p.com";
 /** Direct line to the CEO — the primary "talk to us" Telegram contact. */
 export const CONTACT_TELEGRAM =
   process.env.NEXT_PUBLIC_CONTACT_TELEGRAM ?? "INRP2P_CEO";
