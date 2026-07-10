@@ -11,19 +11,23 @@ const PARTNER_COUNT = 7;
 const GOLD = "255,153,51";
 const LEAF = "23,138,56";
 
-type Node = { angle: number; x: number; y: number; pulse: number };
+type Node = { angle: number; x: number; y: number; depth: number; scale: number; pulse: number };
 type Particle = { from: number; to: number; t: number; speed: number; color: string };
 
 /**
  * Hero visual, rebuilt a third time on direct feedback that a stepper list
  * (even styled as an audit log) still read as flat and static. This is a
- * canvas particle network instead: a center "you" node, an orbit of
- * partner nodes, faint mesh lines between them, and small glowing packets
- * continuously flowing in from partners and — periodically — a bright
- * packet flowing out to a partner that lights up (the "match" moment).
- * No new dependency — canvas is a native browser API. Falls back to a
- * single static frame under prefers-reduced-motion. Stage labels below
- * keep the plain-English explanation the visual alone doesn't carry.
+ * canvas particle network: a center "you" node, an orbit of partner nodes
+ * projected as a tilted 3D ring (a cheap perspective trick — nodes further
+ * "back" in the rotation render smaller/dimmer, nodes "forward" render
+ * bigger/brighter, sorted and drawn back-to-front every frame), faint mesh
+ * lines between them, and small glowing packets continuously flowing in
+ * from partners and — periodically — a bright packet flowing out to a
+ * partner that lights up (the "match" moment). The ring also tilts toward
+ * the cursor for real parallax, same lerped-follow technique as HeroRing.
+ * No new dependency — canvas is a native browser API, no WebGL. Falls back
+ * to a single static frame under prefers-reduced-motion. Stage labels
+ * below keep the plain-English explanation the visual alone doesn't carry.
  */
 export function RequestPipelineCard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,17 +69,44 @@ export function RequestPipelineCard() {
       angle: (i / PARTNER_COUNT) * Math.PI * 2 - Math.PI / 2,
       x: 0,
       y: 0,
+      depth: 0,
+      scale: 1,
       pulse: 0,
     }));
     const particles: Particle[] = [];
 
+    // Pointer-driven tilt, lerped toward the target each frame — same
+    // technique as HeroRing, applied here to an actual 3D-ish projection
+    // instead of a flat translate.
+    let targetTiltX = 0;
+    let targetTiltY = 0;
+    let curTiltX = 0;
+    let curTiltY = 0;
+
+    function onPointerMove(e: PointerEvent) {
+      const rect = wrap!.getBoundingClientRect();
+      targetTiltY = ((e.clientX - rect.left) / rect.width - 0.5) * 1.1;
+      targetTiltX = ((e.clientY - rect.top) / rect.height - 0.5) * 0.7;
+    }
+    function onPointerLeave() {
+      targetTiltX = 0;
+      targetTiltY = 0;
+    }
+    wrap.addEventListener("pointermove", onPointerMove);
+    wrap.addEventListener("pointerleave", onPointerLeave);
+
     function layout() {
       const cx = width / 2;
       const cy = height / 2;
-      const r = Math.min(width, height) * 0.38;
+      const rx = Math.min(width, height) * 0.4;
+      const ry = rx * (0.3 + curTiltX * 0.22);
       nodes.forEach((n) => {
-        n.x = cx + Math.cos(n.angle) * r;
-        n.y = cy + Math.sin(n.angle) * r;
+        const a = n.angle + curTiltY;
+        const depth = Math.sin(a); // -1 (back) .. 1 (front)
+        n.x = cx + Math.cos(a) * rx;
+        n.y = cy + depth * ry;
+        n.depth = depth;
+        n.scale = 0.55 + ((depth + 1) / 2) * 0.85;
       });
       return { cx, cy };
     }
@@ -92,12 +123,14 @@ export function RequestPipelineCard() {
         ctx!.lineTo(n.x, n.y);
         ctx!.stroke();
       });
-      nodes.forEach((n) => {
-        ctx!.beginPath();
-        ctx!.fillStyle = `rgba(${LEAF},0.55)`;
-        ctx!.arc(n.x, n.y, 3, 0, Math.PI * 2);
-        ctx!.fill();
-      });
+      [...nodes]
+        .sort((a, b) => a.depth - b.depth)
+        .forEach((n) => {
+          ctx!.beginPath();
+          ctx!.fillStyle = `rgba(${LEAF},${0.35 + ((n.depth + 1) / 2) * 0.5})`;
+          ctx!.arc(n.x, n.y, 2.6 * n.scale, 0, Math.PI * 2);
+          ctx!.fill();
+        });
       ctx!.beginPath();
       ctx!.fillStyle = `rgba(${GOLD},0.9)`;
       ctx!.arc(cx, cy, 5, 0, Math.PI * 2);
@@ -106,7 +139,11 @@ export function RequestPipelineCard() {
 
     if (reduceMotion) {
       drawStatic();
-      return () => window.removeEventListener("resize", resize);
+      return () => {
+        window.removeEventListener("resize", resize);
+        wrap!.removeEventListener("pointermove", onPointerMove);
+        wrap!.removeEventListener("pointerleave", onPointerLeave);
+      };
     }
 
     let raf = 0;
@@ -114,6 +151,13 @@ export function RequestPipelineCard() {
     let matchTimer = 40;
 
     function frame() {
+      curTiltX += (targetTiltX - curTiltX) * 0.06;
+      curTiltY += (targetTiltY - curTiltY) * 0.06;
+
+      nodes.forEach((n) => {
+        n.angle += 0.0009;
+        n.pulse = Math.max(0, n.pulse - 0.018);
+      });
       const { cx, cy } = layout();
 
       // Translucent overlay instead of a hard clear — leaves a soft trail
@@ -121,17 +165,13 @@ export function RequestPipelineCard() {
       ctx!.fillStyle = "rgba(11,18,32,0.32)";
       ctx!.fillRect(0, 0, width, height);
 
-      nodes.forEach((n) => {
-        n.angle += 0.0007;
-        n.pulse = Math.max(0, n.pulse - 0.018);
-      });
-      layout();
-
-      // Faint mesh between neighbouring partner nodes.
-      ctx!.strokeStyle = "rgba(255,255,255,0.045)";
+      // Faint mesh between neighbouring partner nodes (ring order, not
+      // draw order — the connections themselves don't change with tilt).
       ctx!.lineWidth = 1;
       nodes.forEach((n, i) => {
         const next = nodes[(i + 1) % nodes.length];
+        const meshDepth = (n.depth + next.depth) / 2;
+        ctx!.strokeStyle = `rgba(255,255,255,${0.025 + ((meshDepth + 1) / 2) * 0.05})`;
         ctx!.beginPath();
         ctx!.moveTo(n.x, n.y);
         ctx!.lineTo(next.x, next.y);
@@ -139,8 +179,8 @@ export function RequestPipelineCard() {
       });
 
       // Faint spokes to the center "you" node.
-      ctx!.strokeStyle = `rgba(${GOLD},0.06)`;
       nodes.forEach((n) => {
+        ctx!.strokeStyle = `rgba(${GOLD},${0.04 + ((n.depth + 1) / 2) * 0.05})`;
         ctx!.beginPath();
         ctx!.moveTo(cx, cy);
         ctx!.lineTo(n.x, n.y);
@@ -183,16 +223,22 @@ export function RequestPipelineCard() {
         }
       }
 
-      nodes.forEach((n) => {
-        const glow = 0.4 + n.pulse * 0.5;
-        ctx!.beginPath();
-        ctx!.fillStyle = `rgba(${LEAF},${glow})`;
-        ctx!.shadowColor = `rgba(${LEAF},0.85)`;
-        ctx!.shadowBlur = 5 + n.pulse * 12;
-        ctx!.arc(n.x, n.y, 2.8 + n.pulse * 2.2, 0, Math.PI * 2);
-        ctx!.fill();
-        ctx!.shadowBlur = 0;
-      });
+      // Back-to-front so front-of-ring nodes visually sit above the mesh
+      // and the back-of-ring nodes behind them — the piece that actually
+      // sells the 3D read.
+      [...nodes]
+        .sort((a, b) => a.depth - b.depth)
+        .forEach((n) => {
+          const base = 0.3 + ((n.depth + 1) / 2) * 0.55;
+          const glow = Math.min(1, base + n.pulse * 0.5);
+          ctx!.beginPath();
+          ctx!.fillStyle = `rgba(${LEAF},${glow})`;
+          ctx!.shadowColor = `rgba(${LEAF},0.85)`;
+          ctx!.shadowBlur = (4 + n.pulse * 12) * n.scale;
+          ctx!.arc(n.x, n.y, (2.6 + n.pulse * 2.2) * n.scale, 0, Math.PI * 2);
+          ctx!.fill();
+          ctx!.shadowBlur = 0;
+        });
 
       ctx!.beginPath();
       ctx!.fillStyle = `rgba(${GOLD},0.95)`;
@@ -209,6 +255,8 @@ export function RequestPipelineCard() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      wrap!.removeEventListener("pointermove", onPointerMove);
+      wrap!.removeEventListener("pointerleave", onPointerLeave);
     };
   }, []);
 
