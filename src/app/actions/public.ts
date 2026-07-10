@@ -18,7 +18,7 @@ import {
   partnerApplicationSchema,
   type ActionState,
 } from "@/lib/schemas";
-import { checkCoverageGap } from "@/lib/watchdogs";
+import { autoSuggestMatches, checkCoverageGap } from "@/lib/watchdogs";
 import type { Direction, RequestType, Urgency } from "@prisma/client";
 
 function str(formData: FormData, key: string) {
@@ -178,11 +178,13 @@ export async function submitCompanyRequest(
     meta: { reference, requestType: data.requestType },
   });
 
-  // Fire-and-forget-safe: never throws, never delays or blocks submission.
+  // Fire-and-forget-safe: neither call ever throws or blocks submission.
   // Reuses the same scoring the admin "suggested partners" panel runs, just
   // triggered the moment the request exists instead of whenever someone
-  // happens to open it.
+  // happens to open it — checkCoverageGap flags the no-fit case,
+  // autoSuggestMatches pre-populates the good-fit case.
   await checkCoverageGap(request);
+  await autoSuggestMatches(request);
 
   if (!loggedInCompany && userId) await createSession(userId);
   if (newAccessCredentials) {

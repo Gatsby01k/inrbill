@@ -147,6 +147,13 @@ model User {
   totpEnabled      Boolean  @default(false)
   totpBackupCodes  String[] @default([])
 
+  // Brute-force lockout — applies to every role, not just admin. Counts
+  // consecutive bad passwords; a correct login resets it to zero. Once
+  // lockedUntil is in the future, login() refuses even a correct password
+  // until it passes, so a guessed password alone can never be enough.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
   sessions Session[]
   company  CompanyProfile?
   partner  PartnerProfile?

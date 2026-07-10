@@ -164,6 +164,22 @@ export async function createMatch(fd: FormData) {
           : {}),
       },
     });
+
+    // A human just deliberately created this match — that's the real signal
+    // that matching is under way, so the request's own status stops being
+    // separate bookkeeping the operator has to remember to update by hand.
+    if (request.status === "SUBMITTED" || request.status === "IN_REVIEW") {
+      await db.liquidityRequest.update({ where: { id: requestId }, data: { status: "MATCHING" } });
+      await audit({
+        action: "request.status_changed",
+        entityType: "LiquidityRequest",
+        entityId: requestId,
+        actorId: user.id,
+        actorLabel: "Operator",
+        requestId,
+        meta: { from: request.status, to: "MATCHING", auto: true, reason: "match.created" },
+      });
+    }
   } catch (e) {
     if ((e as { code?: string }).code === "P2002") {
       fail(fd, fallback, "This partner is already matched to the request.");
@@ -361,6 +377,26 @@ export async function updateIntroductionStatus(fd: FormData) {
           `🤝 <b>New introduction</b>\nYou've just been introduced for request ${existing.match.request.reference}. Check your workspace for details.`,
         ),
       ]);
+
+      // The introduction going out is the real "this request is now
+      // introduced" moment — the request's own status stops being separate
+      // bookkeeping an operator has to remember to flip by hand.
+      const reqStatus = existing.match.request.status;
+      if (reqStatus !== "INTRODUCED" && reqStatus !== "CLOSED" && reqStatus !== "REJECTED") {
+        await db.liquidityRequest.update({
+          where: { id: existing.match.requestId },
+          data: { status: "INTRODUCED" },
+        });
+        await audit({
+          action: "request.status_changed",
+          entityType: "LiquidityRequest",
+          entityId: existing.match.requestId,
+          actorId: user.id,
+          actorLabel: "Operator",
+          requestId: existing.match.requestId,
+          meta: { from: reqStatus, to: "INTRODUCED", auto: true, reason: "introduction.sent" },
+        });
+      }
     }
   }
   done(fd, `/admin/requests/${existing.match.requestId}`);

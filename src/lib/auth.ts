@@ -13,6 +13,40 @@ export const CHALLENGE_COOKIE = "inrp2p_2fa_challenge";
 const CHALLENGE_MINUTES = 10;
 const CHALLENGE_MAX_ATTEMPTS = 5;
 
+// Brute-force lockout — applies to every role (company/partner accounts had
+// zero protection before this; admin's 2FA only kicks in after the password
+// step, so a lockout still matters there too). Deliberately simple: no new
+// infra, just two columns on User and a check on every login attempt.
+export const LOGIN_MAX_ATTEMPTS = 5;
+export const LOGIN_LOCKOUT_MINUTES = 15;
+
+export function isAccountLocked(user: { lockedUntil: Date | null }): boolean {
+  return !!user.lockedUntil && user.lockedUntil > new Date();
+}
+
+/** Called on a wrong password. Locks the account once the threshold is hit. */
+export async function registerFailedLogin(userId: string) {
+  const user = await db.user.update({
+    where: { id: userId },
+    data: { failedLoginAttempts: { increment: 1 } },
+    select: { failedLoginAttempts: true },
+  });
+  if (user.failedLoginAttempts >= LOGIN_MAX_ATTEMPTS) {
+    await db.user.update({
+      where: { id: userId },
+      data: { lockedUntil: new Date(Date.now() + LOGIN_LOCKOUT_MINUTES * 60 * 1000) },
+    });
+  }
+}
+
+/** Called on a correct password — a real login clears the slate. */
+export async function clearFailedLogins(userId: string) {
+  await db.user.update({
+    where: { id: userId },
+    data: { failedLoginAttempts: 0, lockedUntil: null },
+  });
+}
+
 export function hashPassword(pw: string) {
   return bcrypt.hash(pw, 12);
 }

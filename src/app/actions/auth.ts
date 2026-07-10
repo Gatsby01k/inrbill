@@ -3,11 +3,14 @@
 import { redirect } from "next/navigation";
 import {
   bumpTwoFactorAttempts,
+  clearFailedLogins,
   clearTwoFactorChallenge,
   createSession,
   createTwoFactorChallenge,
   destroySession,
   getTwoFactorChallenge,
+  isAccountLocked,
+  registerFailedLogin,
   roleHome,
   verifyPassword,
 } from "@/lib/auth";
@@ -27,10 +30,20 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   if (!parsed.success) return { error: "Enter a valid email and password." };
 
   const user = await db.user.findUnique({ where: { email: parsed.data.email } });
+
+  // Checked before the password compare so a locked account never leaks
+  // "yes, that password was actually wrong" while it's locked.
+  if (user && isAccountLocked(user)) {
+    const minutesLeft = Math.max(1, Math.ceil((user.lockedUntil!.getTime() - Date.now()) / 60_000));
+    return { error: `Too many attempts. Try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.` };
+  }
+
   if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    if (user) await registerFailedLogin(user.id);
     return { error: "Invalid email or password." };
   }
 
+  await clearFailedLogins(user.id);
   const next = safeNext(formData.get("next"));
 
   // Password is correct — for accounts with 2FA enabled, that's only step

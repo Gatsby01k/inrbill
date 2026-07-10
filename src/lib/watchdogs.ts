@@ -366,3 +366,62 @@ export async function checkCoverageGap(request: CoverageGapRequest) {
     console.error("checkCoverageGap failed", err);
   }
 }
+
+/* ── 7. Auto-suggest matches ──────────────────────────────────────────────
+   Also fired synchronously at submission time, alongside checkCoverageGap —
+   the flip side of the same signal. Where checkCoverageGap raises an alert
+   when nobody fits, this pre-creates SUGGESTED Match rows for the partners
+   who clearly do, so an operator opening the request for the first time
+   finds ranked candidates already waiting instead of having to run the
+   matching search themselves. It only ever creates SUGGESTED rows — nothing
+   is released to either side, and no match here skips manual review before
+   a real introduction happens. Never throws, same as checkCoverageGap. */
+
+export const AUTO_MATCH_SCORE_THRESHOLD = 60;
+const AUTO_MATCH_MAX = 3;
+
+export async function autoSuggestMatches(request: CoverageGapRequest) {
+  try {
+    const eligiblePartners = await db.partnerProfile.findMany({
+      where: {
+        status: { in: ["VERIFIED", "LIMITED"] },
+        directions: { has: request.direction },
+      },
+    });
+    if (eligiblePartners.length === 0) return;
+
+    const ranked = rankPartners(request, eligiblePartners, AUTO_MATCH_MAX).filter(
+      (r) => r.score >= AUTO_MATCH_SCORE_THRESHOLD,
+    );
+    if (ranked.length === 0) return;
+
+    for (const { partner, score, reasons } of ranked) {
+      try {
+        const match = await db.match.create({
+          data: {
+            requestId: request.id,
+            partnerId: partner.id,
+            confidenceScore: score,
+            adminNote: `Auto-suggested by the matching engine: ${reasons.join("; ")}.`,
+          },
+        });
+        await audit({
+          action: "match.auto_suggested",
+          entityType: "Match",
+          entityId: match.id,
+          actorLabel: "Auto-match",
+          requestId: request.id,
+          partnerId: partner.id,
+          matchId: match.id,
+          meta: { partnerName: partner.displayName, score },
+        });
+      } catch (err) {
+        // P2002 (unique requestId+partnerId) can't actually happen for a
+        // brand-new request, but never let one bad row block the rest.
+        console.error("autoSuggestMatches: failed to create one suggestion", err);
+      }
+    }
+  } catch (err) {
+    console.error("autoSuggestMatches failed", err);
+  }
+}
