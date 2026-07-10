@@ -7,9 +7,9 @@ import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revenueTypeLabel } from "@/lib/format";
 import { draftIntroductionSummary } from "@/lib/matching";
+import { notify } from "@/lib/notify";
 import { createCryptoInvoice } from "@/lib/nowpayments";
 import { createPaymentLink } from "@/lib/razorpay";
-import { notifyUser } from "@/lib/telegram";
 import {
   documentSchema,
   introductionCreateSchema,
@@ -109,12 +109,18 @@ export async function updatePartnerStatus(fd: FormData) {
       // the instant it returns, so an un-awaited push can simply never send.
       // notifyUser never throws (it's internally try/caught), so this can't
       // block the actual status update from completing.
-      await notifyUser(
-        existing.userId,
-        status.data === "VERIFIED"
-          ? "✅ <b>You're verified</b>\nYour partner profile is now fully verified and eligible for matching on INRP2P."
-          : "🟡 <b>Limited verification set</b>\nYour partner profile now has Limited status and is eligible for matching, with some caveats — check your workspace for details.",
-      );
+      await notify(existing.userId, {
+        title: status.data === "VERIFIED" ? "You're verified" : "Limited verification set",
+        body:
+          status.data === "VERIFIED"
+            ? "Your partner profile is now fully verified and eligible for matching."
+            : "Your partner profile now has Limited status and is eligible for matching, with some caveats.",
+        telegramHtml:
+          status.data === "VERIFIED"
+            ? "✅ <b>You're verified</b>\nYour partner profile is now fully verified and eligible for matching on INRP2P."
+            : "🟡 <b>Limited verification set</b>\nYour partner profile now has Limited status and is eligible for matching, with some caveats — check your workspace for details.",
+        link: "/partner",
+      });
     }
   }
   done(fd, `/admin/partners/${partnerId}`);
@@ -480,14 +486,18 @@ async function notifyIntroductionSentAndAdvanceRequest(
   actorId: string,
 ) {
   await Promise.all([
-    notifyUser(
-      match.request.company.userId,
-      `🤝 <b>You've been introduced</b>\nRequest ${match.request.reference} — a partner introduction just went out. Check your workspace for details.`,
-    ),
-    notifyUser(
-      match.partner.userId,
-      `🤝 <b>New introduction</b>\nYou've just been introduced for request ${match.request.reference}. Check your workspace for details.`,
-    ),
+    notify(match.request.company.userId, {
+      title: "You've been introduced",
+      body: `Request ${match.request.reference} — a partner introduction just went out.`,
+      telegramHtml: `🤝 <b>You've been introduced</b>\nRequest ${match.request.reference} — a partner introduction just went out. Check your workspace for details.`,
+      link: `/company/requests/${match.requestId}`,
+    }),
+    notify(match.partner.userId, {
+      title: "New introduction",
+      body: `You've just been introduced for request ${match.request.reference}.`,
+      telegramHtml: `🤝 <b>New introduction</b>\nYou've just been introduced for request ${match.request.reference}. Check your workspace for details.`,
+      link: "/partner",
+    }),
   ]);
 
   const reqStatus = match.request.status;

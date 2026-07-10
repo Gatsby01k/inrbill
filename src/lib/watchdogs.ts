@@ -3,7 +3,8 @@ import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { directionLabel, statusLabel } from "@/lib/format";
 import { rankPartners, type MatchSuggestion } from "@/lib/matching";
-import { notifyUser, sendTelegramAlert } from "@/lib/telegram";
+import { notify } from "@/lib/notify";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 // Three watchdogs, one shared idea: don't rely on an operator noticing.
 // The audit log (already the system of record for every state change) also
@@ -453,6 +454,7 @@ export async function runIntroductionReminderWatchdog() {
       sentAt: true,
       match: {
         select: {
+          id: true,
           requestId: true,
           partnerId: true,
           request: { select: { reference: true, company: { select: { userId: true } } } },
@@ -477,17 +479,21 @@ export async function runIntroductionReminderWatchdog() {
       if (!(await alreadyAlerted(reminderAction, intro.id))) {
         await Promise.all([
           !hasCompanyMsg
-            ? notifyUser(
-                intro.match.request.company.userId,
-                `👋 <b>Still there?</b>\n${reference} — you were introduced to ${intro.match.partner.displayName} ${hours}h ago. Open the deal room and say hello.`,
-              )
-            : Promise.resolve(false),
+            ? notify(intro.match.request.company.userId, {
+                title: "Still there?",
+                body: `${reference} — you were introduced to ${intro.match.partner.displayName} ${hours}h ago.`,
+                telegramHtml: `👋 <b>Still there?</b>\n${reference} — you were introduced to ${intro.match.partner.displayName} ${hours}h ago. Open the deal room and say hello.`,
+                link: `/company/matches/${intro.match.id}`,
+              })
+            : Promise.resolve(),
           !hasPartnerMsg
-            ? notifyUser(
-                intro.match.partner.userId,
-                `👋 <b>Still there?</b>\n${reference} — you were introduced ${hours}h ago. Open the deal room and say hello.`,
-              )
-            : Promise.resolve(false),
+            ? notify(intro.match.partner.userId, {
+                title: "Still there?",
+                body: `${reference} — you were introduced ${hours}h ago.`,
+                telegramHtml: `👋 <b>Still there?</b>\n${reference} — you were introduced ${hours}h ago. Open the deal room and say hello.`,
+                link: `/partner/matches/${intro.match.id}`,
+              })
+            : Promise.resolve(),
         ]);
         await audit({
           action: reminderAction,

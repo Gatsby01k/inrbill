@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { notifyUser } from "@/lib/telegram";
+import { notify } from "@/lib/notify";
 
 function s(fd: FormData, key: string) {
   const v = fd.get(key);
@@ -44,6 +44,7 @@ export async function postDealMessage(fd: FormData) {
   let authorLabel: string;
   let backPath: string;
   let notifyUserId: string | null = null;
+  let notifyLink: string | null = null;
 
   if (session.user.role === "COMPANY") {
     if (
@@ -57,6 +58,7 @@ export async function postDealMessage(fd: FormData) {
     authorLabel = match.request.company.companyName;
     backPath = `/company/matches/${match.id}`;
     notifyUserId = match.partner.userId;
+    notifyLink = `/partner/matches/${match.id}`;
   } else if (session.user.role === "PARTNER") {
     if (!session.user.partner || match.partnerId !== session.user.partner.id || !match.releasedToPartner) {
       redirect("/partner");
@@ -65,6 +67,7 @@ export async function postDealMessage(fd: FormData) {
     authorLabel = match.partner.displayName;
     backPath = `/partner/matches/${match.id}`;
     notifyUserId = match.request.company.userId;
+    notifyLink = `/company/matches/${match.id}`;
   } else {
     // ADMIN — ops can post into any deal room, e.g. to nudge a stalled thread.
     authorSide = "INTERNAL";
@@ -90,10 +93,12 @@ export async function postDealMessage(fd: FormData) {
   });
 
   if (notifyUserId) {
-    await notifyUser(
-      notifyUserId,
-      `💬 New message from ${authorLabel} on your INRP2P introduction:\n"${body.slice(0, 200)}"`,
-    );
+    await notify(notifyUserId, {
+      title: `New message from ${authorLabel}`,
+      body: body.slice(0, 200),
+      telegramHtml: `💬 New message from ${authorLabel} on your INRP2P introduction:\n"${body.slice(0, 200)}"`,
+      link: notifyLink ?? undefined,
+    });
   }
 
   revalidatePath(backPath);

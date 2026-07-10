@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 import { callClaude, isAiConfigured } from "@/lib/ai";
 import { db } from "@/lib/db";
+import { checkRateLimit } from "@/lib/redis";
 
 // Drafts a suggested reply for whichever side is looking at a deal room —
 // never sent automatically, just fills the composer so the user reviews and
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!isAiConfigured()) {
     return NextResponse.json({ error: "AI is not configured (ANTHROPIC_API_KEY unset)." }, { status: 200 });
+  }
+  if (!(await checkRateLimit(`ratelimit:ai:reply-draft:${session.user.id}`, 20, 60))) {
+    return NextResponse.json({ error: "Too many AI requests — wait a moment and try again." }, { status: 429 });
   }
 
   const body = (await req.json().catch(() => null)) as { introductionId?: string } | null;

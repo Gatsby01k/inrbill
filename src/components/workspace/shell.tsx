@@ -3,6 +3,7 @@ import { BrandLockup } from "@/components/brand";
 import { cn } from "@/lib/format";
 import { APP_VERSION } from "@/lib/site";
 import { NavLinks, type NavItem } from "./nav-links";
+import { NotificationBell } from "./notification-bell";
 
 export function WorkspaceShell({
   badge,
@@ -24,18 +25,21 @@ export function WorkspaceShell({
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       <aside className="shrink-0 border-b border-black/[0.08] bg-[#F6F1E7] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[236px] lg:flex-col lg:border-b-0 lg:border-r">
-        <div className="flex h-[60px] items-center justify-between border-b border-black/[0.06] px-4 lg:px-5">
+        <div className="flex h-[60px] items-center justify-between gap-2 border-b border-black/[0.06] px-4 lg:px-5">
           <BrandLockup markSize={26} />
-          <span
-            className={cn(
-              "rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
-              badgeTone === "gold" && "border-gold-600/40 bg-gold-500/10 text-gold-700",
-              badgeTone === "emerald" && "border-leaf-300 bg-leaf-50 text-leaf-700",
-              badgeTone === "sky" && "border-sky-300 bg-sky-50 text-sky-700",
-            )}
-          >
-            {badge}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                badgeTone === "gold" && "border-gold-600/40 bg-gold-500/10 text-gold-700",
+                badgeTone === "emerald" && "border-leaf-300 bg-leaf-50 text-leaf-700",
+                badgeTone === "sky" && "border-sky-300 bg-sky-50 text-sky-700",
+              )}
+            >
+              {badge}
+            </span>
+            <NotificationBell />
+          </div>
         </div>
         <nav className="px-3 py-2.5 lg:py-4">
           <p className="hidden px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 lg:block">

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { callClaude, isAiConfigured } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { scoreMatch } from "@/lib/matching";
+import { checkRateLimit } from "@/lib/redis";
 
 // Turns the deterministic scoring reasons (already computed for every
 // suggestion) plus the free-text fields the scorer never reads into one
@@ -21,6 +22,9 @@ export async function POST(req: NextRequest) {
   }
   if (!isAiConfigured()) {
     return NextResponse.json({ error: "AI is not configured (ANTHROPIC_API_KEY unset)." }, { status: 200 });
+  }
+  if (!(await checkRateLimit(`ratelimit:ai:explain-match:${session.user.id}`, 20, 60))) {
+    return NextResponse.json({ error: "Too many AI requests — wait a moment and try again." }, { status: 429 });
   }
 
   const body = (await req.json().catch(() => null)) as { matchId?: string } | null;

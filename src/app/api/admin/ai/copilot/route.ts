@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 import { runCopilotTurn, type CopilotTurn } from "@/lib/ai-agent";
+import { checkRateLimit } from "@/lib/redis";
 
 // Admin-only AI ops copilot — natural-language questions answered against
 // live platform data via read-only tool calls (see src/lib/ai-tools.ts).
@@ -21,6 +22,11 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Lower ceiling than the single-shot AI routes — each turn here can chain
+  // up to MAX_TOOL_ROUNDS model calls, so it costs more per request.
+  if (!(await checkRateLimit(`ratelimit:ai:copilot:${session.user.id}`, 12, 60))) {
+    return NextResponse.json({ error: "Too many questions — wait a moment and try again." }, { status: 429 });
   }
 
   const body = (await req.json().catch(() => null)) as { history?: unknown } | null;

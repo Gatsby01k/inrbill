@@ -6,7 +6,14 @@
 // session tokens, 2FA secrets, or raw uploaded document URLs.
 
 import { db } from "@/lib/db";
+import { redisGetJSON, redisSetJSON } from "@/lib/redis";
 import { getPartnerTrackRecord } from "@/lib/reputation";
+
+// Aggregate queries (platform-wide counts, revenue rollups) are the
+// expensive/slow ones and don't need to be second-fresh — cached briefly so
+// a burst of copilot questions ("how are we doing" then a follow-up) or the
+// dashboard loading right after don't recompute the same rollup twice.
+const AGGREGATE_CACHE_SECONDS = 60;
 
 const MAX_ROWS = 25;
 
@@ -230,6 +237,10 @@ export async function runAiTool(name: string, rawInput: unknown): Promise<unknow
     case "revenue_summary": {
       const sinceDays = num(input, "sinceDays", 90);
       const groupBy = str(input, "groupBy") || "none";
+      const cacheKey = `ai:tool:revenue_summary:${sinceDays}:${groupBy}`;
+      const cached = await redisGetJSON<Record<string, unknown>>(cacheKey);
+      if (cached) return cached;
+
       const since = new Date(Date.now() - sinceDays * 86_400_000);
       const rows = await db.revenueRecord.findMany({
         where: { createdAt: { gte: since } },
@@ -242,7 +253,9 @@ export async function runAiTool(name: string, rawInput: unknown): Promise<unknow
         const key = `${base} (${r.currency})`;
         totals[key] = (totals[key] ?? 0) + Number(r.amount);
       }
-      return { sinceDays, recordCount: rows.length, totalsByCurrency: totals };
+      const result = { sinceDays, recordCount: rows.length, totalsByCurrency: totals };
+      await redisSetJSON(cacheKey, result, AGGREGATE_CACHE_SECONDS);
+      return result;
     }
 
     case "stale_introductions": {
@@ -271,6 +284,10 @@ export async function runAiTool(name: string, rawInput: unknown): Promise<unknow
     }
 
     case "platform_overview": {
+      const cacheKey = "ai:tool:platform_overview";
+      const cached = await redisGetJSON<Record<string, unknown>>(cacheKey);
+      if (cached) return cached;
+
       const now = new Date();
       const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -288,7 +305,7 @@ export async function runAiTool(name: string, rawInput: unknown): Promise<unknow
           }),
         ]);
 
-      return {
+      const overview = {
         requestsByStatus: Object.fromEntries(requestsByStatus.map((r) => [r.status, r._count])),
         partnersByStatus: Object.fromEntries(partnersByStatus.map((r) => [r.status, r._count])),
         matchesByStatus: Object.fromEntries(matchesByStatus.map((r) => [r.status, r._count])),
@@ -299,6 +316,8 @@ export async function runAiTool(name: string, rawInput: unknown): Promise<unknow
           revenueLastMonth.map((r) => [r.currency, r._sum.amount?.toString() ?? "0"]),
         ),
       };
+      await redisSetJSON(cacheKey, overview, AGGREGATE_CACHE_SECONDS);
+      return overview;
     }
 
     default:

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { callClaude, isAiConfigured } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { directionLabel, requestTypeLabel } from "@/lib/format";
+import { checkRateLimit } from "@/lib/redis";
 
 // On-demand AI briefing for an admin reviewing a request — turns the free-text
 // fields (kycNotes, partnerRequirements, notes) that the deterministic
@@ -23,6 +24,9 @@ export async function POST(req: NextRequest) {
   }
   if (!isAiConfigured()) {
     return NextResponse.json({ error: "AI is not configured (ANTHROPIC_API_KEY unset)." }, { status: 200 });
+  }
+  if (!(await checkRateLimit(`ratelimit:ai:briefing:${session.user.id}`, 20, 60))) {
+    return NextResponse.json({ error: "Too many AI requests — wait a moment and try again." }, { status: 429 });
   }
 
   const body = (await req.json().catch(() => null)) as { requestId?: string } | null;
