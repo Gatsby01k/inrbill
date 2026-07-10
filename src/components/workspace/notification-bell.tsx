@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type NotificationItem = {
   id: string;
@@ -33,10 +34,22 @@ function timeAgo(iso: string): string {
     the shell's narrow sidebar column — a 320px panel anchored `absolute`
     inside a 236px-wide sidebar has nowhere to lay out correctly and looks
     broken. Position is anchored to the button's left edge and then clamped
-    to stay within the viewport — the bell lives in a left sidebar here, so
-    right-aligning a wide panel against it would push the panel off the left
-    edge of the screen entirely (which is exactly what happened before this
-    fix: only the tail end of the panel's text was ever on screen). */
+    to stay within the viewport.
+
+    It's also rendered through a React portal straight into `document.body`,
+    not inline where the button sits. Reason: WorkspaceShell's sidebar
+    (`<aside>`) is `position: sticky`, which makes it establish its own CSS
+    stacking context. A `position: fixed` dropdown nested *inside* that
+    sidebar never actually competes for top-most paint order against the
+    rest of the page on its own z-index — it's confined to painting
+    wherever the sidebar's context lands, which is earlier in DOM order than
+    the main content column. In practice that meant any positioned element
+    in the page content (e.g. a card in the request wizard) could paint over
+    the open dropdown and clip it, even though the dropdown's z-index was
+    higher. Portalling to `document.body` escapes that ancestor entirely, so
+    the dropdown's own z-index is compared at the top level like it should
+    be. (CommandPalette/AiCopilot don't need this — they're already mounted
+    outside the sidebar, as siblings of WorkspaceShell in admin/layout.tsx.) */
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
@@ -116,43 +129,46 @@ export function NotificationBell() {
         ) : null}
       </button>
 
-      {open && pos ? (
-        <div
-          ref={panelRef}
-          style={{ top: pos.top, left: pos.left, width: `min(${PANEL_WIDTH}px, calc(100vw - 2rem))` }}
-          className="fixed z-50 max-h-96 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl"
-        >
-          <p className="border-b border-black/10 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Notifications
-          </p>
-          {items.length === 0 ? (
-            <p className="px-3.5 py-4 text-xs text-slate-400">Nothing yet.</p>
-          ) : (
-            <ul className="divide-y divide-black/[0.06]">
-              {items.map((n) => {
-                const inner = (
-                  <div className="px-3.5 py-2.5 hover:bg-black/[0.02]">
-                    <p className="text-[12.5px] font-medium text-slate-800">{n.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.body}</p>
-                    <p className="mt-1 text-[10px] text-slate-400">{timeAgo(n.createdAt)}</p>
-                  </div>
-                );
-                return (
-                  <li key={n.id}>
-                    {n.link ? (
-                      <Link href={n.link} onClick={() => setOpen(false)}>
-                        {inner}
-                      </Link>
-                    ) : (
-                      inner
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      ) : null}
+      {open && pos
+        ? createPortal(
+            <div
+              ref={panelRef}
+              style={{ top: pos.top, left: pos.left, width: `min(${PANEL_WIDTH}px, calc(100vw - 2rem))` }}
+              className="fixed z-50 max-h-96 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl"
+            >
+              <p className="border-b border-black/10 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Notifications
+              </p>
+              {items.length === 0 ? (
+                <p className="px-3.5 py-4 text-xs text-slate-400">Nothing yet.</p>
+              ) : (
+                <ul className="divide-y divide-black/[0.06]">
+                  {items.map((n) => {
+                    const inner = (
+                      <div className="px-3.5 py-2.5 hover:bg-black/[0.02]">
+                        <p className="text-[12.5px] font-medium text-slate-800">{n.title}</p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.body}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">{timeAgo(n.createdAt)}</p>
+                      </div>
+                    );
+                    return (
+                      <li key={n.id}>
+                        {n.link ? (
+                          <Link href={n.link} onClick={() => setOpen(false)}>
+                            {inner}
+                          </Link>
+                        ) : (
+                          inner
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
