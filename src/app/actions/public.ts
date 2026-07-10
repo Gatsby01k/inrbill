@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { audit, nextReference } from "@/lib/audit";
 import {
   clearAccessReveal,
@@ -10,6 +11,7 @@ import {
   hashPassword,
   setAccessReveal,
 } from "@/lib/auth";
+import { runFullTriagePipeline } from "@/lib/ai-triage";
 import { db } from "@/lib/db";
 import {
   companyRequestSchema,
@@ -185,6 +187,13 @@ export async function submitCompanyRequest(
   // autoSuggestMatches pre-populates the good-fit case.
   await checkCoverageGap(request);
   await autoSuggestMatches(request);
+
+  // AI pre-flight triage — scheduled to run *after* the response (this
+  // action's redirect) has already gone out, via Next's after(), so the
+  // company never waits on an LLM round-trip to submit their request. By
+  // the time an operator opens their queue, the easy majority of requests
+  // already have a triage verdict and top-match explanations attached.
+  after(() => runFullTriagePipeline(request.id));
 
   if (!loggedInCompany && userId) await createSession(userId);
   if (newAccessCredentials) {

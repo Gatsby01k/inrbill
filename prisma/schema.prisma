@@ -262,6 +262,15 @@ model LiquidityRequest {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
+  // AI pre-flight triage — generated automatically right after submission
+  // (see runRequestTriage in src/lib/ai-triage.ts), not on a click. Null
+  // until the background pass completes (or forever, if AI isn't
+  // configured). aiFlagged is parsed from a machine-readable marker line in
+  // the model's own output so the admin list can filter/sort on it without
+  // re-reading prose every time.
+  aiTriageNote String?
+  aiFlagged    Boolean?
+
   matches   Match[]
   notesList Note[]
   documents DocumentRecord[]

@@ -739,7 +739,11 @@ export default async function AdminRequestDetailPage({
 
         {/* ── Right rail ── */}
         <div className="space-y-5 xl:sticky xl:top-7 xl:self-start">
-          <AiBriefingCard requestId={request.id} />
+          <AiBriefingCard
+            requestId={request.id}
+            initialNote={request.aiTriageNote}
+            initialFlagged={request.aiFlagged}
+          />
 
           <div className="card p-5">
             <SectionTitle title="Company" />
