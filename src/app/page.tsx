@@ -75,7 +75,7 @@ const PROBLEM_PAIRS = [
 
 const FACTS = [
   { value: "24–48h", label: "First response. Not “soon.”" },
-  { value: "₹0", label: "Held in custody, ever. Funds never pass through INRP2P" },
+  { value: "Never", label: "Custody of your funds. They pass directly, partner to partner" },
   { value: "3", label: "Corridors: INR→USDT, USDT→INR, INR payouts" },
 ];
 
@@ -357,7 +357,7 @@ export default async function LandingPage() {
                 "India's liquidity, reviewed.",
                 ...POWERED_BY.map((p) => `Service fees invoiced via ${p} — never the deal itself`),
                 "24–48h first response — not “soon.”",
-                "₹0 held in custody — funds never pass through INRP2P",
+                "Zero custody, always — funds never pass through INRP2P",
                 "Every request and every application manually reviewed",
                 "3 corridors: INR→USDT, USDT→INR, INR payouts",
               ]}
