@@ -121,6 +121,32 @@ export function scoreMatch(request: ScorableRequest, partner: ScorablePartner): 
   return { score: Math.round(score), reasons };
 }
 
+type DraftableRequest = Pick<
+  LiquidityRequest,
+  "direction" | "dailyVolumeBand" | "monthlyVolumeBand" | "requiredSpeed" | "banks" | "methods"
+>;
+type DraftablePartner = Pick<
+  PartnerProfile,
+  "displayName" | "dailyCapacityBand" | "workingHours" | "banks" | "methods"
+>;
+
+/**
+ * Turns the request + partner facts already on file into a ready-to-send
+ * introduction summary — the operator reviews/edits instead of writing one
+ * from a blank textarea every time. Used by the one-click "Approve &
+ * introduce" action and as the default text in the manual introduction form.
+ */
+export function draftIntroductionSummary(request: DraftableRequest, partner: DraftablePartner): string {
+  const directionText = request.direction.replace(/_/g, " ").toLowerCase();
+  return (
+    `Introducing ${partner.displayName} for a ${directionText} requirement ` +
+    `(${request.dailyVolumeBand} daily / ${request.monthlyVolumeBand} monthly, ${request.requiredSpeed} settlement). ` +
+    `Partner covers ${partner.banks.slice(0, 4).join(", ") || "the required banks"} via ` +
+    `${partner.methods.slice(0, 4).join(", ") || "the required rails"}, ${partner.dailyCapacityBand} daily capacity, ` +
+    `${partner.workingHours}.`
+  );
+}
+
 /** Rank a pool of already-eligible partners against a request, best first. */
 export function rankPartners(
   request: ScorableRequest,

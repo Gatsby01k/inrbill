@@ -6,6 +6,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revenueTypeLabel } from "@/lib/format";
+import { draftIntroductionSummary } from "@/lib/matching";
 import { createCryptoInvoice } from "@/lib/nowpayments";
 import { createPaymentLink } from "@/lib/razorpay";
 import { notifyUser } from "@/lib/telegram";
@@ -328,6 +329,115 @@ export async function createIntroduction(fd: FormData) {
   done(fd, `/admin/requests/${match.requestId}`);
 }
 
+/**
+ * Collapses the common happy-path — release to both sides, draft the
+ * introduction, send it — into one click instead of four separate forms.
+ * Only meant for a match the operator already trusts (typically a strong
+ * auto-suggested one); every field it sets remains editable afterwards
+ * through the normal per-step controls, so nothing here is a one-way door.
+ */
+export async function approveAndIntroduce(fd: FormData) {
+  const user = await requireRole("ADMIN");
+  const matchId = s(fd, "matchId");
+  if (!matchId) fail(fd, "/admin/matches", "Match not found.");
+
+  const match = await db.match.findUnique({
+    where: { id: matchId },
+    include: { request: { include: { company: true } }, partner: true, introductions: true },
+  });
+  if (!match) fail(fd, "/admin/matches", "Match not found.");
+  const fallback = `/admin/requests/${match.requestId}`;
+
+  if (!match.releasedToCompany || !match.releasedToPartner) {
+    await db.match.update({
+      where: { id: matchId },
+      data: { releasedToCompany: true, releasedToPartner: true },
+    });
+    await audit({
+      action: "match.release_changed",
+      entityType: "Match",
+      entityId: matchId,
+      actorId: user.id,
+      actorLabel: "Operator",
+      requestId: match.requestId,
+      partnerId: match.partnerId,
+      matchId,
+      meta: { side: "both", released: true, partnerName: match.partner.displayName, viaApprove: true },
+    });
+  }
+
+  if (match.introductions.length === 0) {
+    const summary = draftIntroductionSummary(match.request, match.partner);
+    const intro = await db.introduction.create({
+      data: {
+        matchId,
+        channel: "TELEGRAM",
+        summary,
+        status: "SENT",
+        sentAt: new Date(),
+      },
+    });
+    await audit({
+      action: "introduction.created",
+      entityType: "Introduction",
+      entityId: intro.id,
+      actorId: user.id,
+      actorLabel: "Operator",
+      requestId: match.requestId,
+      partnerId: match.partnerId,
+      matchId,
+      meta: { channel: "TELEGRAM", partnerName: match.partner.displayName, viaApprove: true },
+    });
+    await notifyIntroductionSentAndAdvanceRequest(
+      { requestId: match.requestId, partnerId: match.partnerId, request: match.request, partner: match.partner },
+      user.id,
+    );
+  }
+
+  done(fd, fallback);
+}
+
+/**
+ * Shared by updateIntroductionStatus and approveAndIntroduce — both are
+ * "this introduction just went out" moments and both deserve the exact same
+ * side effects: both sides notified on Telegram, and the request's own
+ * status auto-advanced instead of left as separate bookkeeping.
+ */
+async function notifyIntroductionSentAndAdvanceRequest(
+  match: {
+    requestId: string;
+    partnerId: string;
+    request: { reference: string; status: string; company: { userId: string } };
+    partner: { userId: string };
+  },
+  actorId: string,
+) {
+  await Promise.all([
+    notifyUser(
+      match.request.company.userId,
+      `🤝 <b>You've been introduced</b>\nRequest ${match.request.reference} — a partner introduction just went out. Check your workspace for details.`,
+    ),
+    notifyUser(
+      match.partner.userId,
+      `🤝 <b>New introduction</b>\nYou've just been introduced for request ${match.request.reference}. Check your workspace for details.`,
+    ),
+  ]);
+
+  const reqStatus = match.request.status;
+  if (reqStatus !== "INTRODUCED" && reqStatus !== "CLOSED" && reqStatus !== "REJECTED") {
+    await db.liquidityRequest.update({ where: { id: match.requestId }, data: { status: "INTRODUCED" } });
+    await audit({
+      action: "request.status_changed",
+      entityType: "LiquidityRequest",
+      entityId: match.requestId,
+      actorId,
+      actorLabel: "Operator",
+      requestId: match.requestId,
+      meta: { from: reqStatus, to: "INTRODUCED", auto: true, reason: "introduction.sent" },
+    });
+  }
+}
+
 export async function updateIntroductionStatus(fd: FormData) {
   const user = await requireRole("ADMIN");
   const introId = s(fd, "introductionId");
@@ -365,38 +475,8 @@ export async function updateIntroductionStatus(fd: FormData) {
     });
     if (status.data === "SENT" && existing.status !== "SENT") {
       // Both sides find out the moment it happens, not whenever they next
-      // happen to open their workspace. Awaited for the same reason as the
-      // partner-verification push above — never throws, never blocks.
-      await Promise.all([
-        notifyUser(
-          existing.match.request.company.userId,
-          `🤝 <b>You've been introduced</b>\nRequest ${existing.match.request.reference} — a partner introduction just went out. Check your workspace for details.`,
-        ),
-        notifyUser(
-          existing.match.partner.userId,
-          `🤝 <b>New introduction</b>\nYou've just been introduced for request ${existing.match.request.reference}. Check your workspace for details.`,
-        ),
-      ]);
-
-      // The introduction going out is the real "this request is now
-      // introduced" moment — the request's own status stops being separate
-      // bookkeeping an operator has to remember to flip by hand.
-      const reqStatus = existing.match.request.status;
-      if (reqStatus !== "INTRODUCED" && reqStatus !== "CLOSED" && reqStatus !== "REJECTED") {
-        await db.liquidityRequest.update({
-          where: { id: existing.match.requestId },
-          data: { status: "INTRODUCED" },
-        });
-        await audit({
-          action: "request.status_changed",
-          entityType: "LiquidityRequest",
-          entityId: existing.match.requestId,
-          actorId: user.id,
-          actorLabel: "Operator",
-          requestId: existing.match.requestId,
-          meta: { from: reqStatus, to: "INTRODUCED", auto: true, reason: "introduction.sent" },
-        });
-      }
+      // happen to open their workspace — awaited, never blocks or throws.
+      await notifyIntroductionSentAndAdvanceRequest(existing.match, user.id);
     }
   }
   done(fd, `/admin/requests/${existing.match.requestId}`);

@@ -425,3 +425,53 @@ export async function autoSuggestMatches(request: CoverageGapRequest) {
     console.error("autoSuggestMatches failed", err);
   }
 }
+
+/* ── 8. Stale-suggestion watchdog ─────────────────────────────────────────
+   Closes the loop on autoSuggestMatches above — pre-filling candidates is
+   only a win if someone actually looks at them. Flags any match still sitting
+   at SUGGESTED (never shortlisted, released or declined) after a couple of
+   days, whether it was auto-created or added by hand, so the new automation
+   never quietly creates a queue nobody reviews. */
+
+const STALE_SUGGESTION_HOURS = 48;
+
+export async function runStaleSuggestionWatchdog() {
+  const cutoff = new Date(Date.now() - STALE_SUGGESTION_HOURS * 60 * 60 * 1000);
+  const stale = await db.match.findMany({
+    where: { status: "SUGGESTED", createdAt: { lte: cutoff } },
+    select: {
+      id: true,
+      createdAt: true,
+      requestId: true,
+      partnerId: true,
+      request: { select: { reference: true } },
+      partner: { select: { displayName: true } },
+    },
+  });
+
+  let sent = 0;
+  for (const match of stale) {
+    const action = "watchdog.stale_suggestion";
+    if (await alreadyAlerted(action, match.id)) continue;
+
+    const hours = Math.round((Date.now() - match.createdAt.getTime()) / 3_600_000);
+    const ok = await sendTelegramAlert(
+      `🕵️ <b>Suggested match unreviewed</b>\n${match.request.reference} — ${match.partner.displayName}\n` +
+        `Still sitting at Suggested after ${hours}h. Review, shortlist, or decline.`,
+    );
+    if (!ok) continue;
+
+    await audit({
+      action,
+      entityType: "Match",
+      entityId: match.id,
+      actorLabel: "Watchdog",
+      requestId: match.requestId,
+      partnerId: match.partnerId,
+      matchId: match.id,
+      meta: { hoursElapsed: hours },
+    });
+    sent++;
+  }
+  return { checked: stale.length, sent };
+}

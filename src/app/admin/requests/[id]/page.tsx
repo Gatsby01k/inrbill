@@ -5,6 +5,7 @@ import {
   addDocument,
   addNote,
   addRevenue,
+  approveAndIntroduce,
   createIntroduction,
   createMatch,
   createRevenueCryptoInvoice,
@@ -48,7 +49,7 @@ import {
   revenueTypeLabel,
   statusLabel,
 } from "@/lib/format";
-import { rankPartners } from "@/lib/matching";
+import { draftIntroductionSummary, rankPartners } from "@/lib/matching";
 import { isNowPaymentsConfigured } from "@/lib/nowpayments";
 import { isRazorpayConfigured } from "@/lib/razorpay";
 import {
@@ -279,6 +280,15 @@ export default async function AdminRequestDetailPage({
                           </button>
                         </form>
                       </div>
+                      {!m.releasedToCompany || !m.releasedToPartner || m.introductions.length === 0 ? (
+                        <form action={approveAndIntroduce} className="contents">
+                          <input type="hidden" name="matchId" value={m.id} />
+                          <input type="hidden" name="back" value={back} />
+                          <SubmitButton className="btn btn-gold btn-sm ml-auto" pendingLabel="Approving…">
+                            ⚡ Approve &amp; introduce
+                          </SubmitButton>
+                        </form>
+                      ) : null}
                     </div>
 
                     {/* Decision notes — tucked away unless already in use */}
@@ -415,6 +425,7 @@ export default async function AdminRequestDetailPage({
                           </select>
                           <input
                             name="summary"
+                            defaultValue={draftIntroductionSummary(request, m.partner)}
                             className="input h-8 min-w-40 flex-1 py-0 text-xs"
                             placeholder="Summary — who was introduced to whom, context"
                           />

@@ -6,6 +6,7 @@ import {
   runRevenueOverdueWatchdog,
   runRevenueUninvoicedWatchdog,
   runSlaWatchdog,
+  runStaleSuggestionWatchdog,
 } from "@/lib/watchdogs";
 
 // Vercel Cron hits this on schedule (see vercel.json). Protected by
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [sla, revenue, followUp, uninvoiced, retainer] = await Promise.all([
+  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions] = await Promise.all([
     runSlaWatchdog().catch(async (err) => {
       await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
@@ -44,6 +45,10 @@ export async function GET(req: NextRequest) {
       await logError({ error: err, source: "cron:runRetainerRenewalWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
+    runStaleSuggestionWatchdog().catch(async (err) => {
+      await logError({ error: err, source: "cron:runStaleSuggestionWatchdog", severity: "ERROR" });
+      return { checked: 0, sent: 0, error: true };
+    }),
   ]);
 
   return NextResponse.json({
@@ -53,6 +58,7 @@ export async function GET(req: NextRequest) {
     followUp,
     uninvoiced,
     retainer,
+    staleSuggestions,
     ranAt: new Date().toISOString(),
   });
 }
