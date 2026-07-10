@@ -149,6 +149,203 @@ export function KineticText({
   return <p {...props}>{content}</p>;
 }
 
+/* ── PhysicsText ───────────────────────────────────────────────
+   Letter-by-letter drop-and-bounce entrance — the same idle-physics idea
+   as the tyre in RequestPipelineCard (gravity, a bouncy restitution,
+   decaying wobble), applied to text instead of a wheel. Hand-rolled RAF
+   physics per letter, not a library — this sandbox can't npm install into
+   the app. Writes to each letter's DOM style directly every frame rather
+   than going through React state, so a 20+ character headline doesn't
+   trigger 20+ re-renders on every tick.
+
+   Safety follows the same rule KineticText was fixed to use: the
+   pre-drop hidden state is never a permanent CSS default, and it's
+   cleared two independent ways — the physics loop as each letter lands,
+   and a hard fallback timeout that force-settles everything regardless.
+   A failed observer or a stalled RAF loop can never leave text stuck
+   invisible. Under prefers-reduced-motion, letters just appear at rest,
+   no physics at all. */
+
+type PhysicsTag = "h1" | "h2" | "p" | "div";
+const PHYSICS_ARM_FALLBACK_MS = 900;
+const PHYSICS_SETTLE_FALLBACK_MS = 1800;
+
+export function PhysicsText({
+  text,
+  className,
+  letterClassName,
+  highlight,
+  highlightClassName = "text-gradient-brand animate-gradient-shift italic",
+  as = "p",
+}: {
+  text: string;
+  className?: string;
+  letterClassName?: string;
+  /** Bare words (no punctuation) to render with highlightClassName. */
+  highlight?: string[];
+  highlightClassName?: string;
+  as?: PhysicsTag;
+}) {
+  const wrapRef = useRef<HTMLHeadingElement & HTMLParagraphElement & HTMLDivElement>(null);
+  const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [armed, setArmed] = useState(false);
+
+  const words = text.split(" ");
+  const letters: string[] = [];
+  const letterWordIndex: number[] = [];
+  words.forEach((w, wi) => {
+    w.split("").forEach((ch) => {
+      letters.push(ch);
+      letterWordIndex.push(wi);
+    });
+    if (wi < words.length - 1) {
+      letters.push(" ");
+      letterWordIndex.push(-1);
+    }
+  });
+
+  // Arm the drop: scroll-into-view via IntersectionObserver, or a hard
+  // timeout backup regardless of whether the observer ever fires.
+  useEffect(() => {
+    const el = wrapRef.current;
+    const reduceMotion =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !el || typeof IntersectionObserver === "undefined") {
+      setArmed(true);
+      return;
+    }
+    const fallback = setTimeout(() => setArmed(true), PHYSICS_ARM_FALLBACK_MS);
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setArmed(true);
+            io.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.3, rootMargin: "0px 0px -5% 0px" },
+    );
+    io.observe(el);
+    return () => {
+      clearTimeout(fallback);
+      io.disconnect();
+    };
+  }, []);
+
+  // The actual drop-and-bounce, once armed.
+  useEffect(() => {
+    if (!armed) return;
+    const reduceMotion =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const settle = () => {
+      letterRefs.current.forEach((el) => {
+        if (el) {
+          el.style.opacity = "1";
+          el.style.transform = "none";
+        }
+      });
+    };
+    if (reduceMotion) {
+      settle();
+      return;
+    }
+
+    type LState = { y: number; vy: number; rot: number; vrot: number; started: boolean; settled: boolean };
+    const states: LState[] = letters.map(() => ({
+      y: -(36 + Math.random() * 70),
+      vy: 0,
+      rot: (Math.random() - 0.5) * 36,
+      vrot: 0,
+      started: false,
+      settled: false,
+    }));
+
+    const GRAVITY = 0.85;
+    const RESTITUTION = 0.44;
+    const STAGGER_MS = 34;
+    const start = performance.now();
+    let raf = 0;
+    let forced = false;
+
+    function forceSettle() {
+      forced = true;
+      settle();
+    }
+    const hardStop = setTimeout(forceSettle, PHYSICS_SETTLE_FALLBACK_MS);
+
+    function tick(now: number) {
+      if (forced) return;
+      let anyActive = false;
+      states.forEach((s, i) => {
+        if (s.settled) return;
+        const el = letterRefs.current[i];
+        if (!el) return;
+        if (!s.started) {
+          if (now - start < i * STAGGER_MS) {
+            anyActive = true;
+            return;
+          }
+          s.started = true;
+          el.style.opacity = "1";
+        }
+        anyActive = true;
+        s.vy += GRAVITY;
+        s.y += s.vy;
+        s.vrot += (0 - s.rot) * 0.02;
+        s.rot += s.vrot;
+        if (s.y >= 0) {
+          s.y = 0;
+          s.vy = -s.vy * RESTITUTION;
+          s.vrot += (Math.random() - 0.5) * 5;
+          if (Math.abs(s.vy) < 0.6) {
+            s.vy = 0;
+            s.rot = 0;
+            s.settled = true;
+          }
+        }
+        el.style.transform = `translateY(${s.y}px) rotate(${s.rot.toFixed(2)}deg)`;
+      });
+      if (anyActive && !forced) {
+        raf = requestAnimationFrame(tick);
+      } else if (!forced) {
+        clearTimeout(hardStop);
+      }
+    }
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(hardStop);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [armed]);
+
+  const content = letters.map((ch, i) => {
+    const wi = letterWordIndex[i];
+    const bare = wi >= 0 ? words[wi].replace(/[.,!?]/g, "").toLowerCase() : "";
+    const isHighlight = wi >= 0 && highlight?.some((h) => h.toLowerCase() === bare);
+    return (
+      <span
+        key={i}
+        ref={(el) => {
+          letterRefs.current[i] = el;
+        }}
+        className={cn("inline-block", letterClassName, isHighlight && highlightClassName)}
+        style={{ opacity: 0, willChange: "transform" }}
+      >
+        {ch === " " ? " " : ch}
+      </span>
+    );
+  });
+
+  const props = { ref: wrapRef, className };
+  if (as === "h1") return <h1 {...props}>{content}</h1>;
+  if (as === "h2") return <h2 {...props}>{content}</h2>;
+  if (as === "div") return <div {...props}>{content}</div>;
+  return <p {...props}>{content}</p>;
+}
+
 /* ── Counter ───────────────────────────────────────────────────
    Animated count-up for integer stats. Renders the final value
    immediately for crawlers/no-JS, then animates client-side.    */
