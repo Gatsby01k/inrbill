@@ -8,7 +8,9 @@ import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
+import { CORRIDOR_SLUGS } from "@/lib/corridor-page";
 import { db } from "@/lib/db";
+import { buildCorridorStats } from "@/lib/market-intelligence";
 import {
   CONTACT_EMAIL,
   CONTACT_LINKEDIN,
@@ -117,6 +119,14 @@ const FAQ = [
     q: "How is our information handled?",
     a: "Request details are visible to network operations only. Partner and company identities are exchanged only when an introduction is explicitly released, never before.",
   },
+  {
+    q: "Can I get a rate estimate before submitting a request?",
+    a: "Each corridor page (INR → USDT, USDT → INR, INR payouts) shows a reference range built from real closed deals, plus a quick tool that hands you a pre-filled form for your volume and speed. It is not a quote — actual pricing is agreed directly with the partner you are introduced to.",
+  },
+  {
+    q: "Is there a faster way to figure out which form I need?",
+    a: "Yes — the chat in the corner of this page asks a couple of quick questions (are you a company or a partner, what corridor, roughly what volume) and hands you a pre-filled form instead of a blank one. It cannot submit anything on your behalf; every submission still goes through the same manual review.",
+  },
 ];
 
 const jsonLd = {
@@ -171,11 +181,23 @@ const jsonLd = {
 };
 
 export default async function LandingPage() {
-  const [verifiedPartners, successfulIntros] = await Promise.all([
+  const [verifiedPartners, successfulIntros, corridorStats] = await Promise.all([
     db.partnerProfile.count({ where: { status: { in: ["VERIFIED", "LIMITED"] } } }),
     db.introduction.count({ where: { status: "SUCCESSFUL" } }),
+    buildCorridorStats(),
   ]);
   const showLiveStats = verifiedPartners >= LIVE_STATS_THRESHOLD;
+  // buildCorridorStats() returns entries in the same fixed order
+  // (INR_TO_USDT, USDT_TO_INR, INR_PAYOUTS) as CORRIDOR_SLUGS, so they're
+  // zipped by index rather than re-fetching per corridor.
+  const corridors = corridorStats.map((s, i) => ({
+    ...s,
+    slug: CORRIDOR_SLUGS[i],
+    growthPct:
+      s.requestsPrior14d > 0
+        ? Math.round(((s.requestsLast14d - s.requestsPrior14d) / s.requestsPrior14d) * 100)
+        : null,
+  }));
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -221,6 +243,10 @@ export default async function LandingPage() {
                 </Link>
                 <ApplyTraderCta />
               </div>
+              <p className="mt-4 text-[12px] text-slate-400">
+                Not sure which corridor fits? Chat with the concierge in the corner — it hands
+                you a pre-filled form, it doesn&apos;t submit anything for you.
+              </p>
             </Reveal>
 
             <Reveal index={2}>
@@ -356,6 +382,61 @@ export default async function LandingPage() {
                 Apply to join →
               </Link>
             </Reveal>
+          </div>
+        </section>
+
+        {/* ── Corridors (live network data) ── */}
+        <section className="border-t border-black/[0.06] py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow text-gold-700">Live network data · updated hourly</p>
+                <h2 className="mt-3 max-w-2xl font-display text-[2rem] font-medium leading-tight text-slate-900">
+                  Real coverage, not a directory.
+                </h2>
+                <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-500">
+                  Each corridor page below is a live snapshot of currently-active, verified
+                  partners — not a listing anyone can pay into.
+                </p>
+              </div>
+              <Link href="/corridors" className="btn btn-ghost btn-sm">
+                All corridors →
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-5 sm:grid-cols-3">
+              {corridors.map((c, i) => (
+                <Reveal
+                  key={c.slug}
+                  index={i}
+                  className="card flex h-full flex-col p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised"
+                >
+                  <p className="eyebrow text-leaf-600">{c.directionLabel}</p>
+                  <p className="tnum mt-3 text-[28px] font-semibold text-slate-900">
+                    {c.activePartners}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    active reviewed partner{c.activePartners === 1 ? "" : "s"}
+                  </p>
+                  <div className="mt-4 flex items-center gap-2 text-[11.5px] text-slate-500">
+                    <span>
+                      {c.requestsLast14d} request{c.requestsLast14d === 1 ? "" : "s"} · 14d
+                    </span>
+                    {c.growthPct !== null ? (
+                      <span
+                        className={
+                          c.growthPct >= 0 ? "font-medium text-leaf-600" : "font-medium text-rose-500"
+                        }
+                      >
+                        {c.growthPct >= 0 ? "▲" : "▼"} {Math.abs(c.growthPct)}%
+                      </span>
+                    ) : null}
+                  </div>
+                  <Link href={`/corridors/${c.slug}`} className="btn btn-ghost btn-sm mt-5">
+                    View corridor →
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
