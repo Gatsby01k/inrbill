@@ -7,10 +7,9 @@ import { ApplyTraderCta } from "@/components/site/apply-trader-cta";
 import { HeroRing } from "@/components/site/hero-ring";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { PartnerLogos } from "@/components/site/partner-logos";
+import { PartnerLogoMarquee } from "@/components/site/partner-logos";
 import { RequestPipelineCard } from "@/components/site/request-pipeline-card";
 import { SpotlightCard } from "@/components/site/spotlight-card";
-import { Ticker } from "@/components/site/ticker";
 import { CORRIDOR_SLUGS } from "@/lib/corridor-page";
 import { db } from "@/lib/db";
 import { buildCorridorStats } from "@/lib/market-intelligence";
@@ -345,19 +344,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="mt-14">
-            <Ticker
-              items={[
-                "India's liquidity, reviewed.",
-                "24–48h first response — not “soon.”",
-                "Zero custody, always — funds never pass through INRP2P",
-                "Every request and every application manually reviewed",
-                "3 corridors: INR→USDT, USDT→INR, INR payouts",
-              ]}
-            />
-          </div>
-
-          <div className="mt-6">
-            <PartnerLogos />
+            <PartnerLogoMarquee />
           </div>
         </section>
 
