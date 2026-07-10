@@ -32,13 +32,16 @@ function timeAgo(iso: string): string {
     on-screen coordinates (measured on open) rather than `absolute` inside
     the shell's narrow sidebar column — a 320px panel anchored `absolute`
     inside a 236px-wide sidebar has nowhere to lay out correctly and looks
-    broken. `fixed` + a measured position is the same approach already used
-    by the command palette and AI copilot overlays elsewhere in the shell. */
+    broken. Position is anchored to the button's left edge and then clamped
+    to stay within the viewport — the bell lives in a left sidebar here, so
+    right-aligning a wide panel against it would push the panel off the left
+    edge of the screen entirely (which is exactly what happened before this
+    fix: only the tail end of the panel's text was ever on screen). */
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -79,11 +82,10 @@ export function NotificationBell() {
   function openPanel() {
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      setPos({
-        top: rect.bottom + 8,
-        right: Math.max(16, viewportWidth - rect.right),
-      });
+      const margin = 16;
+      const maxLeft = window.innerWidth - PANEL_WIDTH - margin;
+      const left = Math.min(Math.max(rect.left, margin), Math.max(margin, maxLeft));
+      setPos({ top: rect.bottom + 8, left });
     }
     const willOpen = !open;
     setOpen(willOpen);
@@ -117,7 +119,7 @@ export function NotificationBell() {
       {open && pos ? (
         <div
           ref={panelRef}
-          style={{ top: pos.top, right: pos.right, width: `min(${PANEL_WIDTH}px, calc(100vw - 2rem))` }}
+          style={{ top: pos.top, left: pos.left, width: `min(${PANEL_WIDTH}px, calc(100vw - 2rem))` }}
           className="fixed z-50 max-h-96 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl"
         >
           <p className="border-b border-black/10 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
