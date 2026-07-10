@@ -72,6 +72,7 @@ export function Reveal({
    length statements (a slogan, a manifesto line), not paragraphs. */
 
 type KineticTag = "h1" | "h2" | "p" | "div";
+const KINETIC_FALLBACK_MS = 900;
 
 export function KineticText({
   text,
@@ -94,10 +95,13 @@ export function KineticText({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
+    // Belt-and-suspenders: whatever the observer below does, force the
+    // text visible shortly after mount regardless — this can never end up
+    // permanently blank just because an observer didn't fire.
+    const fallback = setTimeout(() => setInView(true), KINETIC_FALLBACK_MS);
+    if (!el || typeof IntersectionObserver === "undefined") {
       setInView(true);
-      return;
+      return () => clearTimeout(fallback);
     }
     const io = new IntersectionObserver(
       (entries) => {
@@ -108,10 +112,13 @@ export function KineticText({
           }
         }
       },
-      { threshold: 0.4, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0.2, rootMargin: "0px 0px -5% 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      clearTimeout(fallback);
+      io.disconnect();
+    };
   }, []);
 
   const words = text.split(" ");
@@ -122,7 +129,7 @@ export function KineticText({
       <span
         key={i}
         className={cn("kinetic-word", wordClassName, isHighlight && highlightClassName)}
-        style={{ "--kw-i": i } as React.CSSProperties}
+        style={{ "--kw-i": i, opacity: inView ? undefined : 0 } as React.CSSProperties}
       >
         {w}
         {i < words.length - 1 ? " " : ""}
