@@ -5,7 +5,7 @@
   "description": "INRP2P — private INR liquidity network. Manual review, matching and qualified introductions. No custody, no execution.",
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate && node scripts/database-release.mjs",
+    "postinstall": "prisma generate && node scripts/database-release.mjs && node scripts/operator-bootstrap.mjs",
     "build": "prisma generate && node scripts/database-release.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
