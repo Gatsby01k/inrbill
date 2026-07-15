@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BrandMark, Wordmark } from "@/components/brand";
 import { LoginForm } from "@/components/forms/login-form";
+import { AuthFrame } from "@/components/site/auth-frame";
 import { getSession, roleHome } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -20,35 +20,9 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <div className="hero-aurora flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-[380px]">
-        <div className="mb-7 flex flex-col items-center gap-3">
-          <BrandMark size={42} />
-          <Wordmark />
-        </div>
-        <div className="card p-7 shadow-raised">
-          <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
-            Sign in to your workspace
-          </h1>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-400">
-            Operations · Company · Partner
-          </p>
-          <div className="mt-6">
-            <LoginForm next={next} />
-          </div>
-        </div>
-        <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
-          New here?{" "}
-          <Link href="/request" className="text-gold-600 transition-colors hover:text-gold-700">
-            Submit a request
-          </Link>{" "}
-          or{" "}
-          <Link href="/apply" className="text-gold-600 transition-colors hover:text-gold-700">
-            apply as a partner
-          </Link>
-          .
-        </p>
-      </div>
-    </div>
+    <AuthFrame eyebrow="Secure workspace" title="Welcome back." sub="Sign in as network operations, a company or a liquidity partner.">
+      <LoginForm next={next} />
+      <p className="fin-auth-new">New to the network? <Link href="/request">Request access</Link> or <Link href="/apply">apply as a partner</Link>.</p>
+    </AuthFrame>
   );
 }
