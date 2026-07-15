@@ -121,6 +121,95 @@ enum Currency {
   USD
 }
 
+enum NetworkConnectionStatus {
+  INVITED
+  ACTIVE
+  PAUSED
+  REJECTED
+}
+
+enum VerificationCaseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum VerificationCheckStatus {
+  PENDING
+  RUNNING
+  PASSED
+  REVIEW
+  FAILED
+  WAIVED
+}
+
+enum CapacityStatus {
+  AVAILABLE
+  LIMITED
+  PAUSED
+  OFFLINE
+}
+
+enum MatchOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum PartnerTier {
+  CANDIDATE
+  VERIFIED
+  STRATEGIC
+  RESTRICTED
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum EvidenceKind {
+  INCORPORATION
+  GST_CERTIFICATE
+  PAN
+  DIRECTOR_ID
+  ADDRESS
+  BANK_PROOF
+  AML_POLICY
+  SOURCE_OF_FUNDS
+  REFERENCE
+  WALLET_REPORT
+  AGREEMENT
+  OTHER
+}
+
+enum EvidenceStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum DataClassification {
+  RESTRICTED
+  CONFIDENTIAL
+  INTERNAL
+}
+
 // ── Identity & access ────────────────────────────────────────────────────────
 
 model User {
@@ -153,12 +242,38 @@ model User {
   // until it passes, so a guessed password alone can never be enough.
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
+  emailVerifiedAt     DateTime?
+  mustSetPassword     Boolean   @default(false)
 
   sessions Session[]
   company  CompanyProfile?
   partner  PartnerProfile?
   twoFactorChallenges TwoFactorChallenge[]
   notifications Notification[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model EmailVerificationToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
 }
 
 // In-app notification feed — the bell icon in the workspace shell. Written
@@ -245,6 +360,7 @@ model CompanyProfile {
 
   requests LiquidityRequest[]
   revenues RevenueRecord[]
+  organization Organization?
 }
 
 model LiquidityRequest {
@@ -279,11 +395,13 @@ model LiquidityRequest {
   // re-reading prose every time.
   aiTriageNote String?
   aiFlagged    Boolean?
+  routingEnabled Boolean @default(true)
 
   matches   Match[]
   notesList Note[]
   documents DocumentRecord[]
   revenues  RevenueRecord[]
+  matchOffers MatchOffer[]
 
   @@index([status])
   @@index([companyId])
@@ -320,6 +438,7 @@ model PartnerProfile {
   riskNotes           String?
   additionalComments  String?
   status            PartnerStatus @default(APPLIED)
+  tier              PartnerTier @default(CANDIDATE)
   verifiedAt        DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -339,8 +458,179 @@ model PartnerProfile {
   matches   Match[]
   notesList Note[]
   documents DocumentRecord[]
+  networkConnections CompanyPartnerConnection[]
+  verificationCases VerificationCase[]
+  capacityPulses CapacityPulse[]
+  matchOffers MatchOffer[]
+  incidents Incident[]
 
   @@index([status])
+}
+
+model Organization {
+  id String @id @default(cuid())
+  companyProfileId String @unique
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  partnerConnections CompanyPartnerConnection[]
+  verificationCases VerificationCase[]
+  matchOffers MatchOffer[]
+  @@index([name])
+}
+
+model CompanyPartnerConnection {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  partnerId String
+  partner PartnerProfile @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  status NetworkConnectionStatus @default(INVITED)
+  approvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([organizationId, partnerId])
+  @@index([partnerId, status])
+}
+
+model VerificationCase {
+  id String @id @default(cuid())
+  reference String @unique
+  organizationId String?
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  partnerId String?
+  partner PartnerProfile? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  status VerificationCaseStatus @default(IN_PROGRESS)
+  riskLevel String?
+  decisionNote String?
+  decidedById String?
+  decidedAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  checks VerificationCheck[]
+  evidence EvidenceArtifact[]
+  @@index([status, createdAt])
+  @@index([organizationId])
+  @@index([partnerId])
+}
+
+model VerificationCheck {
+  id String @id @default(cuid())
+  verificationCaseId String
+  verificationCase VerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
+  type String
+  provider String?
+  providerReference String?
+  status VerificationCheckStatus @default(PENDING)
+  summary String?
+  result Json?
+  reviewedById String?
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([verificationCaseId, type])
+  @@index([status])
+}
+
+model EvidenceArtifact {
+  id String @id @default(cuid())
+  verificationCaseId String
+  verificationCase VerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
+  kind EvidenceKind
+  title String
+  storageKey String @unique
+  mimeType String
+  byteSize Int
+  checksumSha256 String?
+  classification DataClassification @default(RESTRICTED)
+  status EvidenceStatus @default(PENDING)
+  uploadedById String
+  reviewedById String?
+  reviewedAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([verificationCaseId, status])
+  @@index([expiresAt])
+}
+
+model CapacityPulse {
+  id String @id @default(cuid())
+  partnerId String
+  partner PartnerProfile @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  status CapacityStatus
+  direction Direction
+  availableBand String
+  minTicket String?
+  maxTicket String?
+  banks String[]
+  methods String[]
+  confirmedAt DateTime @default(now())
+  availableUntil DateTime
+  createdAt DateTime @default(now())
+  @@index([partnerId, confirmedAt])
+  @@index([status, availableUntil])
+}
+
+model MatchOffer {
+  id String @id @default(cuid())
+  reference String @unique
+  requestId String
+  request LiquidityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  partnerId String
+  partner PartnerProfile @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status MatchOfferStatus @default(PENDING)
+  fitScore Int
+  reasonCodes String[]
+  capacityBand String?
+  termsSummary String?
+  expiresAt DateTime
+  respondedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([requestId, partnerId])
+  @@index([partnerId, status, expiresAt])
+}
+
+model Incident {
+  id String @id @default(cuid())
+  reference String @unique
+  partnerId String?
+  partner PartnerProfile? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  severity IncidentSeverity
+  status IncidentStatus @default(OPEN)
+  category String
+  summary String
+  details String?
+  openedById String
+  resolvedById String?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, severity])
+  @@index([partnerId])
+}
+
+model WebhookEvent {
+  id String @id @default(cuid())
+  provider String
+  externalId String
+  payloadHash String
+  processedAt DateTime @default(now())
+  @@unique([provider, externalId])
+  @@index([processedAt])
+}
+
+model RateLimitState {
+  id String @id
+  count Int @default(0)
+  windowStart DateTime
+  expiresAt DateTime
+  @@index([expiresAt])
 }
 
 // ── Matching & introductions ─────────────────────────────────────────────────
