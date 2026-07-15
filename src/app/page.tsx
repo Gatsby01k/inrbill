@@ -1,18 +1,120 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/brand";
+import { FintechMedallion } from "@/components/site/fintech-medallion";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteNav } from "@/components/site/nav";
 
-const capabilities = [
-  ["Private network", "Invite partners you know. Each partner accepts access; companies can pause it at any time."],
-  ["Trust Passport", "KYB, sanctions, bank, wallet-risk and reference checks normalize into one human-reviewed case."],
-  ["Live capacity", "Short-lived capacity pulses replace stale profile claims. Expired availability is never routed."],
-  ["Deterministic routing", "Direction, bank, rail, tier, verification and incidents create an explainable shortlist."],
-  ["Controlled offers", "Partners receive time-boxed requirements. Acceptance confirms interest, never execution."],
-  ["Operations ledger", "Decisions, evidence reviews, incidents, messages and revenue remain in an audit trail."],
+const pillars = [
+  ["01", "Trust Passport", "One reusable, human-reviewed record for entity, banking, sanctions, wallet-risk and reference checks."],
+  ["02", "Live capacity", "Short availability windows replace stale promises. Expired capacity is removed from routing automatically."],
+  ["03", "Explainable routing", "Direction, bank, rail, volume, verification and network eligibility create every shortlist — never a black box."],
 ];
 
-const controls = ["Email ownership before workspace access", "Human approval after provider checks", "KMS-encrypted restricted evidence", "Webhook signatures and replay protection", "Durable public-form rate limits", "No custody and no automated execution"];
+const flow = [
+  ["01", "Verify", "Identity, controls and evidence"],
+  ["02", "Connect", "Private bilateral network access"],
+  ["03", "Signal", "Current capacity and coverage"],
+  ["04", "Route", "Requirement-specific shortlist"],
+  ["05", "Introduce", "Human-controlled release"],
+];
+
+const controls = [
+  "Email ownership before workspace access",
+  "Human decision after provider checks",
+  "Restricted evidence with explicit visibility",
+  "Signed webhooks and replay protection",
+  "Durable rate limits on public intake",
+  "Append-only operational audit trail",
+];
+
+function Arrow() {
+  return <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M3.75 9h10.5M10 4.75 14.25 9 10 13.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function Check() {
+  return <span className="fin-check" aria-hidden="true"><svg viewBox="0 0 14 14" fill="none"><path d="m3 7 2.5 2.5L11 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg></span>;
+}
 
 export default function HomePage() {
-  return <div className="bg-[#f7f5ef] text-slate-900"><SiteNav /><main><section className="relative overflow-hidden bg-[#071422] pt-32 text-white"><div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_12%,rgba(214,154,56,.18),transparent_34%),radial-gradient(circle_at_12%_80%,rgba(31,122,93,.14),transparent_32%)]" /><div className="relative mx-auto grid max-w-6xl gap-14 px-4 pb-24 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center"><div><p className="text-[11px] font-semibold uppercase tracking-[.28em] text-gold-400">Private INR Network OS</p><h1 className="mt-6 max-w-3xl font-display text-5xl leading-[1.02] tracking-[-.035em] sm:text-6xl">Run your private INR partner network in one workspace.</h1><p className="mt-6 max-w-2xl text-base leading-7 text-slate-300">Verify counterparties, see live capacity, route requirements to explainable fits and release introductions under human control. Built for companies and professional liquidity partners—not anonymous marketplace traffic.</p><div className="mt-8 flex flex-wrap gap-3"><Link className="btn btn-gold" href="/request">Set up your network</Link><Link className="btn border border-white/20 bg-white/[.06] text-white hover:bg-white/[.1]" href="/apply">Join as a reviewed partner</Link></div><div className="mt-8 flex flex-wrap gap-2 text-[11px] text-slate-400">{["No custody", "No platform execution", "Human verification", "Private by design"].map((item) => <span key={item} className="rounded-full border border-white/10 px-3 py-1.5">{item}</span>)}</div></div><div className="rounded-2xl border border-white/10 bg-white/[.055] p-5 shadow-2xl backdrop-blur"><div className="flex items-center justify-between"><div><p className="text-[10px] uppercase tracking-[.2em] text-gold-400">Control plane</p><p className="mt-1 text-sm font-semibold">One requirement · governed flow</p></div><span className="rounded-full border border-leaf-400/25 bg-leaf-400/10 px-2.5 py-1 text-[10px] text-leaf-200">AUDITABLE</span></div><div className="mt-6 space-y-3">{[["01", "Identity and verification", "Human decision"], ["02", "Live capacity pulse", "Expires automatically"], ["03", "Explainable shortlist", "Top connected fits"], ["04", "Controlled offer", "Partner confirms interest"], ["05", "Qualified introduction", "Bilateral settlement"]].map(([n, title, sub]) => <div className="flex items-center gap-4 rounded-xl border border-white/[.08] bg-black/10 p-3" key={n}><span className="font-mono text-xs text-gold-400">{n}</span><div><p className="text-xs font-medium text-white">{title}</p><p className="mt-0.5 text-[10px] text-slate-400">{sub}</p></div><span className="ml-auto text-leaf-300">✓</span></div>)}</div></div></div></section><section id="product" className="mx-auto max-w-6xl px-4 py-24 sm:px-6"><div className="max-w-2xl"><p className="eyebrow">Product</p><h2 className="mt-3 font-display text-4xl tracking-tight">Not another lead form. A network operating system.</h2><p className="mt-4 text-sm leading-6 text-slate-500">The workflow starts before an introduction and remains useful after it. Every control exists to reduce stale claims, noisy brokers and unaccountable decisions.</p></div><div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{capabilities.map(([title, body], index) => <div className="card p-6" key={title}><span className="font-mono text-xs text-gold-600">0{index + 1}</span><h3 className="mt-4 text-base font-semibold">{title}</h3><p className="mt-2 text-[13px] leading-6 text-slate-500">{body}</p></div>)}</div></section><section id="operating-model" className="bg-white py-24"><div className="mx-auto max-w-6xl px-4 sm:px-6"><div className="grid gap-14 lg:grid-cols-2"><div><p className="eyebrow">For companies</p><h2 className="mt-3 font-display text-4xl tracking-tight">Own the network, not a spreadsheet of broker contacts.</h2><p className="mt-5 text-sm leading-7 text-slate-500">Invite existing partners, require a reusable verification case, inspect capacity recency and route each requirement only to eligible connections. No public order book and no identity release before control gates pass.</p><Link className="btn btn-gold mt-7" href="/request">Create company workspace</Link></div><div><p className="eyebrow text-leaf-600">For partners</p><h2 className="mt-3 font-display text-4xl tracking-tight">Turn trust and availability into qualified demand.</h2><p className="mt-5 text-sm leading-7 text-slate-500">Maintain a Trust Passport, publish short availability windows and receive requirement-specific offers from company networks you explicitly accepted. Confirm interest without giving a platform permission to transact.</p><Link className="btn btn-ghost mt-7" href="/apply">Apply for partner review</Link></div></div></div></section><section id="controls" className="mx-auto max-w-6xl px-4 py-24 sm:px-6"><div className="grid gap-12 lg:grid-cols-[.85fr_1.15fr]"><div><p className="eyebrow">Controls</p><h2 className="mt-3 font-display text-4xl tracking-tight">Automation where it removes friction. Human authority where it changes trust.</h2><p className="mt-5 text-sm leading-7 text-slate-500">Provider output is normalized, recorded and reviewable. It never becomes silent approval. Routing is deterministic; introductions and settlement remain controlled and bilateral.</p></div><div className="grid gap-3 sm:grid-cols-2">{controls.map((control) => <div className="card flex items-start gap-3 p-4" key={control}><span className="mt-0.5 text-leaf-600">✓</span><p className="text-[13px] font-medium">{control}</p></div>)}</div></div></section><section className="bg-[#071422] py-20 text-white"><div className="mx-auto max-w-4xl px-4 text-center sm:px-6"><p className="text-[11px] font-semibold uppercase tracking-[.28em] text-gold-400">Private beta</p><h2 className="mt-4 font-display text-4xl tracking-tight">Start with one corridor, a small verified partner set and real operating discipline.</h2><p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-400">INRP2P coordinates review, matching and introductions. It does not hold funds, execute trades, guarantee liquidity or replace your legal and compliance obligations.</p><div className="mt-8 flex justify-center gap-3"><Link className="btn btn-gold" href="/request">Set up your network</Link><Link className="btn border border-white/15 bg-white/[.05] text-white" href="/how-it-works">Read operating model</Link></div></div></section></main><SiteFooter /></div>;
+  return (
+    <div className="marketing-site">
+      <SiteNav />
+      <main>
+        <section className="fin-hero">
+          <div className="fin-route-field" aria-hidden="true"><i /><i /><i /><b /><b /><b /></div>
+          <div className="fin-hero-grid">
+            <div className="fin-hero-copy">
+              <p className="fin-kicker"><span /> Private INR liquidity infrastructure</p>
+              <h1>Private liquidity.<br /><em>Verified relationships.</em></h1>
+              <p className="fin-lede">One controlled workspace for companies and professional liquidity partners to verify, signal capacity, route requirements and release qualified introductions.</p>
+              <div className="fin-actions">
+                <Link className="fin-btn fin-btn-primary" href="/request">Request network access <Arrow /></Link>
+                <Link className="fin-btn fin-btn-secondary" href="/apply">Join as a partner</Link>
+              </div>
+              <p className="fin-beta"><span /> Private beta · Every application reviewed by a person</p>
+            </div>
+            <FintechMedallion />
+          </div>
+          <div className="fin-proof-strip">
+            <div><strong>24–48h</strong><span>First review</span></div>
+            <div><strong>5 stages</strong><span>Controlled flow</span></div>
+            <div><strong>12 months</strong><span>Verification validity</span></div>
+            <div><strong>Zero</strong><span>Custody or execution</span></div>
+          </div>
+        </section>
+
+        <section id="product" className="fin-section fin-intro">
+          <div className="fin-section-head">
+            <p className="fin-kicker"><span /> The control layer</p>
+            <h2>Where serious INR liquidity becomes visible, verifiable and operable.</h2>
+            <p>INRP2P replaces scattered broker contacts and unverifiable chat claims with a private network operating model. Trust remains human. Operations become structured.</p>
+          </div>
+          <div className="fin-pillars">
+            {pillars.map(([number, title, body]) => <article key={number} className="fin-pillar"><div><span>{number}</span><i /></div><h3>{title}</h3><p>{body}</p></article>)}
+          </div>
+        </section>
+
+        <section id="operating-model" className="fin-flow-section">
+          <div className="fin-flow-inner">
+            <div className="fin-flow-title">
+              <p className="fin-kicker fin-kicker-dark"><span /> The operating model</p>
+              <h2>One requirement.<br /><em>One governed route.</em></h2>
+              <p>No public order book. No anonymous counterparties. No silent automated approvals.</p>
+            </div>
+            <div className="fin-flow">
+              {flow.map(([number, title, body], index) => <div className="fin-flow-step" key={number}><div className="fin-flow-node"><BrandMark size={22} /><span>{number}</span></div>{index < flow.length - 1 ? <div className="fin-flow-line" /> : null}<h3>{title}</h3><p>{body}</p></div>)}
+            </div>
+            <div className="fin-flow-note"><span>Settlement</span><p>Once introduced, counterparties agree terms and settle directly under their own agreements.</p><strong>INRP2P never touches funds.</strong></div>
+          </div>
+        </section>
+
+        <section className="fin-audiences">
+          <article className="fin-audience fin-audience-company">
+            <p className="fin-kicker"><span /> For companies</p><h2>Own the network.<br />Not a broker spreadsheet.</h2>
+            <p>Invite trusted relationships, require a reusable verification case and route each requirement only to eligible, current capacity.</p>
+            <ul><li><Check /> Private partner graph</li><li><Check /> Requirement-level routing controls</li><li><Check /> Controlled identity release</li></ul>
+            <Link href="/request" className="fin-text-link">Create company workspace <Arrow /></Link>
+          </article>
+          <article className="fin-audience fin-audience-partner">
+            <p className="fin-kicker fin-kicker-dark"><span /> For liquidity partners</p><h2>Turn credibility into qualified demand.</h2>
+            <p>Maintain one trust profile, publish short capacity windows and receive relevant requirements from networks you explicitly accepted.</p>
+            <ul><li><Check /> Private until introduction</li><li><Check /> No public listing or cold inbound</li><li><Check /> You confirm every opportunity</li></ul>
+            <Link href="/apply" className="fin-text-link fin-text-link-light">Apply for review <Arrow /></Link>
+          </article>
+        </section>
+
+        <section id="controls" className="fin-section fin-controls">
+          <div className="fin-controls-number">0</div>
+          <div className="fin-controls-copy"><p className="fin-kicker"><span /> Risk position</p><h2>Automation removes friction.<br />People still decide trust.</h2><p>Provider output is normalized and recorded, never converted into invisible approval. Introductions remain controlled; settlement remains bilateral.</p></div>
+          <div className="fin-control-list">{controls.map((control) => <div key={control}><Check /><span>{control}</span></div>)}</div>
+        </section>
+
+        <section className="fin-final-cta">
+          <div className="fin-final-orbit" aria-hidden="true" />
+          <div className="fin-final-inner"><BrandMark size={44} /><p className="fin-kicker"><span /> Private beta</p><h2>Build your INR partner network on verified ground.</h2><p>Start with one corridor, a small counterparty set and an operating model your team can actually control.</p><div className="fin-actions"><Link className="fin-btn fin-btn-primary" href="/request">Request access <Arrow /></Link><Link className="fin-btn fin-btn-secondary" href="/how-it-works">See how it works</Link></div></div>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
+  );
 }
