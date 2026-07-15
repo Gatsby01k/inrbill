@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearDraft } from "@/components/forms/clear-draft";
 import { FormShell } from "@/components/site/form-shell";
-import { AccessReveal } from "@/components/site/access-reveal";
-import { readAccessReveal } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel } from "@/lib/format";
 import { rankPartners } from "@/lib/matching";
@@ -68,22 +66,15 @@ export default async function RequestSubmittedPage({
 }) {
   const { ref } = await searchParams;
   const matchPreview = ref && ref !== "received" ? await getMatchPreview(ref) : null;
-  const reveal = await readAccessReveal();
   return (
     <FormShell
       eyebrow="Request received"
       title="Your request is in the review queue."
-      sub="A workspace account has been created for you — you are signed in and can track status, timeline and introductions there."
+      sub="A workspace account has been created. Confirm the address we emailed before opening it."
     >
       <div className="space-y-6">
         <ClearDraft />
-        {reveal ? (
-          <AccessReveal
-            email={reveal.email}
-            password={reveal.password}
-            backPath={`/request/submitted${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`}
-          />
-        ) : null}
+        <div className="card border-gold-500/30 bg-gold-500/[0.04] p-6"><p className="text-[11px] font-semibold uppercase tracking-wider text-gold-700">Confirm your address</p><p className="mt-2 text-[13px] leading-relaxed text-slate-600">Open the single-use verification link sent to your email. Only then can this device enter the workspace and set a private password.</p><Link href="/verify-email?status=pending" className="btn btn-gold btn-sm mt-4">Verify email</Link></div>
         {ref && ref !== "received" ? (
           <div className="card flex items-center justify-between gap-4 px-6 py-5">
             <div>
@@ -92,8 +83,8 @@ export default async function RequestSubmittedPage({
               </p>
               <p className="mt-1 font-mono text-xl text-gold-700">{ref}</p>
             </div>
-            <Link href="/company" className="btn btn-gold btn-sm">
-              Open company workspace
+            <Link href="/verify-email?status=pending" className="btn btn-gold btn-sm">
+              Continue securely
             </Link>
           </div>
         ) : null}

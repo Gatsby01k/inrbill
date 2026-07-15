@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, hasWorkspaceAccess } from "@/lib/auth";
 import { callClaude, isAiConfigured } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "@/lib/redis";
@@ -16,6 +16,7 @@ const SYSTEM_PROMPT = `You are drafting ONE short reply in an ongoing deal-room 
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasWorkspaceAccess(session.user)) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
   if (!isAiConfigured()) {
     return NextResponse.json({ error: "AI is not configured (ANTHROPIC_API_KEY unset)." }, { status: 200 });
   }

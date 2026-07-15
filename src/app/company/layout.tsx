@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { requireRole } from "@/lib/auth";
+import { requireVerifiedRole } from "@/lib/auth";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -9,7 +9,7 @@ export default async function CompanyLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("COMPANY");
+  const user = await requireVerifiedRole("COMPANY");
   return (
     <WorkspaceShell
       badge="Company"
@@ -18,6 +18,9 @@ export default async function CompanyLayout({
       nav={[
         { href: "/company", label: "My requests", exact: true },
         { href: "/company/new-request", label: "New request" },
+        { href: "/company/network", label: "Private network" },
+        { href: "/company/verification", label: "Verification" },
+        { href: "/account/security", label: "Security" },
       ]}
     >
       {children}

@@ -29,6 +29,8 @@ export default async function AdminLayout({
           { href: "/admin/matches", label: "Matches" },
           { href: "/admin/revenue", label: "Revenue" },
           { href: "/admin/risk", label: "Risk radar" },
+          { href: "/admin/reviews", label: "Verification" },
+          { href: "/admin/incidents", label: "Incidents" },
           { href: "/admin/audit", label: "Audit log" },
           { href: "/admin/errors", label: "Errors" },
           { href: "/admin/security", label: "Security" },

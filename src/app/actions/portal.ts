@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
-import { getSession, requireRole } from "@/lib/auth";
+import { getSession, hasWorkspaceAccess, requireVerifiedRole, roleHome } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assignCompanyReferralCode, assignPartnerReferralCode } from "@/lib/referral";
 import { documentSchema, noteSchema, partnerOpsSchema } from "@/lib/schemas";
@@ -30,7 +30,7 @@ function fail(path: string, msg: string): never {
 /* ── Company ──────────────────────────────────────────────────────────────── */
 
 async function ownedRequest(requestId: string) {
-  const user = await requireRole("COMPANY");
+  const user = await requireVerifiedRole("COMPANY");
   if (!user.company) redirect("/login");
   const request = await db.liquidityRequest.findUnique({ where: { id: requestId } });
   if (!request || request.companyId !== user.company.id) redirect("/company");
@@ -105,7 +105,7 @@ export async function addCompanyDocument(fd: FormData) {
 /* ── Partner ──────────────────────────────────────────────────────────────── */
 
 async function ownPartner() {
-  const user = await requireRole("PARTNER");
+  const user = await requireVerifiedRole("PARTNER");
   if (!user.partner) redirect("/login");
   return { user, partner: user.partner };
 }
@@ -250,6 +250,8 @@ function workspacePath(role: string) {
 export async function connectTelegram() {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (!hasWorkspaceAccess(session.user)) redirect("/verify-email?status=pending");
+  if (session.user.role === "ADMIN") redirect(roleHome(session.user.role));
   const path = workspacePath(session.user.role);
 
   const code = `LINK-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
@@ -260,6 +262,8 @@ export async function connectTelegram() {
 export async function disconnectTelegram() {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (!hasWorkspaceAccess(session.user)) redirect("/verify-email?status=pending");
+  if (session.user.role === "ADMIN") redirect(roleHome(session.user.role));
   const path = workspacePath(session.user.role);
 
   await db.user.update({
@@ -278,6 +282,8 @@ export async function disconnectTelegram() {
 export async function generateReferralCode() {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (!hasWorkspaceAccess(session.user)) redirect("/verify-email?status=pending");
+  if (session.user.role === "ADMIN") redirect(roleHome(session.user.role));
   const path = workspacePath(session.user.role);
 
   if (session.user.role === "PARTNER") {

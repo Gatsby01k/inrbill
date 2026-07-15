@@ -689,3 +689,19 @@ export async function runReferralRewardWatchdog() {
 
   return { checked: companies.length + partners.length, sent };
 }
+
+export async function runNetworkMaintenance() {
+  const now = new Date();
+  const [offers, verification, evidence, sessions, limits, resetTokens, verificationTokens] = await db.$transaction([
+    db.matchOffer.updateMany({ where: { status: "PENDING", expiresAt: { lte: now } }, data: { status: "EXPIRED" } }),
+    db.verificationCase.updateMany({ where: { status: "APPROVED", expiresAt: { lte: now } }, data: { status: "EXPIRED" } }),
+    db.evidenceArtifact.updateMany({ where: { status: { in: ["PENDING", "ACCEPTED"] }, expiresAt: { lte: now } }, data: { status: "EXPIRED" } }),
+    db.session.deleteMany({ where: { expiresAt: { lte: now } } }),
+    db.rateLimitState.deleteMany({ where: { expiresAt: { lte: now } } }),
+    db.passwordResetToken.deleteMany({ where: { OR: [{ expiresAt: { lte: now } }, { usedAt: { not: null } }] } }),
+    db.emailVerificationToken.deleteMany({ where: { OR: [{ expiresAt: { lte: now } }, { usedAt: { not: null } }] } }),
+  ]);
+  const result = { offers: offers.count, verification: verification.count, evidence: evidence.count, sessions: sessions.count, limits: limits.count, resetTokens: resetTokens.count, verificationTokens: verificationTokens.count };
+  await audit({ action: "watchdog.network_maintenance", entityType: "System", entityId: now.toISOString(), actorLabel: "Watchdog", meta: result });
+  return result;
+}

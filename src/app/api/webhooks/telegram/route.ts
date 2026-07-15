@@ -27,11 +27,8 @@ type TelegramUpdate = {
 export async function POST(req: NextRequest) {
   try {
     const configuredSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    if (configuredSecret) {
-      const header = req.headers.get("x-telegram-bot-api-secret-token");
-      if (header !== configuredSecret) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!configuredSecret || req.headers.get("x-telegram-bot-api-secret-token") !== configuredSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     let update: TelegramUpdate;

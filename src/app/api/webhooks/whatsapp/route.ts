@@ -3,6 +3,7 @@ import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/error-log";
 import { sendWhatsAppText } from "@/lib/whatsapp";
+import { payloadHash, verifyWebhookSignature } from "@/lib/webhook-security";
 
 // Meta calls GET once, at setup time, to verify you actually own this URL
 // (the "verification handshake"), then POSTs every inbound message/status
@@ -52,11 +53,16 @@ function normalizePhone(from: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = (await req.json().catch(() => null)) as WhatsAppWebhookPayload | null;
+    const body = await req.text();
+    const secret = process.env.WHATSAPP_APP_SECRET;
+    if (!secret || !verifyWebhookSignature(secret, body, req.headers.get("x-hub-signature-256"))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const payload = (() => { try { return JSON.parse(body) as WhatsAppWebhookPayload; } catch { return null; } })();
     const messages = payload?.entry?.flatMap((e) => e.changes ?? []).flatMap((c) => c.value?.messages ?? []) ?? [];
 
     for (const msg of messages) {
       if (!msg.from) continue;
+      const externalId = msg.id ?? payloadHash(body);
+      if (await db.webhookEvent.findUnique({ where: { provider_externalId: { provider: "WHATSAPP", externalId } } })) continue;
       const phoneTail = normalizePhone(msg.from);
 
       const [company, partner] = await Promise.all([
@@ -68,17 +74,18 @@ export async function POST(req: NextRequest) {
       await audit({
         action: "whatsapp.inbound_message",
         entityType: "WhatsAppMessage",
-        entityId: msg.id ?? msg.from,
-        actorLabel: matched ? ("companyName" in matched ? matched.companyName : matched.displayName) : msg.from,
+        entityId: externalId,
+        actorLabel: matched ? ("companyName" in matched ? matched.companyName : matched.displayName) : `WhatsApp contact ••••${phoneTail.slice(-4)}`,
         requestId: null,
         partnerId: partner ? partner.id : null,
-        meta: { from: msg.from, text: msg.text?.body ?? null, matched: Boolean(matched) },
+        meta: { phoneLast4: phoneTail.slice(-4), textLength: msg.text?.body?.length ?? 0, matched: Boolean(matched) },
       });
 
       await sendWhatsAppText(
         msg.from,
         "Thanks for reaching out — this inbox isn't monitored live yet. Message us on Telegram or open your INRP2P workspace and an operator will follow up shortly.",
       );
+      await db.webhookEvent.create({ data: { provider: "WHATSAPP", externalId, payloadHash: payloadHash(body) } });
     }
 
     return NextResponse.json({ ok: true });

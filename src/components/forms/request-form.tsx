@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { submitCompanyRequest } from "@/app/actions/public";
 import { SubmitButton } from "@/components/submit-button";
 import { CheckboxGrid, Field, FormError, RadioCards } from "@/components/ui";
+import { TurnstileField } from "@/components/forms/turnstile-field";
 import { applyFieldsToForm, requestFormPrefill } from "@/lib/form-prefill";
 import { cn } from "@/lib/format";
 import {
@@ -545,6 +546,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
             </div>
           ) : null}
 
+          <TurnstileField />
           <FormError message={state.error} />
 
           {/* Navigation */}

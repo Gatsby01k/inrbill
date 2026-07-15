@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearDraft } from "@/components/forms/clear-draft";
-import { AccessReveal } from "@/components/site/access-reveal";
 import { FormShell } from "@/components/site/form-shell";
-import { readAccessReveal } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { directionLabel } from "@/lib/format";
 import { CONTACT_EMAIL } from "@/lib/options";
@@ -61,22 +59,15 @@ export default async function ApplySubmittedPage({
 }) {
   const { ref } = await searchParams;
   const openPreview = ref && ref !== "received" ? await getOpenRequestPreview(ref) : null;
-  const reveal = await readAccessReveal();
   return (
     <FormShell
       eyebrow="Application received"
       title="Your application is under review."
-      sub="A partner workspace has been created for you — you are signed in and can track verification status there."
+      sub="A partner workspace has been created. Confirm the address we emailed before opening it."
     >
       <div className="space-y-6">
         <ClearDraft draftKey="inrp2p-apply-draft-v1" />
-        {reveal ? (
-          <AccessReveal
-            email={reveal.email}
-            password={reveal.password}
-            backPath={`/apply/submitted${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`}
-          />
-        ) : null}
+        <div className="card border-gold-500/30 bg-gold-500/[0.04] p-6"><p className="text-[11px] font-semibold uppercase tracking-wider text-gold-700">Confirm your address</p><p className="mt-2 text-[13px] leading-relaxed text-slate-600">Open the single-use verification link sent to your email. Only then can this device enter the workspace and set a private password.</p><Link href="/verify-email?status=pending" className="btn btn-gold btn-sm mt-4">Verify email</Link></div>
         {ref && ref !== "received" ? (
           <div className="card flex items-center justify-between gap-4 px-6 py-5">
             <div>
@@ -85,8 +76,8 @@ export default async function ApplySubmittedPage({
               </p>
               <p className="mt-1 font-mono text-xl text-leaf-700">{ref}</p>
             </div>
-            <Link href="/partner" className="btn btn-gold btn-sm">
-              Open partner workspace
+            <Link href="/verify-email?status=pending" className="btn btn-gold btn-sm">
+              Continue securely
             </Link>
           </div>
         ) : null}

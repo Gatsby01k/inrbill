@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { submitPartnerApplication } from "@/app/actions/public";
 import { SlidingIndicator } from "@/components/motion";
 import { SubmitButton } from "@/components/submit-button";
+import { TurnstileField } from "@/components/forms/turnstile-field";
 import {
   CheckboxGrid,
   Field,
@@ -514,6 +515,7 @@ export function ApplyForm() {
               </ReviewSection>
             </FormSection>
 
+            <TurnstileField />
             <FormError message={state.error} />
 
             <div className="mt-5 flex flex-col-reverse items-start gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { addCompanyDocument, addCompanyNote } from "@/app/actions/portal";
+import { routePrivateOffers } from "@/app/actions/network-os";
 import { BackLink, EmptyState, FormError, KV, SectionTitle, StatusBadge } from "@/components/ui";
 import {
   DocumentComposer,
@@ -17,6 +18,7 @@ import { deriveRequestStage } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
 import { auditLabel, directionLabel, fmtDate, requestTypeLabel } from "@/lib/format";
 import { getPartnerTrackRecords } from "@/lib/reputation";
+import { Flash } from "@/components/workspace/flash";
 
 export const metadata: Metadata = { title: "Request" };
 
@@ -32,12 +34,12 @@ export default async function CompanyRequestDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
   const user = await requireRole("COMPANY");
   if (!user.company) redirect("/login");
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, notice } = await searchParams;
 
   const request = await db.liquidityRequest.findUnique({
     where: { id },
@@ -56,6 +58,7 @@ export default async function CompanyRequestDetailPage({
       },
       notesList: { where: { visibility: "COMPANY" }, orderBy: { createdAt: "desc" } },
       documents: { where: { visibility: "COMPANY" }, orderBy: { createdAt: "desc" } },
+      matchOffers: { include: { partner: true }, orderBy: { createdAt: "desc" } },
     },
   });
   if (!request || request.companyId !== user.company.id) notFound();
@@ -104,11 +107,16 @@ export default async function CompanyRequestDetailPage({
           <FormError message={error} />
         </div>
       ) : null}
+      <Flash notice={notice} />
 
       {/* Progress */}
       <div className="card mb-5 space-y-4 p-5">
         <DealProgress stage={stage} />
         <NextStepHint stage={stage} role="company" />
+      </div>
+
+      <div className="card mb-5 p-5">
+        <div className="flex flex-wrap items-center gap-3"><div><h2 className="text-sm font-semibold">Controlled private routing</h2><p className="mt-1 text-xs text-slate-500">Sends a 30-minute offer only to connected partners with approved verification and live capacity.</p></div>{request.routingEnabled ? <form action={routePrivateOffers} className="ml-auto"><input type="hidden" name="requestId" value={request.id} /><button className="btn btn-gold btn-sm">Route top verified fits</button></form> : <StatusBadge status="MANUAL_ONLY" />}</div>{request.matchOffers.length ? <div className="mt-4 flex flex-wrap gap-2">{request.matchOffers.map((offer) => <span className="chip border-black/10 bg-black/[0.03] text-slate-600" key={offer.id}>{offer.partner.displayName} · {offer.status} · {offer.fitScore}</span>)}</div> : null}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">

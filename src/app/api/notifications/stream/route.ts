@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, hasWorkspaceAccess } from "@/lib/auth";
 import { listNotifications } from "@/lib/notifications";
 
 // Server-Sent Events replacement for the bell's old 20s-interval fetch
@@ -25,6 +25,7 @@ const MAX_DURATION_MS = 4 * 60 * 1000;
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return new Response("Unauthorized", { status: 401 });
+  if (!hasWorkspaceAccess(session.user)) return new Response("Email verification required", { status: 403 });
   const userId = session.user.id;
 
   const encoder = new TextEncoder();

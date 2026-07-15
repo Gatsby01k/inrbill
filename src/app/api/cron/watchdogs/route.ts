@@ -10,6 +10,7 @@ import {
   runRevenueUninvoicedWatchdog,
   runSlaWatchdog,
   runStaleSuggestionWatchdog,
+  runNetworkMaintenance,
 } from "@/lib/watchdogs";
 
 // Vercel Cron hits this on schedule (see vercel.json). Protected by
@@ -20,14 +21,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions, introReminders, duplicateRisk, referralRewards] =
+  const [sla, revenue, followUp, uninvoiced, retainer, staleSuggestions, introReminders, duplicateRisk, referralRewards, networkMaintenance] =
     await Promise.all([
     runSlaWatchdog().catch(async (err) => {
       await logError({ error: err, source: "cron:runSlaWatchdog", severity: "ERROR" });
@@ -65,6 +63,10 @@ export async function GET(req: NextRequest) {
       await logError({ error: err, source: "cron:runReferralRewardWatchdog", severity: "ERROR" });
       return { checked: 0, sent: 0, error: true };
     }),
+    runNetworkMaintenance().catch(async (err) => {
+      await logError({ error: err, source: "cron:runNetworkMaintenance", severity: "ERROR" });
+      return { error: true };
+    }),
   ]);
 
   return NextResponse.json({
@@ -78,6 +80,7 @@ export async function GET(req: NextRequest) {
     introReminders,
     duplicateRisk,
     referralRewards,
+    networkMaintenance,
     ranAt: new Date().toISOString(),
   });
 }

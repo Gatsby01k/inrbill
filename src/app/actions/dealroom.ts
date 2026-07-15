@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession, hasWorkspaceAccess } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 
@@ -26,6 +26,7 @@ function fail(path: string, msg: string): never {
 export async function postDealMessage(fd: FormData) {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (!hasWorkspaceAccess(session.user)) redirect("/verify-email?status=pending");
 
   const matchId = s(fd, "matchId");
   const body = s(fd, "body");

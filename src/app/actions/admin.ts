@@ -10,6 +10,7 @@ import { draftIntroductionSummary } from "@/lib/matching";
 import { notify } from "@/lib/notify";
 import { createCryptoInvoice } from "@/lib/nowpayments";
 import { createPaymentLink } from "@/lib/razorpay";
+import { canTransitionPartner, canTransitionRequest } from "@/lib/state-machine";
 import {
   documentSchema,
   introductionCreateSchema,
@@ -56,6 +57,7 @@ export async function updateRequestStatus(fd: FormData) {
 
   const existing = await db.liquidityRequest.findUnique({ where: { id: requestId } });
   if (!existing) fail(fd, "/admin/requests", "Request not found.");
+  if (!canTransitionRequest(existing.status, status.data)) fail(fd, `/admin/requests/${requestId}`, `Request cannot move directly from ${existing.status} to ${status.data}.`);
 
   if (existing.status !== status.data) {
     await db.liquidityRequest.update({
@@ -85,6 +87,11 @@ export async function updatePartnerStatus(fd: FormData) {
 
   const existing = await db.partnerProfile.findUnique({ where: { id: partnerId } });
   if (!existing) fail(fd, "/admin/partners", "Partner not found.");
+  if (!canTransitionPartner(existing.status, status.data)) fail(fd, `/admin/partners/${partnerId}`, `Partner cannot move directly from ${existing.status} to ${status.data}.`);
+  if (status.data === "VERIFIED") {
+    const approved = await db.verificationCase.findFirst({ where: { partnerId, status: "APPROVED", expiresAt: { gt: new Date() } }, select: { id: true } });
+    if (!approved) fail(fd, `/admin/partners/${partnerId}`, "Verified status requires an approved, unexpired verification case.");
+  }
 
   if (existing.status !== status.data) {
     await db.partnerProfile.update({
@@ -93,6 +100,7 @@ export async function updatePartnerStatus(fd: FormData) {
         status: status.data,
         verifiedAt:
           status.data === "VERIFIED" && !existing.verifiedAt ? new Date() : existing.verifiedAt,
+        tier: status.data === "VERIFIED" ? "VERIFIED" : status.data === "SUSPENDED" || status.data === "REJECTED" ? "RESTRICTED" : existing.tier,
       },
     });
     await audit({

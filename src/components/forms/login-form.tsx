@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { login } from "@/app/actions/auth";
 import { SubmitButton } from "@/components/submit-button";
 import { Field, FormError } from "@/components/ui";
@@ -17,6 +18,7 @@ export function LoginForm({ next }: { next?: string }) {
       <Field label="Password">
         <input name="password" type="password" className="input" placeholder="••••••••••" autoComplete="current-password" />
       </Field>
+      <div className="-mt-2 text-right"><Link href="/forgot-password" className="text-xs text-gold-700 hover:underline">Forgot password?</Link></div>
       <FormError message={state.error} />
       <SubmitButton className="btn btn-gold w-full" pendingLabel="Signing in…">
         Sign in

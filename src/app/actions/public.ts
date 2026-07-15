@@ -1,16 +1,14 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { audit, nextReference } from "@/lib/audit";
 import {
-  clearAccessReveal,
   createSession,
   generateAccessPassword,
   getSession,
   hashPassword,
-  setAccessReveal,
 } from "@/lib/auth";
 import { runFullTriagePipeline, runPartnerTriagePipeline } from "@/lib/ai-triage";
 import { db } from "@/lib/db";
@@ -29,6 +27,14 @@ import {
 } from "@/lib/schemas";
 import { autoSuggestMatches, checkCoverageGap } from "@/lib/watchdogs";
 import type { Direction, RequestType, Urgency } from "@prisma/client";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { issueEmailVerification } from "@/lib/email";
+import { verifyTurnstile } from "@/lib/turnstile";
+
+async function publicIdentity() {
+  const h = await headers();
+  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+}
 
 /** Reads the referral cookie (set client-side by ReferralCapture off a
     ?ref= URL param) and confirms it actually belongs to a real account
@@ -69,8 +75,12 @@ export async function submitCompanyRequest(
 ): Promise<ActionState> {
   // Honeypot — bots fill hidden fields; pretend success without writing.
   if (str(formData, "website_hp")) redirect("/request/submitted?ref=received");
+  const identity = await publicIdentity();
+  if (!(await verifyTurnstile(str(formData, "cf-turnstile-response"), identity))) return { fieldErrors: {}, error: "Security check failed. Refresh and try again." };
+  if (!(await consumeRateLimit("company-request", identity, 5, 60 * 60 * 1000))) return { fieldErrors: {}, error: "Too many submissions. Try again later." };
 
   const session = await getSession();
+  if (session?.user.role === "COMPANY" && !session.user.emailVerifiedAt) redirect("/verify-email?status=pending");
   const loggedInCompany =
     session && session.user.role === "COMPANY" && session.user.company
       ? session.user.company
@@ -112,7 +122,7 @@ export async function submitCompanyRequest(
   let companyId: string;
   let userId: string | null = null;
   let actor = data.companyName;
-  let newAccessCredentials: { email: string; password: string } | null = null;
+  let newAccount: { id: string; email: string } | null = null;
 
   if (loggedInCompany) {
     companyId = loggedInCompany.id;
@@ -143,6 +153,7 @@ export async function submitCompanyRequest(
       data: {
         email: account.data.email,
         passwordHash,
+        mustSetPassword: true,
         name: data.contactName,
         role: "COMPANY",
         company: {
@@ -162,7 +173,7 @@ export async function submitCompanyRequest(
     });
     companyId = created.company!.id;
     userId = created.id;
-    newAccessCredentials = { email: account.data.email, password: plainPassword };
+    newAccount = { id: created.id, email: account.data.email };
     // A single fast update, awaited directly (not after()) so the referral
     // code already exists by the time this account's workspace renders its
     // "your referral link" card.
@@ -189,6 +200,7 @@ export async function submitCompanyRequest(
       kycNotes: data.kycNotes,
       partnerRequirements: data.partnerRequirements,
       notes: data.notes,
+      routingEnabled: !["PARTNER_SOURCING", "OTHER"].includes(data.requestType),
     },
   });
 
@@ -218,9 +230,7 @@ export async function submitCompanyRequest(
   after(() => runFullTriagePipeline(request.id));
 
   if (!loggedInCompany && userId) await createSession(userId);
-  if (newAccessCredentials) {
-    await setAccessReveal(newAccessCredentials.email, newAccessCredentials.password, "/request/submitted");
-  }
+  if (newAccount) after(() => issueEmailVerification(newAccount!.id, newAccount!.email).catch(() => false));
   redirect(`/request/submitted?ref=${encodeURIComponent(reference)}`);
 }
 
@@ -230,8 +240,12 @@ export async function submitPartnerApplication(
   formData: FormData,
 ): Promise<ActionState> {
   if (str(formData, "website_hp")) redirect("/apply/submitted?ref=received");
+  const identity = await publicIdentity();
+  if (!(await verifyTurnstile(str(formData, "cf-turnstile-response"), identity))) return { fieldErrors: {}, error: "Security check failed. Refresh and try again." };
+  if (!(await consumeRateLimit("partner-application", identity, 3, 60 * 60 * 1000))) return { fieldErrors: {}, error: "Too many submissions. Try again later." };
 
   const session = await getSession();
+  if (session?.user.role === "PARTNER" && !session.user.emailVerifiedAt) redirect("/verify-email?status=pending");
   if (session?.user.role === "PARTNER") redirect("/partner");
 
   const input = {
@@ -290,6 +304,7 @@ export async function submitPartnerApplication(
     data: {
       email: account.data.email,
       passwordHash,
+      mustSetPassword: true,
       name: data.contactName,
       role: "PARTNER",
       partner: {
@@ -348,13 +363,6 @@ export async function submitPartnerApplication(
   after(() => runPartnerTriagePipeline(created.partner!.id));
 
   await createSession(created.id);
-  await setAccessReveal(account.data.email, plainPassword, "/apply/submitted");
+  after(() => issueEmailVerification(created.id, account.data.email).catch(() => false));
   redirect(`/apply/submitted?ref=${encodeURIComponent(reference)}`);
-}
-
-/** Clears the one-time access-credentials reveal once the visitor has saved it. */
-export async function dismissAccessReveal(fd: FormData) {
-  await clearAccessReveal();
-  const back = str(fd, "back");
-  redirect(back.startsWith("/") ? back : "/");
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, hasWorkspaceAccess } from "@/lib/auth";
 import { listNotifications } from "@/lib/notifications";
 
 // Polled by the bell icon in every workspace (admin/company/partner alike)
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasWorkspaceAccess(session.user)) return NextResponse.json({ error: "Email verification required" }, { status: 403 });
 
   const { items, unreadCount } = await listNotifications(session.user.id, 15);
   return NextResponse.json({
