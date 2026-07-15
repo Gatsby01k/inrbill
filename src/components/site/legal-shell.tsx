@@ -28,26 +28,16 @@ export function LegalShell({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteNav />
-      <main className="hero-aurora flex-1 pb-24 pt-32">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <p className="eyebrow">{eyebrow}</p>
-          <h1 className="mt-3 font-display text-[2.1rem] font-medium leading-tight text-slate-900 sm:text-[2.5rem]">
-            {title}
-          </h1>
-          <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-slate-500">{sub}</p>
-          <p className="mt-4 text-xs text-slate-400">Last updated {updated}</p>
-
-          <div className="prose-legal card mt-8 p-6 sm:p-8">{children}</div>
-
-          <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2">
+      <main className="fin-legal-page flex-1">
+        <div className="fin-legal-container">
+          <p className="fin-kicker"><span /> {eyebrow}</p>
+          <h1>{title}</h1>
+          <p className="fin-legal-sub">{sub}</p>
+          <p className="fin-legal-updated">Last updated {updated}</p>
+          <div className="prose-legal fin-legal-document">{children}</div>
+          <div className="fin-legal-links">
             {LEGAL_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="text-xs font-medium text-slate-500 transition-colors hover:text-gold-700"
-              >
-                {l.label}
-              </Link>
+              <Link key={l.href} href={l.href}>{l.label}</Link>
             ))}
           </div>
         </div>

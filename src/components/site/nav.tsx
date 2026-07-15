@@ -9,36 +9,24 @@ export function Logo({ compact = false }: { compact?: boolean }) {
 export async function SiteNav() {
   const session = await getSession();
   return (
-    <header className="glass-nav fixed inset-x-0 top-0 z-50">
-      <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Logo />
-        <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-500 md:flex">
-          <Link href="/#product" className="transition-colors hover:text-slate-900">
-            Product
-          </Link>
-          <Link href="/#operating-model" className="transition-colors hover:text-slate-900">
-            Operating model
-          </Link>
-          <Link href="/#controls" className="transition-colors hover:text-slate-900">
-            Controls
-          </Link>
+    <header className="fin-nav">
+      <div className="fin-nav-inner">
+        <div className="fin-nav-brand"><Logo /><span>Private network</span></div>
+        <nav className="fin-nav-links" aria-label="Primary navigation">
+          <Link href="/#product">Product</Link>
+          <Link href="/#operating-model">Operating model</Link>
+          <Link href="/#controls">Controls</Link>
+          <Link href="/how-it-works">How it works</Link>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="fin-nav-actions">
           {session ? (
-            <Link href={roleHome(session.user.role)} className="btn btn-ghost btn-sm">
+            <Link href={roleHome(session.user.role)} className="fin-nav-login">
               Open workspace
             </Link>
           ) : (
-            <Link
-              href="/login"
-              className="text-[13px] font-medium text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Log in
-            </Link>
+            <Link href="/login" className="fin-nav-login">Log in</Link>
           )}
-          <Link href="/request" className="btn btn-gold btn-sm">
-            Set up network
-          </Link>
+          <Link href="/request" className="fin-nav-cta">Request access</Link>
         </div>
       </div>
     </header>
