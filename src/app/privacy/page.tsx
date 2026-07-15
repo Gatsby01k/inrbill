@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           Partner applications: supported directions and rails, capacity, ticket ranges,
           settlement preferences, compliance status, references, and free-text notes.
         </li>
-        <li>Documents or links you choose to submit in support of review.</li>
+        <li>Restricted evidence you choose to submit for KYB, bank and risk review.</li>
       </ul>
       <h3>Usage and technical information</h3>
       <ul>
@@ -66,25 +66,24 @@ export default function PrivacyPage() {
         only once an admin explicitly releases that introduction. We may also share information:
       </p>
       <ul>
-        <li>With service providers who host our infrastructure, under confidentiality obligations.</li>
+        <li>With infrastructure, email and verification providers under confidentiality and data-protection obligations.</li>
         <li>Where required by law, regulation, legal process, or to protect the rights and safety of the network.</li>
         <li>In connection with a merger, acquisition or asset transfer, with continuity of this policy&apos;s protections.</li>
       </ul>
 
       <h2>4. Data retention</h2>
       <p>
-        We retain request, application and audit records for as long as needed to operate the
-        network, resolve disputes, and meet legal obligations. Audit log entries are retained
-        indefinitely as an append-only record and are not edited or deleted.
+        We retain requests, applications, verification evidence and audit records only as long
+        as needed to operate the network, resolve disputes and meet legal obligations. Evidence
+        retention is set by review type and jurisdiction; audit events may be retained longer.
       </p>
 
       <h2>5. Security</h2>
       <p>
-        Passwords are hashed with bcrypt. Sessions use random, high-entropy tokens stored
-        server-side, transmitted only over httpOnly, SameSite cookies (secure in production).
-        Access to admin functions is role-gated and independently re-checked on every server
-        action. No system is perfectly secure, and we cannot guarantee absolute security of
-        information transmitted to or stored by the service.
+        Passwords are hashed with bcrypt. Sessions use random, high-entropy tokens in httpOnly,
+        SameSite cookies (secure in production). Restricted evidence is stored outside the
+        application database in a private, KMS-encrypted object vault and is opened through
+        short-lived authorized links. No system is perfectly secure.
       </p>
 
       <h2>6. Your rights</h2>
@@ -97,7 +96,7 @@ export default function PrivacyPage() {
 
       <h2>7. Cookies and sessions</h2>
       <p>
-        We use a single essential session cookie to keep you signed in to your workspace. We do
+        We use essential session, two-factor challenge and referral-attribution cookies. We do
         not use third-party advertising or tracking cookies.
       </p>
 

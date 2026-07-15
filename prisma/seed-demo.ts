@@ -10,21 +10,26 @@
  * in the admin UI. Safe to re-run — every write is keyed on a fixed id or
  * unique field, so re-running updates the same rows instead of duplicating.
  *
- * Run with:  npm run db:seed:demo
+ * Run only against staging with DEMO_PASSWORD set explicitly.
  */
 import { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
 
-const DEMO_PASSWORD = "inrp2p-demo-2026";
+function demoPassword() {
+  const value = process.env.DEMO_PASSWORD;
+  if (!value || value.length < 14 || !/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) throw new Error("DEMO_PASSWORD must be 14+ characters with uppercase, lowercase and a number.");
+  return value;
+}
+const DEMO_PASSWORD = demoPassword();
 
 async function upsertUser(email: string, name: string, role: "ADMIN" | "COMPANY" | "PARTNER") {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
   return db.user.upsert({
     where: { email },
-    update: { name, role },
-    create: { email, passwordHash, name, role },
+    update: { name, role, passwordHash, emailVerifiedAt: new Date() },
+    create: { email, passwordHash, name, role, emailVerifiedAt: new Date() },
   });
 }
 
@@ -601,7 +606,7 @@ async function main() {
   console.log(line);
   console.log("INRP2P demo seed complete.");
   console.log(`  Operator login: ${email}`);
-  console.log(`  Demo company / partner logins use password: ${DEMO_PASSWORD}`);
+  console.log("  Demo accounts use the DEMO_PASSWORD supplied to this process.");
   console.log("  e.g. demo-company-1@inrp2p.demo, demo-partner-1@inrp2p.demo");
   console.log("");
   console.log("  All demo records are prefixed [DEMO] and use @inrp2p.demo emails —");

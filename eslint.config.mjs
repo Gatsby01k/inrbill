@@ -16,7 +16,7 @@ const eslintConfig = [
     // that aren't installed yet (see the notice at the top of that file)
     // — excluded from lint until they're actually added via npm install,
     // same reasoning as the tsconfig.json exclude below.
-    ignores: ["node_modules/**", ".next/**", "out/**", "src/components/site/request-pipeline-card-3d.tsx"],
+    ignores: ["node_modules/**", ".next/**", "out/**", "next-env.d.ts", "src/components/site/request-pipeline-card-3d.tsx"],
   },
 ];
 

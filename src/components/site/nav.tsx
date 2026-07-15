@@ -13,20 +13,14 @@ export async function SiteNav() {
       <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo />
         <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-500 md:flex">
-          <Link href="/#how-it-works" className="transition-colors hover:text-slate-900">
-            How it works
+          <Link href="/#product" className="transition-colors hover:text-slate-900">
+            Product
           </Link>
-          <Link href="/corridors" className="transition-colors hover:text-slate-900">
-            Corridors
+          <Link href="/#operating-model" className="transition-colors hover:text-slate-900">
+            Operating model
           </Link>
-          <Link href="/#standards" className="transition-colors hover:text-slate-900">
-            Network standards
-          </Link>
-          <Link href="/#no-custody" className="transition-colors hover:text-slate-900">
-            No custody
-          </Link>
-          <Link href="/#contact" className="transition-colors hover:text-slate-900">
-            Contact
+          <Link href="/#controls" className="transition-colors hover:text-slate-900">
+            Controls
           </Link>
         </nav>
         <div className="flex items-center gap-3">
@@ -43,7 +37,7 @@ export async function SiteNav() {
             </Link>
           )}
           <Link href="/request" className="btn btn-gold btn-sm">
-            Request a partner
+            Set up network
           </Link>
         </div>
       </div>

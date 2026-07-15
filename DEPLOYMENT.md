@@ -1,74 +1,113 @@
-# Deploying INRP2P
+# INRP2P production runbook
 
-The app is a standard Next.js App Router project with PostgreSQL via Prisma —
-it deploys anywhere Next.js runs. Two proven paths below.
+The fastest supported path is Vercel plus a managed PostgreSQL database with
+point-in-time recovery. A Node 20+ container or VPS also works.
 
-## Option A — Vercel + managed Postgres (fastest)
+## 1. Provision isolated environments
 
-1. **Database.** Create a PostgreSQL instance (Neon, Supabase, Vercel Postgres,
-   RDS). Copy the connection string. For serverless, prefer a pooled connection
-   string (Neon's `-pooler` host, or Supabase's pgBouncer port 6543 with
-   `?pgbouncer=true`).
-2. **Import the repo** into Vercel (push to GitHub/GitLab first).
-3. **Environment variables** (Vercel → Project → Settings → Environment Variables):
-   - `DATABASE_URL` — the pooled connection string
-   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`
-   - `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_TELEGRAM`
-4. **Schema + seed** (run locally against the production `DATABASE_URL`, once):
-   ```bash
-   DATABASE_URL="postgres://…" npx prisma migrate deploy   # or: npx prisma db push
-   DATABASE_URL="postgres://…" ADMIN_EMAIL=… ADMIN_PASSWORD=… npm run db:seed
-   ```
-5. **Deploy.** Vercel runs `next build` (which runs `prisma generate` via
-   dependency postinstall). If generate is ever skipped by caching, set the
-   project's build command to `prisma generate && next build`.
-6. Attach your domain, force HTTPS (default on Vercel).
+Create separate PostgreSQL databases and credentials for staging and production.
+Use pooled `DATABASE_URL` for the application and a direct
+`DATABASE_URL_UNPOOLED` for migrations. Enable automated backups before loading
+real data and complete one restore drill.
 
-## Option B — Single VPS (full control)
+## 2. Configure secrets
+
+Copy every required value from `.env.example` into the deployment platform's
+encrypted environment-variable store. Do not upload a populated `.env` file.
+
+Required for a real beta:
+
+- database URLs;
+- canonical site URL and public contact values;
+- Resend API key plus a verified `EMAIL_FROM` domain;
+- Cloudflare Turnstile site and secret keys;
+- strong admin seed credentials;
+- a random `CRON_SECRET` for scheduled maintenance;
+- a private S3/KMS evidence vault before evidence collection.
+
+Provider, messaging, fee-collection and operator-AI integrations are optional.
+Unconfigured verification providers explicitly fall back to manual review. Core
+matching and routing are deterministic and do not need an AI key.
+
+## 3. Validate the release
+
+Run against staging configuration:
 
 ```bash
-# Ubuntu 22+, as a non-root user
-sudo apt install -y nodejs npm postgresql nginx     # or install Node 20 via nodesource
-sudo -u postgres createuser inrp2p -P && sudo -u postgres createdb inrp2p -O inrp2p
-
-git clone <your-repo> && cd inrp2p
-cp .env.example .env                                 # set real values
 npm ci
-npx prisma migrate deploy                            # or db push
-npm run db:seed
+npm run db:validate
+npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
-Run under a process manager and reverse-proxy:
+Then deploy migrations:
 
 ```bash
-npm i -g pm2
-pm2 start "npm run start" --name inrp2p             # listens on :3000
-pm2 save && pm2 startup
+npm run db:deploy
 ```
 
-Point nginx at `localhost:3000` with TLS (certbot). Set
-`NODE_ENV=production` (npm start does this) so session cookies are `Secure`.
+For a legacy database, follow the baseline procedure in `README.md`; do not mark
+a migration applied unless its schema is already present.
 
-## Post-deploy checklist
+## 4. Create the operator
 
-- [ ] Log in at `/login` with the seeded admin account — then change the
-      password (update `.env`, re-run seed) and store it in a password manager.
-- [ ] Set real `NEXT_PUBLIC_CONTACT_EMAIL` / `NEXT_PUBLIC_CONTACT_TELEGRAM` and redeploy.
-- [ ] Submit a real test request and application end-to-end; process them in
-      admin; delete nothing — this is your first audit history.
-- [ ] Configure automated Postgres backups (Neon/Supabase have point-in-time
-      recovery; on a VPS schedule `pg_dump`).
-- [ ] Add uptime monitoring on `/` and `/login`.
-- [ ] Have counsel review the public copy and disclaimer for your jurisdictions.
+Run once with credentials supplied from a password manager:
 
-## Notes
+```bash
+ADMIN_EMAIL='operator@example.com' \
+ADMIN_PASSWORD='a-long-unique-password' \
+ADMIN_NAME='Network Operator' \
+npm run db:seed
+```
 
-- Every workspace page is rendered dynamically per-request (session cookie), so
-  no data is ever baked into static HTML at build time; `next build` does not
-  need database access.
-- Sessions live in PostgreSQL — restarting the app never logs users out, and
-  revoking a session is a row delete.
-- Scale-up path: the schema already separates matches, introductions and
-  revenue, so reporting can grow without remodeling. Add read replicas or
-  connection pooling (pgBouncer) before anything else.
+The seed rejects missing or weak values and never prints the password. Remove seed
+credentials from the runtime environment after the account is created.
+
+## 5. Deploy and smoke-test
+
+Deploy the immutable release, then verify:
+
+- `GET /api/health` returns `200` and `database: reachable`;
+- security headers are present over HTTPS;
+- a company and partner can submit intake, receive verification email, set a
+  password and reach only their own workspace;
+- an invitation, verification case, capacity pulse and match offer complete end to end;
+- expired capacity is excluded from routing;
+- evidence upload uses KMS headers and download is an attachment-only short URL;
+- webhook signatures fail when altered and duplicate events do not reprocess;
+- audit entries exist for every material state change.
+
+Do this first in staging with synthetic identities and files. Never use demo data as
+public evidence of traction.
+
+## 6. Schedule maintenance and monitoring
+
+Call `/api/cron/watchdogs` on a schedule with:
+
+```text
+Authorization: Bearer <CRON_SECRET>
+```
+
+Monitor `/api/health`, application error rate, email delivery, database connections,
+backup freshness and webhook failures. Alert an operator; never expose detailed
+health diagnostics publicly.
+
+## 7. Release gate for live counterparties
+
+- Legal counsel has approved the operating model and public documents.
+- The data-retention/deletion policy and incident contacts are documented.
+- At least two genuinely reviewed partners cover the initial narrow corridor.
+- Capacity expiry and response-time expectations are agreed with each partner.
+- No marketing claim promises safety, licensing, liquidity, price or completion.
+- A human operator owns verification decisions and incident escalation.
+- Production access, provider keys and database permissions follow least privilege.
+- Rollback and database restore procedures have been rehearsed.
+
+## Rollback
+
+Roll back application code by deploying the previous immutable commit. Do not reverse
+a production migration automatically. Freeze affected writes, take a backup, inspect
+the audit trail and apply a reviewed forward migration. Restore the database only when
+forward repair is unsafe and the recovery point has been confirmed.

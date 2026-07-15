@@ -1,6 +1,6 @@
 /** Canonical site URL — set NEXT_PUBLIC_SITE_URL to your production domain. */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://inrbill-six.vercel.app"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://inrp2p.com"
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "INRP2P";
@@ -8,14 +8,7 @@ export const SITE_NAME = "INRP2P";
 export const SITE_TAGLINE = "India's Liquidity, Reviewed";
 
 export const SITE_DESCRIPTION =
-  "INRP2P finds reviewed INR liquidity partners for companies moving serious volume: INR to USDT, USDT to INR and INR payouts. Manual KYB review, requirements-based matching, qualified introductions. No custody, no execution — coordination only.";
-
-/**
- * Google Analytics 4 measurement ID. Left unset by default — set
- * NEXT_PUBLIC_GA_MEASUREMENT_ID in Vercel's Production environment only, so
- * local dev and preview deploys don't pollute production analytics.
- */
-export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
+  "Private INR partner network OS for verification, live capacity, explainable routing and controlled introductions. No custody or platform execution.";
 
 /**
  * Build/version marker shown in the operator UI so a screenshot or bug report

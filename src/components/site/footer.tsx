@@ -18,9 +18,8 @@ export function SiteFooter() {
               <Wordmark className="text-slate-100" />
             </Link>
             <p className="mt-4 text-[13px] leading-relaxed text-slate-400">
-              A private INR liquidity network. Manual review, matching and
-              qualified introductions between companies and reviewed liquidity
-              partners.
+              The operating system for private INR partner networks: verification,
+              live capacity, controlled routing and accountable introductions.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 text-[13px] sm:grid-cols-3">
