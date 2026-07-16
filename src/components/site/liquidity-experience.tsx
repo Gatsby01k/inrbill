@@ -80,7 +80,7 @@ export function LiquidityOrbit() {
     const hero = root.closest<HTMLElement>(".v3-hero");
     if (!hero) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const desktop = window.matchMedia("(min-width: 1024px) and (min-height: 820px)").matches;
+    const desktop = window.matchMedia("(min-width: 1024px)").matches;
     if (reduced || !desktop) {
       root.style.setProperty("--wheel-rotation", "0deg");
       root.style.setProperty("--wheel-scale", "1");
@@ -93,33 +93,40 @@ export function LiquidityOrbit() {
     let frame = 0;
     let lastStage = 0;
     let previousRotation = 0;
+    const startedAt = performance.now();
 
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
     const measure = () => {
-      const rect = hero.getBoundingClientRect();
+      const heroTop = hero.getBoundingClientRect().top + window.scrollY;
       const travel = Math.max(1, hero.offsetHeight - window.innerHeight);
-      target = clamp(-rect.top / travel);
+      target = clamp((window.scrollY - heroTop) / travel);
       if (!frame) frame = window.requestAnimationFrame(render);
     };
 
-    const render = () => {
+    const render = (timestamp: number) => {
       current += (target - current) * 0.115;
       if (Math.abs(target - current) < 0.0005) current = target;
 
-      // A short backwards wind-up, then a two-turn inertial release and a
-      // damped mechanical stop. The scroll controls the energy, not the cursor.
-      const windupPhase = clamp(current / 0.09);
-      const windup = current < 0.09 ? -9 * Math.sin(windupPhase * Math.PI) : 0;
-      const release = clamp((current - 0.065) / 0.81);
+      // The engine briefly calibrates on arrival, then the first scroll creates
+      // a backwards wind-up and a three-turn inertial release. No hover gimmick:
+      // page movement is the source of mechanical energy.
+      const calibrationProgress = clamp((timestamp - startedAt) / 1400);
+      const calibrating = target < 0.015 && calibrationProgress < 1;
+      const calibration = calibrating
+        ? Math.sin(calibrationProgress * Math.PI * 2.4) * (1 - calibrationProgress) * 22
+        : 0;
+      const windupPhase = clamp(current / 0.075);
+      const windup = current < 0.075 ? -13 * Math.sin(windupPhase * Math.PI) : 0;
+      const release = clamp((current - 0.018) / 0.88);
       const eased = 1 - Math.pow(1 - release, 3.2);
-      const damping = Math.sin(release * Math.PI * 5) * (1 - release) * 12;
-      const rotation = windup + eased * 720 + damping;
+      const damping = Math.sin(release * Math.PI * 6) * (1 - release) * 17;
+      const rotation = calibration + windup + eased * 1080 + damping;
       const scale = 1 - eased * 0.038 + Math.sin(release * Math.PI) * 0.012;
       const lift = -eased * 18;
       const angularVelocity = rotation - previousRotation;
       previousRotation = rotation;
       const speed = clamp(Math.abs(angularVelocity) / 12);
-      const needle = -speed * 11 + Math.sin((rotation * Math.PI) / 18) * speed * 7;
+      const needle = -speed * 14 + Math.sin((rotation * Math.PI) / 18) * speed * 9;
       const tiltX = 1.8 - eased * 3.2 + Math.sin(release * Math.PI) * 1.2;
       const tiltY = -Math.sin(release * Math.PI) * 5.5;
       const sheen = 50 + Math.sin((rotation * Math.PI) / 180) * 24;
@@ -145,7 +152,7 @@ export function LiquidityOrbit() {
         setActiveStage(stage);
       }
 
-      if (Math.abs(target - current) > 0.0005) {
+      if (Math.abs(target - current) > 0.0005 || calibrating) {
         frame = window.requestAnimationFrame(render);
       } else {
         frame = 0;

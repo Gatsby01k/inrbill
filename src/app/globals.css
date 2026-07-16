@@ -725,7 +725,7 @@
 .v3-hero {
   position: relative;
   min-height: max(1240px, 165vh);
-  overflow: hidden;
+  overflow: clip;
   padding-top: 0;
   isolation: isolate;
   background:
