@@ -93,8 +93,10 @@ export function LiquidityOrbit() {
     let lastStage = 0;
     let previousRotation = 0;
     const startedAt = performance.now();
+    const compact = window.matchMedia("(max-width: 1023px)").matches;
 
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const smootherstep = (value: number) => value ** 3 * (value * (value * 6 - 15) + 10);
     const measure = () => {
       const heroTop = hero.getBoundingClientRect().top + window.scrollY;
       const travel = Math.max(1, hero.offsetHeight - window.innerHeight);
@@ -103,32 +105,33 @@ export function LiquidityOrbit() {
     };
 
     const render = (timestamp: number) => {
-      current += (target - current) * 0.115;
-      if (Math.abs(target - current) < 0.0005) current = target;
+      current += (target - current) * 0.064;
+      if (Math.abs(target - current) < 0.00025) current = target;
 
-      // The engine briefly calibrates on arrival, then the first scroll creates
-      // a backwards wind-up and a three-turn inertial release. No hover gimmick:
-      // page movement is the source of mechanical energy.
-      const calibrationProgress = clamp((timestamp - startedAt) / 1400);
-      const calibrating = target < 0.015 && calibrationProgress < 1;
-      const calibration = calibrating
-        ? Math.sin(calibrationProgress * Math.PI * 2.4) * (1 - calibrationProgress) * 22
+      // Precision instrument motion: a quiet alignment on arrival, a restrained
+      // wind-up, one deliberate revolution and a single damped mechanical lock.
+      // Smootherstep keeps acceleration at zero at both ends of the sequence.
+      const calibrationProgress = clamp((timestamp - startedAt) / 2200);
+      const calibrating = target < 0.012 && calibrationProgress < 1;
+      const calibration = calibrating ? -2.4 * Math.sin(calibrationProgress * Math.PI) : 0;
+      const windupPhase = clamp(current / 0.14);
+      const windup = current < 0.14 ? -5.5 * Math.sin(windupPhase * Math.PI) : 0;
+      const release = clamp((current - 0.08) / 0.84);
+      const eased = smootherstep(release);
+      const settlePhase = clamp((release - 0.84) / 0.16);
+      const settle = release > 0.84
+        ? Math.sin(settlePhase * Math.PI) * (1 - settlePhase) * 3.2
         : 0;
-      const windupPhase = clamp(current / 0.075);
-      const windup = current < 0.075 ? -13 * Math.sin(windupPhase * Math.PI) : 0;
-      const release = clamp((current - 0.018) / 0.88);
-      const eased = 1 - Math.pow(1 - release, 3.2);
-      const damping = Math.sin(release * Math.PI * 6) * (1 - release) * 17;
-      const rotation = calibration + windup + eased * 1080 + damping;
-      const scale = 1 - eased * 0.038 + Math.sin(release * Math.PI) * 0.012;
-      const lift = -eased * 18;
+      const rotation = calibration + windup + eased * (compact ? 240 : 360) + settle;
+      const scale = 1 - eased * 0.012 + Math.sin(release * Math.PI) * 0.006;
+      const lift = -eased * 6;
       const angularVelocity = rotation - previousRotation;
       previousRotation = rotation;
-      const speed = clamp(Math.abs(angularVelocity) / 12);
-      const needle = -speed * 14 + Math.sin((rotation * Math.PI) / 18) * speed * 9;
-      const tiltX = 1.8 - eased * 3.2 + Math.sin(release * Math.PI) * 1.2;
-      const tiltY = -Math.sin(release * Math.PI) * 5.5;
-      const sheen = 50 + Math.sin((rotation * Math.PI) / 180) * 24;
+      const speed = clamp(Math.abs(angularVelocity) / 3.5);
+      const needle = -speed * 5 + Math.sin((rotation * Math.PI) / 24) * speed * 1.8;
+      const tiltX = 1.1 - eased * 1.4 + Math.sin(release * Math.PI) * 0.6;
+      const tiltY = -Math.sin(release * Math.PI) * 2.4;
+      const sheen = 50 + Math.sin((rotation * Math.PI) / 180) * 12;
 
       root.style.setProperty("--wheel-rotation", `${rotation.toFixed(3)}deg`);
       root.style.setProperty("--wheel-scale", scale.toFixed(4));
@@ -136,13 +139,13 @@ export function LiquidityOrbit() {
       root.style.setProperty("--wheel-tilt-x", `${tiltX.toFixed(3)}deg`);
       root.style.setProperty("--wheel-tilt-y", `${tiltY.toFixed(3)}deg`);
       root.style.setProperty("--needle-angle", `${needle.toFixed(3)}deg`);
-      root.style.setProperty("--shadow-scale", (1 - eased * 0.055).toFixed(4));
+      root.style.setProperty("--shadow-scale", (1 - eased * 0.018).toFixed(4));
       root.style.setProperty("--sheen-x", `${sheen.toFixed(2)}%`);
-      root.style.setProperty("--halo-a", `${(-13 - rotation * 0.12).toFixed(3)}deg`);
-      root.style.setProperty("--halo-b", `${(18 + rotation * 0.08).toFixed(3)}deg`);
+      root.style.setProperty("--halo-a", `${(-13 - rotation * 0.05).toFixed(3)}deg`);
+      root.style.setProperty("--halo-b", `${(18 + rotation * 0.035).toFixed(3)}deg`);
       root.style.setProperty("--launch-progress", eased.toFixed(4));
-      root.dataset.launched = current > 0.075 ? "true" : "false";
-      root.dataset.locked = current > 0.975 ? "true" : "false";
+      root.dataset.launched = current > 0.08 ? "true" : "false";
+      root.dataset.locked = current > 0.94 ? "true" : "false";
 
       const stage = current < 0.24 ? 0 : current < 0.48 ? 1 : current < 0.73 ? 2 : 3;
       if (stage !== lastStage) {
@@ -151,7 +154,7 @@ export function LiquidityOrbit() {
         setActiveStage(stage);
       }
 
-      if (Math.abs(target - current) > 0.0005 || calibrating) {
+      if (Math.abs(target - current) > 0.00025 || calibrating) {
         frame = window.requestAnimationFrame(render);
       } else {
         frame = 0;
