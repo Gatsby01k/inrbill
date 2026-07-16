@@ -49,32 +49,34 @@ export default function HomePage() {
       <SiteNav />
       <main>
         <section className="v3-hero">
-          <div className="v3-hero-grid">
-            <div className="v3-hero-copy">
-              <p className="v3-kicker"><span /> Private INR liquidity network</p>
-              <h1>India&apos;s liquidity,<br /><em>reviewed.</em></h1>
-              <p className="v3-hero-lede">
-                Verified counterparties, current capacity and governed introductions for INR ↔ USDT and INR payout corridors.
-              </p>
-              <div className="v3-actions">
-                <Link href="/request" className="v3-button v3-button-primary">Request company access <Arrow /></Link>
-                <Link href="/apply" className="v3-button v3-button-quiet">Apply as liquidity partner</Link>
+          <div className="v3-hero-sticky">
+            <div className="v3-hero-grid">
+              <div className="v3-hero-copy">
+                <p className="v3-kicker"><span /> Private INR liquidity network</p>
+                <h1>India&apos;s liquidity,<br /><em>reviewed.</em></h1>
+                <p className="v3-hero-lede">
+                  Verified counterparties, current capacity and governed introductions for INR ↔ USDT and INR payout corridors.
+                </p>
+                <div className="v3-actions">
+                  <Link href="/request" className="v3-button v3-button-primary">Request company access <Arrow /></Link>
+                  <Link href="/apply" className="v3-button v3-button-quiet">Apply as liquidity partner</Link>
+                </div>
+                <div className="v3-trust-line">
+                  <span><Check /> Manual review</span>
+                  <span><Check /> Controlled introductions</span>
+                  <span><Check /> Direct settlement</span>
+                </div>
               </div>
-              <div className="v3-trust-line">
-                <span><Check /> Manual review</span>
-                <span><Check /> Controlled introductions</span>
-                <span><Check /> Direct settlement</span>
-              </div>
+              <LiquidityOrbit />
             </div>
-            <LiquidityOrbit />
-          </div>
 
-          <div className="v3-proof-strip">
-            {proof.map(([value, label], index) => (
-              <div key={label}><span>0{index + 1}</span><strong>{value}</strong><small>{label}</small></div>
-            ))}
+            <div className="v3-proof-strip">
+              {proof.map(([value, label], index) => (
+                <div key={label}><span>0{index + 1}</span><strong>{value}</strong><small>{label}</small></div>
+              ))}
+            </div>
+            <a className="v3-scroll-cue" href="#product" aria-label="Explore the product"><span>Launch</span><i /></a>
           </div>
-          <a className="v3-scroll-cue" href="#product" aria-label="Explore the product"><span>Explore</span><i /></a>
         </section>
 
         <section id="product" className="v3-manifesto">
