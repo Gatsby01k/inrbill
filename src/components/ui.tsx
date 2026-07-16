@@ -231,14 +231,14 @@ export function CheckboxGrid({
       {items.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-black/[0.1] bg-white px-3 py-2 text-[13px] text-slate-700 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-gold-600/60 has-[:checked]:bg-gold-500/[0.07] has-[:checked]:text-slate-900"
+          className="fin-choice flex cursor-pointer items-center gap-2.5 rounded-xl border border-black/[0.1] bg-white px-3 py-2.5 text-[13px] text-slate-700 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-[#07152e]/50 has-[:checked]:bg-[#07152e]/[.035] has-[:checked]:text-slate-900"
         >
           <input
             type="checkbox"
             name={name}
             value={o.value}
             defaultChecked={defaultChecked.includes(o.value)}
-            className="h-3.5 w-3.5 accent-[#DD8114]"
+            className="h-3.5 w-3.5 accent-[#07152E]"
           />
           <span>{o.label}</span>
         </label>
@@ -261,7 +261,7 @@ export function RadioCards({
       {options.map((o) => (
         <label
           key={o.value}
-          className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-black/[0.1] bg-white px-3.5 py-3 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-gold-600/60 has-[:checked]:bg-gold-500/[0.07]"
+          className="fin-choice flex cursor-pointer flex-col gap-0.5 rounded-xl border border-black/[0.1] bg-white px-3.5 py-3.5 transition-colors duration-150 hover:border-black/25 hover:bg-[#FCFAF5] has-[:checked]:border-[#07152e]/50 has-[:checked]:bg-[#07152e]/[.035]"
         >
           <span className="flex items-center gap-2.5">
             <input
@@ -269,7 +269,7 @@ export function RadioCards({
               name={name}
               value={o.value}
               defaultChecked={defaultValue === o.value}
-              className="h-3.5 w-3.5 accent-[#DD8114]"
+              className="h-3.5 w-3.5 accent-[#07152E]"
             />
             <span className="text-[13px] font-semibold text-slate-800">{o.label}</span>
           </span>
@@ -290,12 +290,12 @@ export function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="card p-6 sm:p-7">
-      <div className="border-b border-black/[0.07] pb-4">
-        <h2 className="text-sm font-semibold tracking-[-0.01em] text-slate-900">{title}</h2>
-        {sub ? <p className="mt-1 text-[12.5px] text-slate-500">{sub}</p> : null}
+    <section className="fin-form-section">
+      <div className="fin-form-section-head">
+        <h2>{title}</h2>
+        {sub ? <p>{sub}</p> : null}
       </div>
-      <div className="mt-5 space-y-5">{children}</div>
+      <div className="fin-form-section-body">{children}</div>
     </section>
   );
 }

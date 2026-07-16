@@ -283,18 +283,18 @@ export function ApplyForm() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+    <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-start">
       <div className="min-w-0">
         {/* Step tabs */}
         <div
           ref={tabsRef}
-          className="relative mb-6 flex gap-1 rounded-xl border border-black/[0.08] bg-black/[0.025] p-1"
+          className="relative mb-5 flex gap-1 rounded-[14px] border border-[#07152e]/10 bg-white p-1.5 shadow-[0_14px_36px_-32px_rgba(7,21,46,.45)]"
         >
           <SlidingIndicator
             containerRef={tabsRef}
             activeSelector={String(step)}
             axis="horizontal"
-            className="rounded-lg border border-gold-600/25 shadow-[0_1px_2px_rgba(35,28,12,0.08)]"
+            className="rounded-[10px] border border-[#07152e] bg-[#07152e] shadow-[0_8px_18px_-12px_rgba(7,21,46,.7)]"
           />
           {STEPS.map((s, i) => (
             <button
@@ -306,10 +306,10 @@ export function ApplyForm() {
               className={cn(
                 "relative z-[1] flex flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-[11px] font-semibold leading-tight transition-colors",
                 step === i
-                  ? "text-slate-900"
+                  ? "text-white"
                   : i <= maxStep
                     ? "text-slate-500 hover:text-slate-800"
-                    : "cursor-not-allowed text-slate-300",
+                    : "cursor-not-allowed text-slate-400",
               )}
             >
               <span className="hidden sm:inline">
@@ -535,11 +535,10 @@ export function ApplyForm() {
       </div>
 
       {/* Rail */}
-      <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
-        <div className="card p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {STEPS[step].eta}
-          </p>
+      <aside className="xl:sticky xl:top-28 xl:self-start">
+        <div className="card rounded-[16px] p-5">
+          <p className="text-[8px] font-semibold uppercase tracking-[.14em] text-gold-700">Application progress</p>
+          <p className="mt-2 text-[12px] font-semibold text-slate-700">{STEPS[step].eta}</p>
           <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
             <div
               className="h-full rounded-full bg-gradient-to-r from-gold-500 to-leaf-500 transition-[width] duration-500 ease-out"
@@ -562,31 +561,11 @@ export function ApplyForm() {
             ))}
           </ul>
           {draftRestored || draftSaved ? (
-            <p className="mt-3 text-[10.5px] text-slate-400">
+            <p className="mt-4 border-t border-black/[0.06] pt-3 text-[10px] text-slate-400">
               {draftRestored && !draftSaved ? "Draft restored from this device" : "Draft saved on this device"}
             </p>
           ) : null}
-        </div>
-
-        <div className="card p-5">
-          <p className="eyebrow text-leaf-600">After you send it</p>
-          <ol className="mt-3 space-y-3.5">
-            {[
-              ["We read it", "Ops checks corridors, capacity, banks and compliance readiness."],
-              ["We verify", "Usually a documents request, often a short call."],
-              ["You start matching", "Verified partners become eligible. Identity stays private until an introduction."],
-            ].map(([t, d], i) => (
-              <li key={t} className="flex gap-2.5">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-leaf-400/40 bg-leaf-50 font-mono text-[10px] text-leaf-700">
-                  {i + 1}
-                </span>
-                <div>
-                  <p className="text-[12.5px] font-semibold text-slate-800">{t}</p>
-                  <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">{d}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <p className="mt-4 border-t border-black/[0.06] pt-3 text-[10px] leading-4 text-slate-400">Manual review · Private profile · No public listing</p>
         </div>
       </aside>
     </div>

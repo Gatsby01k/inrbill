@@ -285,7 +285,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_250px] lg:items-start">
       <form
         ref={formRef}
         action={formAction}
@@ -313,7 +313,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
         />
 
         {/* Progress */}
-        <div className="border-b border-black/[0.07] bg-black/[0.015] px-6 py-4 sm:px-7">
+        <div className="border-b border-black/[0.07] bg-white px-6 py-5 sm:px-7">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
               Step {step + 1} of {labels.length}
@@ -327,7 +327,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
           </div>
           <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-black/[0.06]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-600 transition-all duration-300"
+              className="h-full rounded-full bg-[#07152e] transition-all duration-300"
               style={{ width: `${((step + 1) / labels.length) * 100}%` }}
             />
           </div>
@@ -340,9 +340,9 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
                 disabled={i > step}
                 className={cn(
                   "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
-                  i === step && "bg-gold-500/10 text-gold-700",
+                  i === step && "bg-[#07152e] text-white",
                   i < step && "text-slate-500 hover:bg-black/[0.04] hover:text-slate-800",
-                  i > step && "cursor-default text-slate-300",
+                  i > step && "cursor-default text-slate-400",
                 )}
               >
                 {i < step ? "✓ " : ""}
@@ -587,7 +587,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
 
       {/* ── Live summary rail ── */}
       <aside className="sticky top-24 hidden lg:block">
-        <div className="card p-5">
+        <div className="card rounded-[16px] p-5">
           <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
             Your request
           </p>
@@ -605,16 +605,10 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
             <SummaryRow label="KYC / KYB" value={snap.kycReadiness} />
             <SummaryRow label="Company" value={loggedInCompany ?? snap.companyName} />
           </div>
+          <div className="mt-4 border-t border-black/[0.07] pt-4">
+            <p className="text-[10.5px] leading-[1.6] text-slate-500">Human-reviewed within 24–48 hours. Introductions only; settlement remains direct.</p>
+          </div>
         </div>
-        <div className="mt-4 rounded-lg border border-leaf-500/25 bg-leaf-500/[0.06] px-4 py-3">
-          <p className="text-[12px] leading-relaxed text-leaf-800">
-            A person reviews every request. First response within 24–48 hours.
-          </p>
-        </div>
-        <p className="mt-3 px-1 text-[11px] leading-relaxed text-slate-400">
-          INRP2P never holds or moves funds. Introductions only — settlement is agreed directly
-          with the partner.
-        </p>
       </aside>
     </div>
   );

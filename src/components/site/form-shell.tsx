@@ -27,13 +27,6 @@ export function FormShell({
                 {facts.map((fact, index) => <span key={fact}><strong>0{index + 1}</strong>{fact}</span>)}
               </div>
             </div>
-            <aside className="fin-form-assurance" aria-label="What happens next">
-              <small>What happens next</small>
-              <div><i>1</i><span><strong>Submit</strong><em>Your information enters a private review queue.</em></span></div>
-              <div><i>2</i><span><strong>Review</strong><em>A network operator checks fit and evidence.</em></span></div>
-              <div><i>3</i><span><strong>Decision</strong><em>You receive a direct response, never a public listing.</em></span></div>
-              <p>No custody · No automatic approval</p>
-            </aside>
           </header>
           <div className="fin-form-body">{children}</div>
         </div>
