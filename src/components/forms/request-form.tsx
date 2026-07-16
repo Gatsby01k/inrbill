@@ -29,10 +29,6 @@ const REQUEST_TYPE_CHOICES = [
   { value: "OTHER", label: "Other", hint: "Describe it in the notes below" },
 ];
 
-const REQUEST_TYPE_LABELS: Record<string, string> = Object.fromEntries(
-  REQUEST_TYPE_CHOICES.map((c) => [c.value, c.label]),
-);
-
 /** Field names validated on each step. */
 function stepFields(loggedIn: boolean): string[][] {
   const steps = [
@@ -104,73 +100,12 @@ function Select({
   );
 }
 
-type Snap = {
-  requestType: string;
-  dailyVolumeBand: string;
-  monthlyVolumeBand: string;
-  requiredSpeed: string;
-  jurisdiction: string;
-  kycReadiness: string;
-  companyName: string;
-  banks: number;
-  methods: number;
-};
-
-const EMPTY_SNAP: Snap = {
-  requestType: "",
-  dailyVolumeBand: "",
-  monthlyVolumeBand: "",
-  requiredSpeed: "",
-  jurisdiction: "",
-  kycReadiness: "",
-  companyName: "",
-  banks: 0,
-  methods: 0,
-};
-
-function readSnap(fd: FormData): Snap {
-  const s = (k: string) => {
-    const v = fd.get(k);
-    return typeof v === "string" ? v.trim() : "";
-  };
-  return {
-    requestType: s("requestType"),
-    dailyVolumeBand: s("dailyVolumeBand"),
-    monthlyVolumeBand: s("monthlyVolumeBand"),
-    requiredSpeed: s("requiredSpeed"),
-    jurisdiction: s("jurisdiction"),
-    kycReadiness: s("kycReadiness"),
-    companyName: s("companyName"),
-    banks: fd.getAll("banks").length,
-    methods: fd.getAll("methods").length,
-  };
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-black/[0.05] py-2 last:border-b-0">
-      <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "text-right text-[12.5px]",
-          value ? "font-medium text-slate-800" : "text-slate-400",
-        )}
-      >
-        {value || "—"}
-      </span>
-    </div>
-  );
-}
-
 export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
   const loggedIn = Boolean(loggedInCompany);
   const [state, formAction] = useActionState<ActionState, FormData>(submitCompanyRequest, {});
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(0);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
-  const [snap, setSnap] = useState<Snap>(EMPTY_SNAP);
   const [draftSaved, setDraftSaved] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
 
@@ -203,7 +138,6 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
     }
     const touched = applyFieldsToForm(form, { ...saved, ...prefill });
     if (touched) {
-      setSnap(readSnap(new FormData(form)));
       setDraftRestored(true);
     }
   }, []);
@@ -260,7 +194,6 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
     const form = formRef.current;
     if (!form) return;
     const fd = new FormData(form);
-    setSnap(readSnap(fd));
     if (Object.keys(localErrors).length) setLocalErrors({});
     persistDraft(fd);
   }
@@ -285,7 +218,7 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
   }
 
   return (
-    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_250px] lg:items-start">
+    <div className="fin-onboarding-flow">
       <form
         ref={formRef}
         action={formAction}
@@ -585,31 +518,6 @@ export function RequestForm({ loggedInCompany }: { loggedInCompany?: string }) {
         </div>
       </form>
 
-      {/* ── Live summary rail ── */}
-      <aside className="sticky top-24 hidden lg:block">
-        <div className="card rounded-[16px] p-5">
-          <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Your request
-          </p>
-          <div className="mt-3">
-            <SummaryRow
-              label="Request type"
-              value={snap.requestType ? (REQUEST_TYPE_LABELS[snap.requestType] ?? snap.requestType) : ""}
-            />
-            <SummaryRow label="Daily" value={snap.dailyVolumeBand} />
-            <SummaryRow label="Monthly" value={snap.monthlyVolumeBand} />
-            <SummaryRow label="Speed" value={snap.requiredSpeed} />
-            <SummaryRow label="Banks" value={snap.banks ? `${snap.banks} selected` : ""} />
-            <SummaryRow label="Methods" value={snap.methods ? `${snap.methods} selected` : ""} />
-            <SummaryRow label="Jurisdiction" value={snap.jurisdiction} />
-            <SummaryRow label="KYC / KYB" value={snap.kycReadiness} />
-            <SummaryRow label="Company" value={loggedInCompany ?? snap.companyName} />
-          </div>
-          <div className="mt-4 border-t border-black/[0.07] pt-4">
-            <p className="text-[10.5px] leading-[1.6] text-slate-500">Human-reviewed within 24–48 hours. Introductions only; settlement remains direct.</p>
-          </div>
-        </div>
-      </aside>
     </div>
   );
 }

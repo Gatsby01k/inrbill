@@ -552,6 +552,32 @@
 }
 
 @layer components {
+  .fin-intake-page { @apply grid min-h-screen bg-[#f5f1ea] lg:grid-cols-[380px_minmax(0,1fr)]; }
+  .fin-intake-sidebar { @apply relative isolate overflow-hidden bg-[#07152e] px-10 py-9 text-white lg:sticky lg:top-0 lg:h-screen; }
+  .fin-intake-sidebar::before { content:""; @apply pointer-events-none absolute -bottom-44 -left-40 -z-10 h-[520px] w-[520px] rounded-full border border-[#e99425]/20; box-shadow:0 0 0 72px rgba(233,148,37,.035),0 0 0 144px rgba(233,148,37,.02); }
+  .fin-intake-brand { @apply flex items-center gap-3; }
+  .fin-intake-copy { @apply mt-24; }
+  .fin-intake-copy .fin-kicker { @apply text-[#e9a03b]; }
+  .fin-intake-copy h1 { @apply mt-7 font-display text-[43px] font-medium leading-[.98] tracking-[-.045em]; }
+  .fin-intake-copy > p:last-of-type { @apply mt-6 text-[12px] leading-6 text-slate-400; }
+  .fin-intake-facts { @apply mt-10 border-y border-white/10; }
+  .fin-intake-facts span { @apply grid grid-cols-[28px_1fr] items-center gap-3 border-b border-white/10 py-4 text-[8px] font-semibold uppercase tracking-[.12em] text-slate-400 last:border-b-0; }
+  .fin-intake-facts strong { @apply font-mono text-[7px] text-[#e99a2e]; }
+  .fin-intake-sidebar-foot { @apply absolute bottom-9 left-10 right-10 border-t border-white/10 pt-5; }
+  .fin-intake-sidebar-foot p { @apply text-[7px] font-semibold uppercase tracking-[.14em] text-slate-500; }
+  .fin-intake-sidebar-foot a { @apply mt-3 inline-block text-[10px] font-medium text-slate-400 transition-colors hover:text-white; }
+  .fin-intake-workspace { @apply min-w-0; }
+  .fin-intake-topbar { @apply flex h-[72px] items-center justify-between border-b border-[#07152e]/10 bg-[#faf7f2]/90 px-8 backdrop-blur-xl; }
+  .fin-intake-topbar > a { @apply text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500 transition-colors hover:text-[#07152e]; }
+  .fin-intake-topbar > span { @apply flex items-center gap-2 text-[8px] font-semibold uppercase tracking-[.13em] text-slate-500; }
+  .fin-intake-topbar i { @apply h-1.5 w-1.5 rounded-full bg-emerald-500; box-shadow:0 0 0 5px rgba(16,185,129,.08); }
+  .fin-intake-container { @apply mx-auto px-6 pb-20 pt-10 sm:px-10 lg:pt-12; }
+  .fin-intake-workspace .fin-form-body { @apply mt-0; }
+  .fin-onboarding-flow { @apply min-w-0; }
+  .fin-step-heading { @apply mb-3 flex items-center justify-between gap-4 px-1; }
+  .fin-step-heading span { @apply text-[8px] font-semibold uppercase tracking-[.13em] text-slate-500; }
+  .fin-step-heading strong { @apply text-[10px] font-medium text-slate-500; }
+
   .fin-form-page { @apply relative isolate overflow-hidden pb-24 pt-[132px]; background:radial-gradient(circle at 8% 8%,rgba(255,255,255,.92),transparent 28%),linear-gradient(118deg,#faf7f2,#f2eadf); }
   .fin-form-page::before { content:""; @apply pointer-events-none absolute -right-56 -top-48 -z-10 h-[680px] w-[680px] rounded-full border border-[#d9901c]/10; box-shadow:0 0 0 82px rgba(217,144,28,.022),0 0 0 164px rgba(217,144,28,.015); }
   .fin-form-container { @apply relative z-10 mx-auto px-4 sm:px-6; }
@@ -629,6 +655,14 @@
 }
 
 @media (max-width:1023px) {
+  .fin-intake-sidebar { height: auto; padding: 28px 32px 30px; }
+  .fin-intake-copy { margin-top: 50px; }
+  .fin-intake-copy h1 { max-width: 680px; font-size: 40px; }
+  .fin-intake-copy > p:last-of-type { max-width: 680px; }
+  .fin-intake-facts { display: grid; grid-template-columns: repeat(3,1fr); }
+  .fin-intake-facts span { border-right: 1px solid rgba(255,255,255,.1); border-bottom: 0; padding-right: 14px; }
+  .fin-intake-facts span:last-child { border-right: 0; }
+  .fin-intake-sidebar-foot { position: static; margin-top: 30px; }
   .fin-auth-page { padding-inline: 18px; }
   .fin-auth-stage { min-height: calc(100vh - 112px); max-width: 720px; }
   .fin-auth-trust { display: none; }
@@ -636,6 +670,15 @@
 }
 
 @media (max-width:639px) {
+  .fin-intake-sidebar { padding: 24px 22px 26px; }
+  .fin-intake-copy { margin-top: 38px; }
+  .fin-intake-copy h1 { font-size: 34px; }
+  .fin-intake-copy > p:last-of-type { margin-top: 18px; }
+  .fin-intake-facts { grid-template-columns: 1fr; margin-top: 28px; }
+  .fin-intake-facts span { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .fin-intake-topbar { height: 62px; padding-inline: 20px; }
+  .fin-intake-container { padding: 28px 16px 60px; }
+  .fin-step-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
   .fin-form-page { padding-top: 104px; }
   .fin-form-header { gap: 28px; }
   .fin-form-intro { padding-block: 0; }

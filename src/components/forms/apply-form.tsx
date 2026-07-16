@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitPartnerApplication } from "@/app/actions/public";
-import { SlidingIndicator } from "@/components/motion";
 import { SubmitButton } from "@/components/submit-button";
 import { TurnstileField } from "@/components/forms/turnstile-field";
 import {
@@ -150,7 +149,6 @@ export function ApplyForm() {
   const [draftRestored, setDraftRestored] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
   const stepRef0 = useRef<HTMLDivElement>(null);
   const stepRef1 = useRef<HTMLDivElement>(null);
   const stepRef2 = useRef<HTMLDivElement>(null);
@@ -260,12 +258,6 @@ export function ApplyForm() {
     EMAIL_RE.test(snap.email),
   ];
 
-  const checklist = [
-    { label: "Desk identified", done: stepValid[0] },
-    { label: "Coverage & capacity declared", done: stepValid[1] },
-    { label: "Compliance signals added", done: snap.complianceFlags.length > 0 },
-  ];
-
   function goToStep(i: number) {
     if (i > maxStep) return;
     setStep(i);
@@ -283,32 +275,27 @@ export function ApplyForm() {
   }
 
   return (
-    <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-start">
-      <div className="min-w-0">
+    <div className="fin-onboarding-flow">
+      <div className="fin-step-heading">
+        <span>Partner application · Step {step + 1} of {STEPS.length}</span>
+        <strong>{STEPS[step].eta}</strong>
+      </div>
         {/* Step tabs */}
         <div
-          ref={tabsRef}
-          className="relative mb-5 flex gap-1 rounded-[14px] border border-[#07152e]/10 bg-white p-1.5 shadow-[0_14px_36px_-32px_rgba(7,21,46,.45)]"
+          className="mb-5 grid grid-cols-4 gap-1 rounded-[14px] border border-[#07152e]/10 bg-white p-1.5 shadow-[0_14px_36px_-32px_rgba(7,21,46,.45)]"
         >
-          <SlidingIndicator
-            containerRef={tabsRef}
-            activeSelector={String(step)}
-            axis="horizontal"
-            className="rounded-[10px] border border-[#07152e] bg-[#07152e] shadow-[0_8px_18px_-12px_rgba(7,21,46,.7)]"
-          />
           {STEPS.map((s, i) => (
             <button
               key={s.title}
               type="button"
-              data-active={step === i ? "true" : undefined}
               onClick={() => goToStep(i)}
               disabled={i > maxStep}
               className={cn(
-                "relative z-[1] flex flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-[11px] font-semibold leading-tight transition-colors",
+                "flex min-h-[44px] items-center justify-center rounded-[10px] px-2 py-2.5 text-center text-[10px] font-semibold leading-tight transition-colors",
                 step === i
-                  ? "text-white"
+                  ? "bg-[#07152e] text-white shadow-[0_8px_18px_-12px_rgba(7,21,46,.7)]"
                   : i <= maxStep
-                    ? "text-slate-500 hover:text-slate-800"
+                    ? "text-slate-600 hover:bg-black/[0.035] hover:text-slate-900"
                     : "cursor-not-allowed text-slate-400",
               )}
             >
@@ -532,42 +519,11 @@ export function ApplyForm() {
             </div>
           </div>
         </form>
-      </div>
-
-      {/* Rail */}
-      <aside className="xl:sticky xl:top-28 xl:self-start">
-        <div className="card rounded-[16px] p-5">
-          <p className="text-[8px] font-semibold uppercase tracking-[.14em] text-gold-700">Application progress</p>
-          <p className="mt-2 text-[12px] font-semibold text-slate-700">{STEPS[step].eta}</p>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-gold-500 to-leaf-500 transition-[width] duration-500 ease-out"
-              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            {checklist.map((c) => (
-              <li key={c.label} className="flex items-center gap-2.5 text-[12px]">
-                <span
-                  className={cn(
-                    "flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full border text-[9px] transition-colors duration-300",
-                    c.done ? "border-leaf-500 bg-leaf-500 text-white" : "border-black/15 text-transparent",
-                  )}
-                >
-                  ✓
-                </span>
-                <span className={c.done ? "font-medium text-slate-800" : "text-slate-500"}>{c.label}</span>
-              </li>
-            ))}
-          </ul>
-          {draftRestored || draftSaved ? (
-            <p className="mt-4 border-t border-black/[0.06] pt-3 text-[10px] text-slate-400">
-              {draftRestored && !draftSaved ? "Draft restored from this device" : "Draft saved on this device"}
-            </p>
-          ) : null}
-          <p className="mt-4 border-t border-black/[0.06] pt-3 text-[10px] leading-4 text-slate-400">Manual review · Private profile · No public listing</p>
-        </div>
-      </aside>
+      {draftRestored || draftSaved ? (
+        <p className="mt-4 text-[10px] text-slate-400">
+          {draftRestored && !draftSaved ? "Draft restored from this device" : "Draft saved on this device"}
+        </p>
+      ) : null}
     </div>
   );
 }
