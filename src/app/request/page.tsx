@@ -21,6 +21,7 @@ export default async function RequestPage() {
       eyebrow="Company request"
       title="Request an INR liquidity partner."
       sub="Four short steps, about three minutes. A person reviews every request within 24–48 hours and, if the network has a verified partner that fits, introduces you directly."
+      facts={["~3 minute intake", "24–48h first response", "Direct introduction"]}
     >
       <RequestForm loggedInCompany={loggedInCompany} />
     </FormShell>

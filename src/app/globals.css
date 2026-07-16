@@ -552,30 +552,71 @@
 }
 
 @layer components {
-  .fin-form-page { @apply relative isolate overflow-hidden pb-24 pt-[132px]; background:radial-gradient(circle at 87% 5%,rgba(239,148,18,.15),transparent 26%),linear-gradient(118deg,#fbf8f3,#f4ecdf); }
-  .fin-form-page::before { content:""; @apply pointer-events-none absolute -right-40 top-0 -z-10 h-[720px] w-[720px] rounded-full border border-[#d9901c]/15; box-shadow:0 0 0 70px rgba(217,144,28,.035),0 0 0 140px rgba(217,144,28,.025); }
+  .fin-form-page { @apply relative isolate overflow-hidden pb-24 pt-[132px]; background:radial-gradient(circle at 8% 8%,rgba(255,255,255,.92),transparent 28%),linear-gradient(118deg,#faf7f2,#f2eadf); }
+  .fin-form-page::before { content:""; @apply pointer-events-none absolute -right-56 -top-48 -z-10 h-[680px] w-[680px] rounded-full border border-[#d9901c]/10; box-shadow:0 0 0 82px rgba(217,144,28,.022),0 0 0 164px rgba(217,144,28,.015); }
   .fin-form-container { @apply relative z-10 mx-auto px-4 sm:px-6; }
-  .fin-form-header { @apply grid gap-10 border-b border-[#07152e]/10 pb-10 lg:grid-cols-[1fr_.7fr] lg:items-end; }
-  .fin-form-header h1 { @apply mt-6 max-w-2xl font-display text-[42px] font-medium leading-none tracking-[-.04em] text-[#07152e] sm:text-[54px]; }
-  .fin-form-header > div:first-child > p:last-child { @apply mt-5 max-w-xl text-[13px] leading-6 text-[#667287]; }
-  .fin-form-assurance { @apply grid gap-3 border-l border-[#07152e]/10 pl-6; }
-  .fin-form-assurance span { @apply flex items-center gap-4 text-[10px] font-semibold uppercase tracking-[.11em] text-[#667287]; } .fin-form-assurance strong { @apply font-mono text-[9px] text-[#d77d0b]; }
-  .fin-form-body { @apply mt-10; } .fin-form-body > .card,.fin-form-body form.card { box-shadow:0 30px 80px -48px rgba(7,21,46,.34); }
+  .fin-form-header { @apply grid gap-12 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch; }
+  .fin-form-intro { @apply py-4 lg:py-8; }
+  .fin-form-header h1 { @apply mt-7 max-w-[760px] font-display text-[44px] font-medium leading-[.96] tracking-[-.045em] text-[#07152e] sm:text-[58px]; }
+  .fin-form-intro > p:last-of-type { @apply mt-6 max-w-[700px] text-[13px] leading-6 text-[#667287]; }
+  .fin-form-facts { @apply mt-9 flex flex-wrap gap-x-7 gap-y-3 border-y border-[#07152e]/10 py-4; }
+  .fin-form-facts span { @apply flex items-center gap-2.5 text-[9px] font-semibold uppercase tracking-[.1em] text-[#687487]; }
+  .fin-form-facts strong { @apply font-mono text-[7px] text-[#cf760a]; }
+  .fin-form-assurance { @apply rounded-[22px] bg-[#07152e] px-7 py-7 text-white; box-shadow:0 28px 65px -45px rgba(7,21,46,.78); }
+  .fin-form-assurance > small { @apply block border-b border-white/10 pb-4 text-[7px] font-semibold uppercase tracking-[.16em] text-[#e99a2e]; }
+  .fin-form-assurance > div { @apply grid grid-cols-[24px_1fr] gap-3 border-b border-white/10 py-4 last:border-b-0; }
+  .fin-form-assurance i { @apply font-mono text-[8px] not-italic text-[#e99a2e]; }
+  .fin-form-assurance span,.fin-form-assurance strong,.fin-form-assurance em { @apply block; }
+  .fin-form-assurance strong { @apply text-[11px] font-semibold; }
+  .fin-form-assurance em { @apply mt-1 text-[9px] font-normal not-italic leading-4 text-slate-500; }
+  .fin-form-assurance > p { @apply mt-5 text-[7px] font-semibold uppercase tracking-[.13em] text-slate-500; }
+  .fin-form-body { @apply mt-12; }
+  .fin-form-body > .card,.fin-form-body form.card { @apply rounded-[20px] border-[#07152e]/10; box-shadow:0 30px 80px -48px rgba(7,21,46,.34); }
+  .fin-form-page .input { @apply min-h-[48px] rounded-xl border-[#07152e]/15 px-4; }
+  .fin-form-page .btn-gold { @apply border-[#07152e] bg-none bg-[#07152e] text-white; box-shadow:0 16px 32px -23px rgba(7,21,46,.78); }
+  .fin-form-page .btn-gold:hover { @apply bg-[#10284c]; filter:none; box-shadow:0 20px 36px -23px rgba(7,21,46,.72); }
+  .fin-form-page .btn-gold::after { @apply hidden; }
 
-  .fin-auth-page { @apply grid min-h-screen bg-[#f8f3eb] lg:grid-cols-[1.05fr_.95fr]; }
-  .fin-auth-art { @apply relative hidden overflow-hidden bg-[#f3eadc] lg:block; background-image:radial-gradient(circle at 62% 30%,rgba(239,148,18,.2),transparent 30%); }
-  .fin-auth-brand { @apply absolute left-10 top-9 z-20 flex items-center gap-3; }
-  .fin-auth-medallion { @apply absolute -right-20 -top-16 h-[68%] w-[82%] opacity-90; }
-  .fin-auth-medallion .fin-hud { @apply hidden; }
-  .fin-auth-art-copy { @apply absolute bottom-14 left-10 right-10 z-20 max-w-[620px]; }
-  .fin-auth-art-copy h1 { @apply mt-6 font-display text-[56px] font-medium leading-[.96] tracking-[-.045em] text-[#07152e]; }
-  .fin-auth-art-copy > p:last-child { @apply mt-5 max-w-[500px] text-[13px] leading-6 text-[#58657a]; }
-  .fin-auth-panel { @apply flex items-center justify-center px-5 py-16 sm:px-10; }
-  .fin-auth-form { @apply w-full max-w-[420px]; }
-  .fin-auth-mobile-brand { @apply mb-16 flex items-center gap-3 lg:hidden; }
-  .fin-auth-form h2 { @apply mt-6 font-display text-[46px] font-medium leading-none tracking-[-.04em] text-[#07152e]; }
-  .fin-auth-sub { @apply mt-4 text-[13px] leading-6 text-[#687487]; } .fin-auth-fields { @apply mt-9; }
-  .fin-auth-new { @apply mt-8 border-t border-[#07152e]/10 pt-6 text-[11px] leading-5 text-[#7b8595]; } .fin-auth-new a { @apply font-semibold text-[#bd6806] hover:text-[#e58b12]; }
+  .fin-auth-page { @apply min-h-screen bg-[#f7f2ea] px-5 pb-8; background-image:radial-gradient(circle at 12% 8%,rgba(255,255,255,.96),transparent 30%),radial-gradient(circle at 88% 92%,rgba(228,138,19,.08),transparent 25%); }
+  .fin-auth-topbar { @apply mx-auto flex h-[78px] max-w-[1220px] items-center justify-between; }
+  .fin-auth-brand { @apply flex items-center gap-3; }
+  .fin-auth-back { @apply inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#687487] transition-colors hover:text-[#07152e]; }
+  .fin-auth-back span { @apply text-[#cf760a]; }
+  .fin-auth-stage { @apply relative mx-auto grid min-h-[700px] max-w-[1220px] overflow-hidden rounded-[28px] border border-[#07152e]/10 bg-white lg:grid-cols-[.82fr_1fr]; box-shadow:0 38px 110px -66px rgba(7,21,46,.5); }
+  .fin-auth-trust { @apply relative isolate overflow-hidden bg-[#07152e] px-12 py-16 text-white; }
+  .fin-auth-trust::before { content:""; @apply pointer-events-none absolute -right-32 -top-32 -z-10 h-[430px] w-[430px] rounded-full border border-[#ed971f]/25; box-shadow:0 0 0 62px rgba(237,151,31,.04),0 0 0 124px rgba(237,151,31,.025); }
+  .fin-auth-trust .fin-kicker { @apply text-[#e9a03b]; }
+  .fin-auth-trust h1 { @apply mt-16 max-w-[470px] font-display text-[48px] font-medium leading-[.98] tracking-[-.045em]; }
+  .fin-auth-trust-lede { @apply mt-7 max-w-[440px] text-[13px] leading-6 text-slate-400; }
+  .fin-auth-trust-list { @apply mt-14 border-y border-white/10; }
+  .fin-auth-trust-list > div { @apply grid grid-cols-[34px_1fr] gap-4 border-b border-white/10 py-5 last:border-b-0; }
+  .fin-auth-trust-list i { @apply pt-0.5 font-mono text-[8px] not-italic tracking-[.12em] text-[#e99a2e]; }
+  .fin-auth-trust-list strong,.fin-auth-trust-list small { @apply block; }
+  .fin-auth-trust-list strong { @apply text-[12px] font-semibold text-white; }
+  .fin-auth-trust-list small { @apply mt-1.5 text-[10px] leading-4 text-slate-500; }
+  .fin-auth-trust-foot { @apply absolute bottom-9 left-12 flex items-center gap-3 text-[8px] font-semibold uppercase tracking-[.14em] text-slate-500; }
+  .fin-auth-trust-foot > span { @apply h-1.5 w-1.5 rounded-full bg-emerald-400; box-shadow:0 0 0 5px rgba(52,211,153,.08); }
+  .fin-auth-panel { @apply flex items-center justify-center bg-[#fcfaf6] px-10 py-16; }
+  .fin-auth-form { @apply w-full max-w-[460px]; }
+  .fin-auth-form h2 { @apply mt-6 font-display text-[50px] font-medium leading-[.96] tracking-[-.045em] text-[#07152e]; }
+  .fin-auth-sub { @apply mt-5 max-w-[410px] text-[13px] leading-6 text-[#687487]; }
+  .fin-auth-fields { @apply mt-9; }
+  .fin-login-form { @apply grid gap-5; }
+  .fin-login-form .input { @apply min-h-[52px] rounded-xl border-[#07152e]/15 bg-white px-4 text-[13px]; box-shadow:0 1px 0 rgba(255,255,255,.9),0 7px 22px -20px rgba(7,21,46,.3); }
+  .fin-login-form .input:focus { @apply border-[#d57d0d]/70; box-shadow:0 0 0 3px rgba(213,125,13,.1); }
+  .fin-auth-forgot { @apply -mt-2 text-right; }
+  .fin-auth-forgot a { @apply text-[11px] font-medium text-[#8b6a3d] transition-colors hover:text-[#c87008]; }
+  .fin-auth-submit { @apply min-h-[52px] rounded-xl border border-[#07152e] bg-[#07152e] px-6 text-[12px] font-semibold text-white; box-shadow:0 18px 34px -23px rgba(7,21,46,.8); }
+  .fin-auth-submit:hover { @apply bg-[#10284c]; transform:translateY(-1px); box-shadow:0 23px 38px -24px rgba(7,21,46,.75); }
+  .fin-auth-submit span { @apply ml-auto; }
+  .fin-auth-entry-paths { @apply mt-9 grid grid-cols-2 gap-3 border-t border-[#07152e]/10 pt-7; }
+  .fin-auth-entry-paths > a { @apply flex min-h-[92px] items-center justify-between gap-3 rounded-xl border border-[#07152e]/10 bg-white px-4 py-3.5 text-[#07152e] transition-all hover:-translate-y-0.5 hover:border-[#d17a0c]/35; box-shadow:0 14px 36px -31px rgba(7,21,46,.45); }
+  .fin-auth-entry-paths small,.fin-auth-entry-paths strong { @apply block; }
+  .fin-auth-entry-paths small { @apply text-[7px] font-semibold uppercase tracking-[.13em] text-[#929aa7]; }
+  .fin-auth-entry-paths strong { @apply mt-2 text-[11px] font-semibold leading-4; }
+  .fin-auth-entry-paths i { @apply text-[15px] not-italic text-[#d27b0d]; }
+  .fin-auth-support { @apply mt-6 text-center text-[10px] text-[#8992a0]; }
+  .fin-auth-support a { @apply font-semibold text-[#8b6a3d] hover:text-[#c87008]; }
 
   .fin-legal-page { @apply bg-[#f8f3eb] pb-24 pt-[140px]; background-image:radial-gradient(circle at 85% 0%,rgba(242,157,37,.12),transparent 24%); }
   .fin-legal-container { @apply mx-auto max-w-4xl px-4 sm:px-6; }
@@ -585,7 +626,31 @@
   .fin-legal-links { @apply mt-9 flex flex-wrap gap-x-6 gap-y-3; } .fin-legal-links a { @apply text-[10px] font-semibold uppercase tracking-[.11em] text-[#6e798b] transition-colors hover:text-[#c66f08]; }
 }
 
-@media (max-width:639px) { .fin-form-page { padding-top:112px; } }
+@media (max-width:1023px) {
+  .fin-auth-page { padding-inline: 18px; }
+  .fin-auth-stage { min-height: calc(100vh - 112px); max-width: 720px; }
+  .fin-auth-trust { display: none; }
+  .fin-auth-panel { min-height: calc(100vh - 112px); }
+  .fin-form-assurance { max-width: 620px; }
+}
+
+@media (max-width:639px) {
+  .fin-form-page { padding-top: 104px; }
+  .fin-form-header { gap: 28px; }
+  .fin-form-intro { padding-block: 0; }
+  .fin-form-header h1 { font-size: 42px; }
+  .fin-form-facts { display: grid; grid-template-columns: 1fr; }
+  .fin-form-assurance { border-radius: 18px; padding: 22px; }
+  .fin-form-body { margin-top: 32px; }
+  .fin-auth-page { padding: 0 14px 14px; }
+  .fin-auth-topbar { height: 66px; }
+  .fin-auth-back { font-size: 8px; }
+  .fin-auth-stage { min-height: calc(100vh - 80px); border-radius: 20px; }
+  .fin-auth-panel { min-height: calc(100vh - 80px); padding: 44px 22px; }
+  .fin-auth-form h2 { font-size: 42px; }
+  .fin-auth-entry-paths { grid-template-columns: 1fr; }
+  .fin-auth-entry-paths > a { min-height: 76px; }
+}
 
 /* ─────────────────────────────────────────────────────────────
    INRP2P V3 — cinematic private-fintech experience

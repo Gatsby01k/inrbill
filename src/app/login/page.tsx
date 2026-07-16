@@ -20,9 +20,19 @@ export default async function LoginPage({
   const { next } = await searchParams;
 
   return (
-    <AuthFrame eyebrow="Secure workspace" title="Welcome back." sub="Sign in as network operations, a company or a liquidity partner.">
+    <AuthFrame eyebrow="Member access" title="Open your workspace." sub="For approved companies, liquidity partners and network operations.">
       <LoginForm next={next} />
-      <p className="fin-auth-new">New to the network? <Link href="/request">Request access</Link> or <Link href="/apply">apply as a partner</Link>.</p>
+      <div className="fin-auth-entry-paths" aria-label="New applicant options">
+        <Link href="/request">
+          <span><small>For companies</small><strong>Request company access</strong></span>
+          <i aria-hidden>→</i>
+        </Link>
+        <Link href="/apply">
+          <span><small>For liquidity desks</small><strong>Apply as a partner</strong></span>
+          <i aria-hidden>→</i>
+        </Link>
+      </div>
+      <p className="fin-auth-support">Access problem? <a href="mailto:info@inrp2p.com">Contact network operations</a>.</p>
     </AuthFrame>
   );
 }
