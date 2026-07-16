@@ -63,34 +63,89 @@ const stages = [
   },
 ] as const;
 
+const launchStages = [
+  ["01", "Review", "Counterparty evidence"],
+  ["02", "Signal", "Current capacity"],
+  ["03", "Route", "Explainable match"],
+  ["04", "Introduce", "Controlled release"],
+] as const;
+
 export function LiquidityOrbit() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [activeStage, setActiveStage] = useState(0);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    const hero = root.closest<HTMLElement>(".v3-hero");
+    if (!hero) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    const desktop = window.matchMedia("(min-width: 1024px) and (min-height: 820px)").matches;
+    if (reduced || !desktop) {
+      root.style.setProperty("--wheel-rotation", "0deg");
+      root.style.setProperty("--wheel-scale", "1");
+      root.style.setProperty("--wheel-lift", "0px");
+      return;
+    }
 
-    const onPointerMove = (event: PointerEvent) => {
-      const rect = root.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-      const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
-      root.style.setProperty("--orbit-x", `${(x - 0.5) * 18}px`);
-      root.style.setProperty("--orbit-y", `${(y - 0.5) * 18}px`);
-      root.style.setProperty("--shine-x", `${x * 100}%`);
-      root.style.setProperty("--shine-y", `${y * 100}%`);
-    };
-    const reset = () => {
-      root.style.setProperty("--orbit-x", "0px");
-      root.style.setProperty("--orbit-y", "0px");
+    let target = 0;
+    let current = 0;
+    let frame = 0;
+    let lastStage = 0;
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const measure = () => {
+      const rect = hero.getBoundingClientRect();
+      const travel = Math.max(1, hero.offsetHeight - window.innerHeight);
+      target = clamp(-rect.top / travel);
+      if (!frame) frame = window.requestAnimationFrame(render);
     };
 
-    root.addEventListener("pointermove", onPointerMove);
-    root.addEventListener("pointerleave", reset);
+    const render = () => {
+      current += (target - current) * 0.115;
+      if (Math.abs(target - current) < 0.0005) current = target;
+
+      // A short backwards wind-up, then a two-turn inertial release and a
+      // damped mechanical stop. The scroll controls the energy, not the cursor.
+      const windupPhase = clamp(current / 0.09);
+      const windup = current < 0.09 ? -9 * Math.sin(windupPhase * Math.PI) : 0;
+      const release = clamp((current - 0.065) / 0.81);
+      const eased = 1 - Math.pow(1 - release, 3.2);
+      const damping = Math.sin(release * Math.PI * 5) * (1 - release) * 12;
+      const rotation = windup + eased * 720 + damping;
+      const scale = 1 - eased * 0.038 + Math.sin(release * Math.PI) * 0.012;
+      const lift = -eased * 18;
+
+      root.style.setProperty("--wheel-rotation", `${rotation.toFixed(3)}deg`);
+      root.style.setProperty("--wheel-scale", scale.toFixed(4));
+      root.style.setProperty("--wheel-lift", `${lift.toFixed(2)}px`);
+      root.style.setProperty("--halo-a", `${(-13 - rotation * 0.12).toFixed(3)}deg`);
+      root.style.setProperty("--halo-b", `${(18 + rotation * 0.08).toFixed(3)}deg`);
+      root.style.setProperty("--launch-progress", eased.toFixed(4));
+      root.dataset.launched = current > 0.075 ? "true" : "false";
+
+      const stage = current < 0.24 ? 0 : current < 0.48 ? 1 : current < 0.73 ? 2 : 3;
+      if (stage !== lastStage) {
+        lastStage = stage;
+        root.dataset.stage = String(stage);
+        setActiveStage(stage);
+      }
+
+      if (Math.abs(target - current) > 0.0005) {
+        frame = window.requestAnimationFrame(render);
+      } else {
+        frame = 0;
+      }
+    };
+
+    measure();
+    root.dataset.stage = "0";
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
     return () => {
-      root.removeEventListener("pointermove", onPointerMove);
-      root.removeEventListener("pointerleave", reset);
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+      window.cancelAnimationFrame(frame);
     };
   }, []);
 
@@ -109,19 +164,25 @@ export function LiquidityOrbit() {
           sizes="(max-width: 1024px) 92vw, 54vw"
         />
       </div>
-      <div className="v3-orbit-shine" aria-hidden="true" />
 
-      <div className="v3-orbit-chip v3-orbit-chip-a">
-        <span className="v3-chip-index">01</span>
-        <span><small>Counterparty</small><strong>Human reviewed</strong></span>
+      <div className="v3-launch-status" aria-hidden="true">
+        <span className="v3-launch-status-mark"><BrandMark size={20} /></span>
+        <span>
+          <small>{launchStages[activeStage][0]} / Review wheel</small>
+          <strong>{launchStages[activeStage][1]}</strong>
+          <em>{launchStages[activeStage][2]}</em>
+        </span>
       </div>
-      <div className="v3-orbit-chip v3-orbit-chip-b">
-        <span className="v3-live-dot" />
-        <span><small>Capacity</small><strong>Current signal</strong></span>
-      </div>
-      <div className="v3-orbit-chip v3-orbit-chip-c">
-        <BrandMark size={19} />
-        <span><small>Introduction</small><strong>Controlled release</strong></span>
+
+      <div className="v3-launch-sequence" aria-hidden="true">
+        <p><span /> Scroll to launch</p>
+        <div className="v3-launch-track">
+          {launchStages.map(([code, title], index) => (
+            <div key={code} className={index < activeStage ? "is-complete" : index === activeStage ? "is-active" : undefined}>
+              <i /><span>{code}</span><strong>{title}</strong>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
