@@ -92,6 +92,7 @@ export function LiquidityOrbit() {
     let current = 0;
     let frame = 0;
     let lastStage = 0;
+    let previousRotation = 0;
 
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
     const measure = () => {
@@ -115,14 +116,27 @@ export function LiquidityOrbit() {
       const rotation = windup + eased * 720 + damping;
       const scale = 1 - eased * 0.038 + Math.sin(release * Math.PI) * 0.012;
       const lift = -eased * 18;
+      const angularVelocity = rotation - previousRotation;
+      previousRotation = rotation;
+      const speed = clamp(Math.abs(angularVelocity) / 12);
+      const needle = -speed * 11 + Math.sin((rotation * Math.PI) / 18) * speed * 7;
+      const tiltX = 1.8 - eased * 3.2 + Math.sin(release * Math.PI) * 1.2;
+      const tiltY = -Math.sin(release * Math.PI) * 5.5;
+      const sheen = 50 + Math.sin((rotation * Math.PI) / 180) * 24;
 
       root.style.setProperty("--wheel-rotation", `${rotation.toFixed(3)}deg`);
       root.style.setProperty("--wheel-scale", scale.toFixed(4));
       root.style.setProperty("--wheel-lift", `${lift.toFixed(2)}px`);
+      root.style.setProperty("--wheel-tilt-x", `${tiltX.toFixed(3)}deg`);
+      root.style.setProperty("--wheel-tilt-y", `${tiltY.toFixed(3)}deg`);
+      root.style.setProperty("--needle-angle", `${needle.toFixed(3)}deg`);
+      root.style.setProperty("--shadow-scale", (1 - eased * 0.055).toFixed(4));
+      root.style.setProperty("--sheen-x", `${sheen.toFixed(2)}%`);
       root.style.setProperty("--halo-a", `${(-13 - rotation * 0.12).toFixed(3)}deg`);
       root.style.setProperty("--halo-b", `${(18 + rotation * 0.08).toFixed(3)}deg`);
       root.style.setProperty("--launch-progress", eased.toFixed(4));
       root.dataset.launched = current > 0.075 ? "true" : "false";
+      root.dataset.locked = current > 0.975 ? "true" : "false";
 
       const stage = current < 0.24 ? 0 : current < 0.48 ? 1 : current < 0.73 ? 2 : 3;
       if (stage !== lastStage) {
@@ -155,15 +169,21 @@ export function LiquidityOrbit() {
       <div className="v3-orbit-halo v3-orbit-halo-b" aria-hidden="true" />
       <div className="v3-orbit-rail v3-orbit-rail-a" aria-hidden="true"><i /><i /><i /></div>
       <div className="v3-orbit-rail v3-orbit-rail-b" aria-hidden="true"><i /><i /></div>
-      <div className="v3-medallion-image" aria-hidden="true">
-        <Image
-          src="/brand/inrp2p-medallion.jpeg"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 1024px) 92vw, 54vw"
-        />
+
+      <div className="v3-wheel-shadow" aria-hidden="true" />
+      <div className="v3-wheel-gyro v3-wheel-gyro-a" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="v3-wheel-gyro v3-wheel-gyro-b" aria-hidden="true"><i /><i /><i /></div>
+      <div className="v3-wheel-assembly" aria-hidden="true">
+        <div className="v3-wheel-depth">
+          <Image src="/brand/inrp2p-wheel-transparent.webp" alt="" fill priority sizes="(max-width: 1024px) 92vw, 54vw" />
+        </div>
+        <div className="v3-medallion-image">
+          <Image src="/brand/inrp2p-wheel-transparent.webp" alt="" fill priority sizes="(max-width: 1024px) 92vw, 54vw" />
+        </div>
+        <div className="v3-wheel-sheen" />
       </div>
+      <div className="v3-wheel-pointer" aria-hidden="true"><span /><i /></div>
+      <div className="v3-wheel-lock" aria-hidden="true"><i /> Route locked</div>
 
       <div className="v3-launch-status" aria-hidden="true">
         <span className="v3-launch-status-mark"><BrandMark size={20} /></span>
