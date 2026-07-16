@@ -10,18 +10,18 @@ import type { ActionState } from "@/lib/schemas";
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<ActionState, FormData>(login, {});
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="fin-login-form">
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <Field label="Email">
-        <input name="email" type="email" className="input" placeholder="you@company.com" autoComplete="email" />
+        <input name="email" type="email" className="input" placeholder="name@company.com" autoComplete="email" autoFocus required spellCheck={false} />
       </Field>
       <Field label="Password">
-        <input name="password" type="password" className="input" placeholder="••••••••••" autoComplete="current-password" />
+        <input name="password" type="password" className="input" placeholder="Enter your password" autoComplete="current-password" required />
       </Field>
-      <div className="-mt-2 text-right"><Link href="/forgot-password" className="text-xs text-gold-700 hover:underline">Forgot password?</Link></div>
+      <div className="fin-auth-forgot"><Link href="/forgot-password">Forgot password?</Link></div>
       <FormError message={state.error} />
-      <SubmitButton className="btn btn-gold w-full" pendingLabel="Signing in…">
-        Sign in
+      <SubmitButton className="btn fin-auth-submit w-full" pendingLabel="Opening workspace…">
+        Open workspace <span aria-hidden>→</span>
       </SubmitButton>
     </form>
   );

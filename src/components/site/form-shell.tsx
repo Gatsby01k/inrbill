@@ -1,5 +1,5 @@
-import { SiteNav } from "./nav";
-import { SiteFooter } from "./footer";
+import Link from "next/link";
+import { BrandMark, Wordmark } from "@/components/brand";
 
 export function FormShell({
   eyebrow,
@@ -7,30 +7,41 @@ export function FormShell({
   sub,
   children,
   wide = false,
+  facts = ["Private intake", "Human review", "Controlled introduction"],
 }: {
   eyebrow: string;
   title: string;
   sub: string;
   children: React.ReactNode;
   wide?: boolean;
+  facts?: readonly string[];
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteNav />
-      <main className="fin-form-page flex-1">
-        <div className={wide ? "fin-form-container max-w-5xl" : "fin-form-container max-w-3xl"}>
-          <header className="fin-form-header">
-            <div><p className="fin-kicker"><span /> {eyebrow}</p><h1>{title}</h1><p>{sub}</p></div>
-            <div className="fin-form-assurance" aria-label="Submission assurances">
-              <span><strong>01</strong> Private intake</span>
-              <span><strong>02</strong> Human review</span>
-              <span><strong>03</strong> Controlled introduction</span>
-            </div>
-          </header>
+    <div className="fin-intake-page">
+      <aside className="fin-intake-sidebar">
+        <Link href="/" className="fin-intake-brand"><BrandMark size={30} /><Wordmark className="text-white" /></Link>
+        <div className="fin-intake-copy">
+          <p className="fin-kicker"><span /> {eyebrow}</p>
+          <h1>{title}</h1>
+          <p>{sub}</p>
+          <div className="fin-intake-facts" aria-label="Application facts">
+            {facts.map((fact, index) => <span key={fact}><strong>0{index + 1}</strong>{fact}</span>)}
+          </div>
+        </div>
+        <div className="fin-intake-sidebar-foot">
+          <p>Private submission · Human review</p>
+          <a href="mailto:info@inrp2p.com">Need help? Contact operations</a>
+        </div>
+      </aside>
+      <main className="fin-intake-workspace">
+        <header className="fin-intake-topbar">
+          <Link href="/">← Back to INRP2P</Link>
+          <span><i /> Secure intake</span>
+        </header>
+        <div className={wide ? "fin-intake-container max-w-4xl" : "fin-intake-container max-w-3xl"}>
           <div className="fin-form-body">{children}</div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }
