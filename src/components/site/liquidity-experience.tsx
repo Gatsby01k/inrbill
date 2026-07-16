@@ -80,8 +80,7 @@ export function LiquidityOrbit() {
     const hero = root.closest<HTMLElement>(".v3-hero");
     if (!hero) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const desktop = window.matchMedia("(min-width: 1024px)").matches;
-    if (reduced || !desktop) {
+    if (reduced) {
       root.style.setProperty("--wheel-rotation", "0deg");
       root.style.setProperty("--wheel-scale", "1");
       root.style.setProperty("--wheel-lift", "0px");
