@@ -4,7 +4,15 @@ type VaultConfig = { bucket: string; region: string; endpoint?: string; accessKe
 
 function config(): VaultConfig {
   const value = { bucket: process.env.EVIDENCE_S3_BUCKET, region: process.env.EVIDENCE_S3_REGION, endpoint: process.env.EVIDENCE_S3_ENDPOINT, accessKeyId: process.env.EVIDENCE_S3_ACCESS_KEY_ID, secretAccessKey: process.env.EVIDENCE_S3_SECRET_ACCESS_KEY, kmsKeyId: process.env.EVIDENCE_S3_KMS_KEY_ID };
-  if (!value.bucket || !value.region || !value.accessKeyId || !value.secretAccessKey || !value.kmsKeyId) throw new Error("Evidence vault is not configured.");
+  const required = [
+    ["EVIDENCE_S3_BUCKET", value.bucket],
+    ["EVIDENCE_S3_REGION", value.region],
+    ["EVIDENCE_S3_ACCESS_KEY_ID", value.accessKeyId],
+    ["EVIDENCE_S3_SECRET_ACCESS_KEY", value.secretAccessKey],
+    ["EVIDENCE_S3_KMS_KEY_ID", value.kmsKeyId],
+  ] as const;
+  const missing = required.filter(([, item]) => !item?.trim()).map(([name]) => name);
+  if (missing.length > 0) throw new Error(`Evidence vault is not configured. Missing: ${missing.join(", ")}.`);
   return value as VaultConfig;
 }
 
