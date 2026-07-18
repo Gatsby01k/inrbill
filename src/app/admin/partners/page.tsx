@@ -13,17 +13,15 @@ export const metadata: Metadata = { title: "Partners" };
 export default async function AdminPartnersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; ai?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
-  const { status, q, ai } = await searchParams;
+  const { status, q } = await searchParams;
   const statusFilter = (PARTNER_STATUSES as readonly string[]).includes(status ?? "")
     ? (status as PartnerStatus)
     : undefined;
-  const aiFlaggedFilter = ai === "flagged";
 
   const where: Prisma.PartnerProfileWhereInput = {
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(aiFlaggedFilter ? { aiFlagged: true } : {}),
     ...(q
       ? {
           OR: [
@@ -63,16 +61,6 @@ export default async function AdminPartnersPage({
             {statusLabel(s)}
           </Link>
         ))}
-        <Link
-          href={`/admin/partners?${new URLSearchParams({
-            ...(statusFilter ? { status: statusFilter } : {}),
-            ...(aiFlaggedFilter ? {} : { ai: "flagged" }),
-          }).toString()}`}
-          className={cn("pill", aiFlaggedFilter && "pill-active")}
-          title="Applications the AI vetting pipeline flagged for a second look"
-        >
-          🚩 AI flagged
-        </Link>
         <form action="/admin/partners" className="mt-1 flex w-full gap-2 sm:ml-auto sm:mt-0 sm:w-auto">
           {statusFilter ? <input type="hidden" name="status" value={statusFilter} /> : null}
           <input
@@ -92,14 +80,13 @@ export default async function AdminPartnersPage({
                 <tr>
                   <th>Ref</th>
                   <th>Partner</th>
+                  <th>Status</th>
                   <th>Directions</th>
                   <th>Daily capacity</th>
                   <th>Reserve</th>
-                  <th>Hours</th>
+                  <th>Availability</th>
                   <th>Matches</th>
                   <th>Track record</th>
-                  <th>AI</th>
-                  <th>Status</th>
                   <th>Applied</th>
                 </tr>
               </thead>
@@ -115,6 +102,9 @@ export default async function AdminPartnersPage({
                       </Link>
                     </td>
                     <td className="font-medium text-slate-800">{p.displayName}</td>
+                    <td className="whitespace-nowrap">
+                      <StatusBadge status={p.status} />
+                    </td>
                     <td className="text-xs">
                       {p.directions.map((d) => directionLabel(d)).join(", ")}
                     </td>
@@ -134,22 +124,6 @@ export default async function AdminPartnersPage({
                           }
                         }
                       />
-                    </td>
-                    <td>
-                      {p.aiFlagged === true ? (
-                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
-                          Flagged
-                        </span>
-                      ) : p.aiFlagged === false ? (
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                          Clear
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <StatusBadge status={p.status} />
                     </td>
                     <td className="whitespace-nowrap text-xs text-slate-500">
                       {fmtDate(p.createdAt)}

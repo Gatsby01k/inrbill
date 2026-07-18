@@ -11,17 +11,15 @@ export const metadata: Metadata = { title: "Requests" };
 export default async function AdminRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; ai?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
-  const { status, q, ai } = await searchParams;
+  const { status, q } = await searchParams;
   const statusFilter = (REQUEST_STATUSES as readonly string[]).includes(status ?? "")
     ? (status as RequestStatus)
     : undefined;
-  const aiFlaggedFilter = ai === "flagged";
 
   const where: Prisma.LiquidityRequestWhereInput = {
     ...(statusFilter ? { status: statusFilter } : {}),
-    ...(aiFlaggedFilter ? { aiFlagged: true } : {}),
     ...(q
       ? {
           OR: [
@@ -60,16 +58,6 @@ export default async function AdminRequestsPage({
             {statusLabel(s)}
           </Link>
         ))}
-        <Link
-          href={`/admin/requests?${new URLSearchParams({
-            ...(statusFilter ? { status: statusFilter } : {}),
-            ...(aiFlaggedFilter ? {} : { ai: "flagged" }),
-          }).toString()}`}
-          className={cn("pill", aiFlaggedFilter && "pill-active")}
-          title="Requests the AI triage pipeline flagged for a second look"
-        >
-          🚩 AI flagged
-        </Link>
         <form action="/admin/requests" className="mt-1 flex w-full gap-2 sm:ml-auto sm:mt-0 sm:w-auto">
           {statusFilter ? <input type="hidden" name="status" value={statusFilter} /> : null}
           <input
@@ -89,14 +77,13 @@ export default async function AdminRequestsPage({
                 <tr>
                   <th>Ref</th>
                   <th>Company</th>
+                  <th>Status</th>
                   <th>Type</th>
                   <th>Daily volume</th>
                   <th>Speed</th>
                   <th>Urgency</th>
                   <th>Jurisdiction</th>
                   <th>Matches</th>
-                  <th>AI</th>
-                  <th>Status</th>
                   <th>Submitted</th>
                 </tr>
               </thead>
@@ -112,6 +99,9 @@ export default async function AdminRequestsPage({
                       </Link>
                     </td>
                     <td className="font-medium text-slate-800">{r.company.companyName}</td>
+                    <td className="whitespace-nowrap">
+                      <StatusBadge status={r.status} />
+                    </td>
                     <td className="whitespace-nowrap">{requestTypeLabel(r.requestType)}</td>
                     <td className="text-xs">{r.dailyVolumeBand}</td>
                     <td className="text-xs">{r.requiredSpeed}</td>
@@ -120,22 +110,6 @@ export default async function AdminRequestsPage({
                     </td>
                     <td className="text-xs">{r.jurisdiction}</td>
                     <td className="tabular-nums">{r._count.matches}</td>
-                    <td>
-                      {r.aiFlagged === true ? (
-                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
-                          Flagged
-                        </span>
-                      ) : r.aiFlagged === false ? (
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                          Clear
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <StatusBadge status={r.status} />
-                    </td>
                     <td className="whitespace-nowrap text-xs text-slate-500">
                       {fmtDate(r.createdAt)}
                     </td>
