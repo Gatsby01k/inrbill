@@ -11,6 +11,17 @@ const KINDS = new Set(["INCORPORATION", "GST_CERTIFICATE", "PAN", "DIRECTOR_ID",
 const DOCUMENT_LIMIT = 10 * 1024 * 1024;
 const VIDEO_LIMIT = 50 * 1024 * 1024;
 
+async function ensureGuidedEvidenceKind(kind: string) {
+  // Compatibility bridge for a legacy Vercel project whose runtime database
+  // predates the guided-verification migration. Both statements are static,
+  // additive and idempotent; no user-controlled SQL is interpolated.
+  if (kind === "IDENTITY_DOCUMENT") {
+    await db.$executeRawUnsafe(`ALTER TYPE "EvidenceKind" ADD VALUE IF NOT EXISTS 'IDENTITY_DOCUMENT'`);
+  } else if (kind === "VIDEO_VERIFICATION") {
+    await db.$executeRawUnsafe(`ALTER TYPE "EvidenceKind" ADD VALUE IF NOT EXISTS 'VIDEO_VERIFICATION'`);
+  }
+}
+
 async function ownedCase(caseId: string) {
   const session = await getSession(); if (!session || !hasWorkspaceAccess(session.user)) return null;
   const item = await db.verificationCase.findUnique({ where: { id: caseId }, include: { organization: true } }); if (!item) return null;
@@ -28,7 +39,7 @@ export async function POST(req: Request) {
   if (byteSize > (isVideo ? VIDEO_LIMIT : DOCUMENT_LIMIT)) return NextResponse.json({ error: isVideo ? "Verification video must be 50 MB or smaller." : "Document must be 10 MB or smaller." }, { status: 400 });
   const access = await ownedCase(body.caseId); if (!access) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (!['IN_PROGRESS', 'NEEDS_REVIEW'].includes(access.item.status)) return NextResponse.json({ error: "This verification case no longer accepts evidence." }, { status: 409 });
-  try { const key = `verification/${body.caseId}/${createOpaqueToken(20)}`; const upload = presignEvidenceUpload(key, body.contentType); const artifact = await db.evidenceArtifact.create({ data: { verificationCaseId: body.caseId, kind: body.kind as EvidenceKind, title: body.title.slice(0, 120), storageKey: key, mimeType: body.contentType, byteSize, uploadedById: access.session.user.id } }); return NextResponse.json({ artifactId: artifact.id, uploadUrl: upload.url, headers: upload.headers }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Vault unavailable" }, { status: 503 }); }
+  try { const key = `verification/${body.caseId}/${createOpaqueToken(20)}`; const upload = presignEvidenceUpload(key, body.contentType); await ensureGuidedEvidenceKind(body.kind); const artifact = await db.evidenceArtifact.create({ data: { verificationCaseId: body.caseId, kind: body.kind as EvidenceKind, title: body.title.slice(0, 120), storageKey: key, mimeType: body.contentType, byteSize, uploadedById: access.session.user.id } }); return NextResponse.json({ artifactId: artifact.id, uploadUrl: upload.url, headers: upload.headers }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Vault unavailable" }, { status: 503 }); }
 }
 
 export async function PATCH(req: Request) {
