@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { logout } from "@/app/actions/auth";
 import { cn } from "@/lib/format";
 import type { NavItem } from "./nav-links";
@@ -43,8 +44,8 @@ export function MobileWorkspaceMenu({
         </span>
       </button>
 
-      {open ? (
-        <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label="Workspace navigation">
+      {open && typeof document !== "undefined" ? createPortal(
+        <div className="fixed inset-0 z-[80] h-[100dvh] w-screen lg:hidden" role="dialog" aria-modal="true" aria-label="Workspace navigation">
           <button className="absolute inset-0 bg-[#07152e]/35 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-label="Close workspace navigation" />
           <aside className="absolute bottom-0 right-0 top-0 flex w-[min(88vw,350px)] flex-col border-l border-black/[0.08] bg-[#F8F3EB] shadow-2xl">
             <div className="flex h-[64px] items-center justify-between border-b border-black/[0.07] px-5">
@@ -67,7 +68,8 @@ export function MobileWorkspaceMenu({
               <form action={logout}><button type="submit" className="btn btn-ghost w-full">Log out</button></form>
             </div>
           </aside>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );
