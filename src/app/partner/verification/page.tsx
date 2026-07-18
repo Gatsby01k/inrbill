@@ -1,12 +1,27 @@
 import { startVerification } from "@/app/actions/network-os";
-import { EvidenceUpload } from "@/components/workspace/evidence-upload";
-import { Flash } from "@/components/workspace/flash";
 import { EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { Flash } from "@/components/workspace/flash";
+import { PartnerEvidenceChecklist } from "@/components/workspace/partner-evidence-checklist";
 import { requireVerifiedRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
 
 export default async function PartnerVerificationPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
-  const [user, flash] = await Promise.all([requireVerifiedRole("PARTNER"), searchParams]); const item = user.partner ? await db.verificationCase.findFirst({ where: { partnerId: user.partner.id }, include: { checks: true, evidence: true }, orderBy: { createdAt: "desc" } }) : null;
-  return <><PageHeader title="Trust Passport" sub="Portable verification for private company networks. Human decisions remain visible and accountable." /><Flash {...flash} />{!item ? <div className="card p-6"><EmptyState title="Trust Passport not started" body="Start verification, then upload only the evidence requested for your operating model." /><form action={startVerification} className="mt-4 text-center"><input type="hidden" name="subject" value="partner" /><button className="btn btn-gold">Start verification</button></form></div> : <div className="space-y-5"><div className="card p-5"><div className="flex flex-wrap items-center gap-3"><span className="font-mono text-xs text-gold-700">{item.reference}</span><StatusBadge status={item.status} />{item.expiresAt ? <span className="ml-auto text-xs text-slate-400">valid to {fmtDate(item.expiresAt)}</span> : null}</div><div className="mt-5 grid gap-3 sm:grid-cols-2">{item.checks.map((check) => <div className="rounded-lg border border-black/[0.08] p-3" key={check.id}><p className="text-xs font-semibold">{check.type.replaceAll("_", " ")}</p><StatusBadge status={check.status} className="mt-2" />{check.summary ? <p className="mt-2 text-xs text-slate-500">{check.summary}</p> : null}</div>)}</div></div><div className="card p-5"><h2 className="text-sm font-semibold">Restricted evidence vault</h2><div className="mt-4"><EvidenceUpload caseId={item.id} /></div><div className="mt-5 space-y-2">{item.evidence.map((evidence) => <div className="flex items-center gap-3 rounded-lg border border-black/[0.08] p-3" key={evidence.id}><span className="text-xs font-medium">{evidence.title}</span><StatusBadge status={evidence.status} /><span className="ml-auto text-[11px] text-slate-400">{evidence.kind.replaceAll("_", " ")}</span></div>)}</div></div></div>}</>;
+  const [user, flash] = await Promise.all([requireVerifiedRole("PARTNER"), searchParams]);
+  const item = user.partner ? await db.verificationCase.findFirst({ where: { partnerId: user.partner.id }, include: { checks: true, evidence: { orderBy: { createdAt: "desc" } } }, orderBy: { createdAt: "desc" } }) : null;
+
+  return <>
+    <PageHeader title="Trust Passport" sub="Complete one private verification set for controlled introductions across the INRP2P network." />
+    <Flash {...flash} />
+    {!item ? <div className="card p-6">
+      <EmptyState title="Your verification is ready to begin" body="It takes about five minutes. Prepare an identity document, bank proof, wallet proof and a short verification video." />
+      <form action={startVerification} className="mt-4 text-center"><input type="hidden" name="subject" value="partner" /><button className="btn btn-gold">Start secure verification</button></form>
+    </div> : <div className="space-y-5">
+      <div className="card p-5">
+        <div className="flex flex-wrap items-center gap-3"><span className="font-mono text-xs text-gold-700">{item.reference}</span><StatusBadge status={item.status} />{item.expiresAt ? <span className="ml-auto text-xs text-slate-400">Valid to {fmtDate(item.expiresAt)}</span> : null}</div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{item.checks.map((check) => <div className="rounded-xl border border-black/[0.08] bg-white p-3" key={check.id}><p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{check.type.replaceAll("_", " ")}</p><div className="mt-2"><StatusBadge status={check.status} /></div>{check.summary ? <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{check.summary}</p> : null}</div>)}</div>
+      </div>
+      <div className="card p-5 sm:p-6"><PartnerEvidenceChecklist caseId={item.id} caseStatus={item.status} evidence={item.evidence.map(({ id, title, kind, status, mimeType, byteSize }) => ({ id, title, kind, status, mimeType, byteSize }))} /></div>
+    </div>}
+  </>;
 }

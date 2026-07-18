@@ -115,7 +115,18 @@ export async function reviewEvidence(fd: FormData) {
 export async function decideVerification(fd: FormData) {
   const admin = await requireRole("ADMIN"); const decision = value(fd, "decision"); const item = await db.verificationCase.findUnique({ where: { id: value(fd, "caseId") }, include: { checks: true, evidence: true, partner: true } });
   if (!item || !['approve', 'reject'].includes(decision)) fail(fd, "/admin/reviews", "Case or decision is invalid.");
-  if (decision === "approve" && (item.checks.some((check) => !['PASSED', 'REVIEW', 'WAIVED'].includes(check.status)) || !item.evidence.some((evidence) => evidence.status === "ACCEPTED"))) fail(fd, `/admin/reviews/${item.id}`, "Approval requires completed checks and at least one accepted evidence artifact.");
+  if (decision === "approve") {
+    if (item.checks.some((check) => !['PASSED', 'REVIEW', 'WAIVED'].includes(check.status))) fail(fd, `/admin/reviews/${item.id}`, "Complete every verification check before approval.");
+    const acceptedKinds = new Set(item.evidence.filter((evidence) => evidence.status === "ACCEPTED").map((evidence) => evidence.kind));
+    const partnerEvidenceComplete = [
+      item.evidence.some((evidence) => evidence.status === "ACCEPTED" && ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind)),
+      acceptedKinds.has("BANK_PROOF"),
+      acceptedKinds.has("WALLET_REPORT"),
+      acceptedKinds.has("VIDEO_VERIFICATION"),
+    ].every(Boolean);
+    if (item.partnerId && !partnerEvidenceComplete) fail(fd, `/admin/reviews/${item.id}`, "Partner approval requires accepted identity, bank, wallet and video evidence.");
+    if (!item.partnerId && acceptedKinds.size === 0) fail(fd, `/admin/reviews/${item.id}`, "Approval requires at least one accepted evidence artifact.");
+  }
   const status = decision === "approve" ? "APPROVED" : "REJECTED"; const expiresAt = decision === "approve" ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null;
   await db.$transaction(async (tx) => { await tx.verificationCase.update({ where: { id: item.id }, data: { status, decisionNote: value(fd, "note") || null, decidedById: admin.id, decidedAt: new Date(), expiresAt } }); if (item.partnerId) await tx.partnerProfile.update({ where: { id: item.partnerId }, data: decision === "approve" ? { status: "VERIFIED", tier: "VERIFIED", verifiedAt: new Date() } : { status: "REJECTED", tier: "RESTRICTED" } }); });
   await audit({ action: "verification.decided", entityType: "VerificationCase", entityId: item.id, actorId: admin.id, actorLabel: "Operator", partnerId: item.partnerId, meta: { decision, expiresAt } });
