@@ -73,13 +73,13 @@ export default async function AdminPartnersPage({
         >
           🚩 AI flagged
         </Link>
-        <form action="/admin/partners" className="ml-auto flex gap-2">
+        <form action="/admin/partners" className="mt-1 flex w-full gap-2 sm:ml-auto sm:mt-0 sm:w-auto">
           {statusFilter ? <input type="hidden" name="status" value={statusFilter} /> : null}
           <input
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search name, ref, coverage…"
-            className="input h-9 w-64 py-0"
+            className="input h-10 w-full py-0 sm:h-9 sm:w-64"
           />
         </form>
       </div>

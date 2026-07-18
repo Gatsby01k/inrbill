@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { actorLabel, requireRole, requireVerifiedRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getCompanyOrganization } from "@/lib/network";
+import { notify } from "@/lib/notify";
 import { rankCandidates } from "@/lib/routing";
 import { createReference } from "@/lib/secure-token";
 import { runProviderCheck } from "@/lib/verification-providers";
@@ -115,21 +116,34 @@ export async function reviewEvidence(fd: FormData) {
 export async function decideVerification(fd: FormData) {
   const admin = await requireRole("ADMIN"); const decision = value(fd, "decision"); const item = await db.verificationCase.findUnique({ where: { id: value(fd, "caseId") }, include: { checks: true, evidence: true, partner: true } });
   if (!item || !['approve', 'reject'].includes(decision)) fail(fd, "/admin/reviews", "Case or decision is invalid.");
+  const consolidatedReview = value(fd, "consolidatedReview") === "confirmed";
+  let reviewedEvidenceIds: string[] = [];
   if (decision === "approve") {
-    if (item.checks.some((check) => !['PASSED', 'REVIEW', 'WAIVED'].includes(check.status))) fail(fd, `/admin/reviews/${item.id}`, "Complete every verification check before approval.");
-    const acceptedKinds = new Set(item.evidence.filter((evidence) => evidence.status === "ACCEPTED").map((evidence) => evidence.kind));
-    const partnerEvidenceComplete = [
-      item.evidence.some((evidence) => evidence.status === "ACCEPTED" && ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind)),
-      acceptedKinds.has("BANK_PROOF"),
-      acceptedKinds.has("WALLET_REPORT"),
-      acceptedKinds.has("VIDEO_VERIFICATION"),
-    ].every(Boolean);
-    if (item.partnerId && !partnerEvidenceComplete) fail(fd, `/admin/reviews/${item.id}`, "Partner approval requires accepted identity, bank, wallet and video evidence.");
-    if (!item.partnerId && acceptedKinds.size === 0) fail(fd, `/admin/reviews/${item.id}`, "Approval requires at least one accepted evidence artifact.");
+    if (consolidatedReview && item.checks.some((check) => check.status === "FAILED")) fail(fd, `/admin/reviews/${item.id}`, "A failed verification check must be resolved before approval.");
+    if (!consolidatedReview && item.checks.some((check) => !['PASSED', 'REVIEW', 'WAIVED'].includes(check.status))) fail(fd, `/admin/reviews/${item.id}`, "Complete every verification check, or use the consolidated human-review confirmation.");
+    const reviewable = item.evidence.filter((evidence) => evidence.status !== "REJECTED" && evidence.status !== "EXPIRED" && !!evidence.checksumSha256);
+    const choose = (kinds: string[]) => reviewable.find((evidence) => kinds.includes(evidence.kind));
+    const required = item.partnerId ? [choose(["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"]), choose(["BANK_PROOF"]), choose(["WALLET_REPORT"]), choose(["VIDEO_VERIFICATION"])] : [reviewable[0]];
+    if (required.some((evidence) => !evidence)) fail(fd, `/admin/reviews/${item.id}`, item.partnerId ? "A completed identity, bank, wallet and video upload is required." : "At least one completed evidence upload is required.");
+    reviewedEvidenceIds = required.flatMap((evidence) => evidence ? [evidence.id] : []);
+    if (!consolidatedReview && required.some((evidence) => evidence?.status !== "ACCEPTED")) fail(fd, `/admin/reviews/${item.id}`, "Accept the required evidence, or explicitly confirm the consolidated human review below.");
   }
   const status = decision === "approve" ? "APPROVED" : "REJECTED"; const expiresAt = decision === "approve" ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null;
-  await db.$transaction(async (tx) => { await tx.verificationCase.update({ where: { id: item.id }, data: { status, decisionNote: value(fd, "note") || null, decidedById: admin.id, decidedAt: new Date(), expiresAt } }); if (item.partnerId) await tx.partnerProfile.update({ where: { id: item.partnerId }, data: decision === "approve" ? { status: "VERIFIED", tier: "VERIFIED", verifiedAt: new Date() } : { status: "REJECTED", tier: "RESTRICTED" } }); });
+  await db.$transaction(async (tx) => {
+    if (decision === "approve" && consolidatedReview) {
+      await tx.evidenceArtifact.updateMany({ where: { id: { in: reviewedEvidenceIds }, status: "PENDING" }, data: { status: "ACCEPTED", reviewedById: admin.id, reviewedAt: new Date() } });
+      await tx.verificationCheck.updateMany({ where: { verificationCaseId: item.id, status: { in: ["PENDING", "RUNNING", "REVIEW"] } }, data: { status: "WAIVED", summary: "Completed through consolidated human evidence review.", reviewedById: admin.id, reviewedAt: new Date() } });
+    }
+    await tx.verificationCase.update({ where: { id: item.id }, data: { status, decisionNote: value(fd, "note") || null, decidedById: admin.id, decidedAt: new Date(), expiresAt } });
+    if (item.partnerId) await tx.partnerProfile.update({ where: { id: item.partnerId }, data: decision === "approve" ? { status: "VERIFIED", tier: "VERIFIED", verifiedAt: new Date() } : { status: "REJECTED", tier: "RESTRICTED" } });
+  });
   await audit({ action: "verification.decided", entityType: "VerificationCase", entityId: item.id, actorId: admin.id, actorLabel: "Operator", partnerId: item.partnerId, meta: { decision, expiresAt } });
+  if (decision === "approve" && item.partner?.userId) {
+    await notify(item.partner.userId, { title: "Verification approved", body: "Your Trust Passport is approved for 12 months and your partner profile is now Verified.", telegramHtml: "✅ <b>Verification approved</b>\nYour INRP2P Trust Passport is approved for 12 months and your partner profile is now Verified.", link: "/partner/verification" });
+  }
+  revalidatePath("/partner");
+  revalidatePath("/partner/verification");
+  if (item.partnerId) revalidatePath(`/admin/partners/${item.partnerId}`);
   done(fd, `/admin/reviews/${item.id}`, `Verification ${decision === "approve" ? "approved" : "rejected"}.`);
 }
 

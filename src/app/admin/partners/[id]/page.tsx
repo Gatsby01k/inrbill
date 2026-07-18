@@ -45,6 +45,11 @@ export default async function AdminPartnerDetailPage({
       },
       notesList: { orderBy: { createdAt: "desc" } },
       documents: { orderBy: { createdAt: "desc" } },
+      verificationCases: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, reference: true, status: true, expiresAt: true },
+      },
     },
   });
   if (!partner) notFound();
@@ -273,7 +278,13 @@ export default async function AdminPartnerDetailPage({
 
           <div className="card p-5">
             <SectionTitle title="Verification status" />
-            <form action={updatePartnerStatus} className="flex items-center gap-2">
+            {partner.verificationCases[0] ? (
+              <Link href={`/admin/reviews/${partner.verificationCases[0].id}`} className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-gold-500/20 bg-gold-500/[0.045] p-3 transition-colors hover:border-gold-500/40">
+                <span className="min-w-0"><strong className="block truncate font-mono text-[11px] text-gold-700">{partner.verificationCases[0].reference}</strong><small className="mt-0.5 block text-[11px] text-slate-500">Open evidence review</small></span>
+                <StatusBadge status={partner.verificationCases[0].status} />
+              </Link>
+            ) : null}
+            <form action={updatePartnerStatus} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <input type="hidden" name="partnerId" value={partner.id} />
               <input type="hidden" name="back" value={back} />
               <select name="status" defaultValue={partner.status} className="input h-9 py-0 text-sm">
@@ -288,8 +299,7 @@ export default async function AdminPartnerDetailPage({
               </SubmitButton>
             </form>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-              Verified — full matching. Limited — matching with caveats (note them below).
-              Suspended — excluded from new matches immediately. Status changes are audited.
+              Verified requires an approved Trust Passport. Open the evidence review above to approve the case and status together. Limited and suspension remain available here for audited operational overrides.
             </p>
           </div>
 

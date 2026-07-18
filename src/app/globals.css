@@ -427,6 +427,38 @@
   }
 }
 
+/* ── Authenticated workspace: mobile-first operational UI ───── */
+.workspace-main {
+  max-width: 100%;
+  overflow-x: clip;
+  overflow-wrap: anywhere;
+}
+.workspace-main > * { min-width: 0; }
+.workspace-main .overflow-x-auto {
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.workspace-main .kv dd,
+.workspace-main td,
+.workspace-main p { overflow-wrap: anywhere; }
+
+@media (max-width: 639px) {
+  .workspace-shell .card { border-radius: 14px; }
+  .workspace-main .input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .workspace-main textarea.input { line-height: 1.45; }
+  .workspace-main .btn { min-height: 42px; }
+  .workspace-main .btn-sm { min-height: 38px; padding-inline: .8rem; }
+  .workspace-main .tbl { min-width: 660px; }
+  .workspace-main .chip { max-width: 100%; }
+  .workspace-main .empty-state { padding-inline: 1rem; }
+  .workspace-main a.card:hover,
+  .workspace-main button.card:hover,
+  .workspace-main .card[data-hoverable="true"]:hover { transform: none; }
+}
+
 /* ── Public brand system: editorial private-fintech ───────── */
 @layer components {
   .marketing-site { --ink:#07152e; --gold:#ef9412; overflow:clip; background:#f7f2ea; color:var(--ink); }

@@ -50,7 +50,7 @@ export function AiCopilot() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-1.5 rounded-full bg-gradient-to-b from-gold-400 to-gold-600 px-4 py-2.5 text-xs font-semibold text-[#231503] shadow-lg hover:brightness-105"
+        className="fixed bottom-[max(.75rem,env(safe-area-inset-bottom))] right-3 z-30 flex items-center gap-1.5 rounded-full bg-gradient-to-b from-gold-400 to-gold-600 px-3.5 py-2.5 text-[11px] font-semibold text-[#231503] shadow-lg hover:brightness-105 sm:bottom-4 sm:right-4 sm:px-4 sm:text-xs"
       >
         ✨ Ask the platform
       </button>
@@ -58,7 +58,7 @@ export function AiCopilot() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex h-[520px] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-black/10 bg-white shadow-2xl">
+    <div className="fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-50 flex h-[min(520px,calc(100dvh-1.5rem))] flex-col overflow-hidden rounded-xl border border-black/10 bg-white shadow-2xl sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(380px,calc(100vw-2rem))]">
       <div className="flex items-center justify-between border-b border-black/10 bg-black/[0.02] px-4 py-2.5">
         <div>
           <p className="text-xs font-semibold text-slate-700">✨ AI ops copilot</p>
@@ -106,7 +106,7 @@ export function AiCopilot() {
             }
           }}
           rows={1}
-          className="input flex-1 resize-none text-xs"
+          className="input min-w-0 flex-1 resize-none text-base sm:text-xs"
           placeholder="Ask about requests, partners, revenue…"
         />
         <button onClick={send} disabled={loading} className="btn btn-gold btn-sm">

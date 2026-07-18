@@ -85,12 +85,12 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 animate-reveal">
-      <div>
+    <div className="workspace-page-header mb-5 flex flex-col items-stretch gap-4 animate-reveal sm:mb-6 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div className="min-w-0">
         <h1 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">{title}</h1>
-        {sub ? <p className="mt-1 max-w-2xl text-[13px] text-slate-500">{sub}</p> : null}
+        {sub ? <p className="mt-1 max-w-2xl break-words text-[13px] leading-relaxed text-slate-500">{sub}</p> : null}
       </div>
-      {actions}
+      {actions ? <div className="workspace-page-actions [&_.btn]:w-full sm:[&_.btn]:w-auto">{actions}</div> : null}
     </div>
   );
 }
@@ -105,7 +105,7 @@ export function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={cn("mb-3 flex items-center justify-between gap-3", className)}>
+    <div className={cn("mb-3 flex flex-wrap items-center justify-between gap-3", className)}>
       <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         {title}
       </h2>

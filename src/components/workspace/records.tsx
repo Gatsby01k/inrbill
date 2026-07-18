@@ -90,11 +90,11 @@ export function NoteComposer({
     <form action={action} className="space-y-2.5">
       <HiddenFields fields={hidden} />
       <textarea name="body" rows={3} className="input" placeholder={placeholder} />
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
         {visibilityOptions ? (
           <select
             name="visibility"
-            className="input h-9 w-auto py-0 text-xs"
+            className="input h-10 w-full py-0 text-xs sm:h-9 sm:w-auto"
             defaultValue={visibilityOptions[0]?.value}
           >
             {visibilityOptions.map((o) => (
@@ -104,7 +104,7 @@ export function NoteComposer({
             ))}
           </select>
         ) : null}
-        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Saving…">
+        <SubmitButton className="btn btn-ghost btn-sm w-full sm:w-auto" pendingLabel="Saving…">
           Add note
         </SubmitButton>
       </div>
@@ -174,11 +174,11 @@ export function DocumentComposer({
         <input name="url" className="input" placeholder="Link (Drive, Docsend…) — optional" />
       </div>
       <input name="note" className="input" placeholder="Short note — optional" />
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
         {visibilityOptions ? (
           <select
             name="visibility"
-            className="input h-9 w-auto py-0 text-xs"
+            className="input h-10 w-full py-0 text-xs sm:h-9 sm:w-auto"
             defaultValue={visibilityOptions[0]?.value}
           >
             {visibilityOptions.map((o) => (
@@ -188,7 +188,7 @@ export function DocumentComposer({
             ))}
           </select>
         ) : null}
-        <SubmitButton className="btn btn-ghost btn-sm" pendingLabel="Saving…">
+        <SubmitButton className="btn btn-ghost btn-sm w-full sm:w-auto" pendingLabel="Saving…">
           Add document
         </SubmitButton>
       </div>

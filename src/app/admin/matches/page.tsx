@@ -72,12 +72,12 @@ export default async function AdminMatchesPage({
               <p className="text-[11px] leading-relaxed text-slate-500">
                 Check suggested/shortlisted rows to approve or decline several at once.
               </p>
-              <div className="flex items-center gap-2">
-                <SubmitButton className="btn btn-gold btn-sm" pendingLabel="Approving…">
+              <div className="grid w-full gap-2 sm:flex sm:w-auto sm:items-center">
+                <SubmitButton className="btn btn-gold btn-sm w-full sm:w-auto" pendingLabel="Approving…">
                   ⚡ Approve &amp; introduce selected
                 </SubmitButton>
                 <SubmitButton
-                  className="btn btn-ghost btn-sm text-rose-600 hover:bg-rose-500/10"
+                  className="btn btn-ghost btn-sm w-full text-rose-600 hover:bg-rose-500/10 sm:w-auto"
                   pendingLabel="Declining…"
                   formAction={bulkDeclineMatches}
                 >

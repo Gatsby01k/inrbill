@@ -3,6 +3,7 @@ import { BrandLockup } from "@/components/brand";
 import { cn } from "@/lib/format";
 import { APP_VERSION } from "@/lib/site";
 import { NavLinks, type NavItem } from "./nav-links";
+import { MobileWorkspaceMenu } from "./mobile-menu";
 import { NotificationBell } from "./notification-bell";
 
 export function WorkspaceShell({
@@ -23,8 +24,8 @@ export function WorkspaceShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="shrink-0 border-b border-black/[0.08] bg-[#F6F1E7] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[236px] lg:flex-col lg:border-b-0 lg:border-r">
+    <div className="workspace-shell flex min-h-screen min-w-0 flex-col lg:flex-row">
+      <aside className="sticky top-0 z-40 shrink-0 border-b border-black/[0.08] bg-[#F6F1E7]/95 backdrop-blur-xl lg:flex lg:h-screen lg:w-[236px] lg:flex-col lg:border-b-0 lg:border-r lg:bg-[#F6F1E7] lg:backdrop-blur-none">
         <div className="flex h-[60px] items-center justify-between gap-2 border-b border-black/[0.06] px-4 lg:px-5">
           <BrandLockup markSize={26} />
           <div className="flex items-center gap-2">
@@ -39,9 +40,10 @@ export function WorkspaceShell({
               {badge}
             </span>
             <NotificationBell />
+            <MobileWorkspaceMenu nav={nav} userLine={userLine} />
           </div>
         </div>
-        <nav className="px-3 py-2.5 lg:py-4">
+        <nav className="hidden px-3 py-2.5 lg:block lg:py-4">
           <p className="hidden px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 lg:block">
             Workspace
           </p>
@@ -62,15 +64,7 @@ export function WorkspaceShell({
         </div>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex h-11 items-center justify-end gap-3 border-b border-black/[0.06] px-4 sm:px-6 lg:hidden">
-          <p className="truncate text-[11.5px] text-slate-500">{userLine}</p>
-          <form action={logout}>
-            <button type="submit" className="btn btn-ghost btn-sm">
-              Log out
-            </button>
-          </form>
-        </header>
-        <main className="p-4 sm:p-6 lg:px-8 lg:py-7">{children}</main>
+        <main className="workspace-main min-w-0 px-3 py-4 min-[390px]:px-4 sm:p-6 lg:px-8 lg:py-7">{children}</main>
       </div>
     </div>
   );
