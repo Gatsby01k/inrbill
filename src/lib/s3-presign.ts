@@ -47,6 +47,22 @@ export function presignEvidenceUpload(key: string, contentType: string) {
   return { url: presign("PUT", key, {}, headers, 300), headers };
 }
 
-export function presignEvidenceDownload(key: string, fileName: string) {
-  return presign("GET", key, { "response-content-disposition": `attachment; filename="${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}"`, "response-content-type": "application/octet-stream" }, {}, 120);
+function evidenceResponse(key: string, fileName: string, contentType: string, disposition: "inline" | "attachment") {
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const safeType = ["application/pdf", "image/png", "image/jpeg", "video/mp4", "video/quicktime", "video/webm"].includes(contentType)
+    ? contentType
+    : "application/octet-stream";
+  return presign("GET", key, {
+    "response-cache-control": "private, no-store",
+    "response-content-disposition": `${disposition}; filename="${safeName}"`,
+    "response-content-type": safeType,
+  }, {}, 120);
+}
+
+export function presignEvidenceView(key: string, fileName: string, contentType: string) {
+  return evidenceResponse(key, fileName, contentType, "inline");
+}
+
+export function presignEvidenceDownload(key: string, fileName: string, contentType: string) {
+  return evidenceResponse(key, fileName, contentType, "attachment");
 }
