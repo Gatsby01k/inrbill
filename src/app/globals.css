@@ -437,9 +437,9 @@
   .fin-nav-brand > span { @apply hidden border-l border-[#07152e]/15 pl-4 text-[9px] font-semibold uppercase tracking-[.2em] text-slate-400 lg:block; }
   .fin-nav-links { @apply hidden items-center gap-8 lg:flex; }
   .fin-nav-links a,.fin-nav-login { @apply text-[12px] font-medium text-[#59657a] transition-colors hover:text-[#07152e]; }
-  .fin-nav-actions { @apply flex items-center gap-5; }
-  .fin-nav-login { @apply hidden sm:inline-flex; }
-  .fin-nav-cta { @apply rounded-full bg-[#07152e] px-4 py-2.5 text-[11px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#132747]; box-shadow:0 12px 28px -18px #07152e; }
+  .fin-nav-actions { @apply flex items-center gap-2.5 sm:gap-5; }
+  .fin-nav-login { @apply inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-full border border-[#07152e]/10 bg-white/45 px-3 text-[10px] text-[#24324a] sm:min-h-0 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:text-[12px]; }
+  .fin-nav-cta { @apply whitespace-nowrap rounded-full bg-[#07152e] px-4 py-2.5 text-[11px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#132747]; box-shadow:0 12px 28px -18px #07152e; }
 
   .fin-kicker { @apply flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-[.24em] text-[#a45d06]; }
   .fin-kicker > span { @apply block h-px w-7 bg-[#e9921b]; }
@@ -1504,6 +1504,7 @@
 @media (max-width: 479px) {
   .v3-site .fin-nav-brand > span { display: none; }
   .v3-site .fin-nav-actions { gap: 10px; }
+  .v3-site .fin-nav-login { min-height: 34px; padding-inline: .7rem; font-size: 9px; }
   .v3-site .fin-nav-cta { padding-inline: .8rem; font-size: 9px; }
   .v3-hero-copy h1 { font-size: clamp(3.8rem,17vw,4.8rem); }
   .v3-trust-line { grid-template-columns: 1fr; }
@@ -1516,6 +1517,12 @@
   .v3-manifesto-grid h2, .v3-model-head h2, .v3-corridors-head h2, .v3-evidence-head h2 { font-size: clamp(3rem,14vw,4rem); }
   .v3-console-state { font-size: 6px; }
   .v3-console-tabs button span { margin-right: 7px; }
+}
+
+@media (max-width: 359px) {
+  .v3-site .fin-nav-inner { padding-inline: 14px; }
+  .v3-site .fin-nav-brand a > span { display: none; }
+  .v3-site .fin-nav-actions { gap: 7px; }
 }
 
 @media (min-width: 1024px) and (max-height: 819px) {
