@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { PartnerDeposit } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { addPartnerDocument, addPartnerNote, generateReferralCode } from "@/app/actions/portal";
@@ -16,6 +17,7 @@ import { TrackRecordCard } from "@/components/workspace/track-record";
 import { requireRole } from "@/lib/auth";
 import { deriveMatchStage, dealStageHint } from "@/lib/deal-stage";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/error-log";
 import { directionLabel, fmtDate } from "@/lib/format";
 import { listReferredPartners, referralUrl } from "@/lib/referral";
 import { getPartnerTrackRecord } from "@/lib/reputation";
@@ -64,16 +66,24 @@ export default async function PartnerOverviewPage({
       },
       notesList: { where: { visibility: "PARTNER" }, orderBy: { createdAt: "desc" } },
       documents: { where: { visibility: "PARTNER" }, orderBy: { createdAt: "desc" } },
-      deposits: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!partner) redirect("/login");
 
+  let deposits: PartnerDeposit[] = [];
+  let depositLedgerUnavailable = false;
+  try {
+    deposits = await db.partnerDeposit.findMany({ where: { partnerId: partner.id }, orderBy: { createdAt: "desc" } });
+  } catch (depositError) {
+    depositLedgerUnavailable = true;
+    await logError({ error: depositError, source: "page:/partner:deposit-summary", severity: "FATAL", userId: user.id, url: "/partner" });
+  }
+
   const trackRecord = await getPartnerTrackRecord(partner.id);
-  const confirmedReserve = partner.deposits
+  const confirmedReserve = deposits
     .filter((deposit) => deposit.status === "CONFIRMED")
     .reduce((sum, deposit) => sum + Number((deposit.actualAmount ?? deposit.amount).toString()), 0);
-  const pendingDeposits = partner.deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
+  const pendingDeposits = deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
 
   const referredRows: ReferredAccountRow[] = partner.referralCode
     ? (await listReferredPartners(partner.referralCode)).map((p) => ({
@@ -254,7 +264,7 @@ export default async function PartnerOverviewPage({
           <div className="card p-5">
             <SectionTitle title="USDT operating reserve" action={<StatusBadge status={pendingDeposits ? "CONFIRMING" : confirmedReserve > 0 ? "CONFIRMED" : "AWAITING_PAYMENT"} />} />
             <p className="text-2xl font-semibold tabular-nums text-slate-900">{confirmedReserve.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span className="text-sm text-slate-400">USDT</span></p>
-            <p className="mt-1 text-xs text-slate-500">{pendingDeposits ? `${pendingDeposits} deposit${pendingDeposits === 1 ? "" : "s"} confirming` : "No transfer currently confirming"}</p>
+            <p className="mt-1 text-xs text-slate-500">{depositLedgerUnavailable ? "Reserve ledger is temporarily unavailable" : pendingDeposits ? `${pendingDeposits} deposit${pendingDeposits === 1 ? "" : "s"} awaiting review` : "No transfer currently awaiting review"}</p>
             <Link href="/partner/deposit" className="btn btn-gold btn-sm mt-4 w-full">Open USDT reserve</Link>
           </div>
           <div className="card p-5">

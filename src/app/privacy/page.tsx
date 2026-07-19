@@ -49,8 +49,8 @@ export default function PrivacyPage() {
       </ul>
       <h3>Deposit and payment records</h3>
       <ul>
-        <li>Deposit reference, invoice identifier, USDT amount, network and payment status.</li>
-        <li>Transaction hashes and provider references used for reconciliation, audit and refunds.</li>
+        <li>Deposit reference, public destination address, USDT amount, network and review status.</li>
+        <li>Transaction hashes used for reconciliation, operator review, audit and refunds.</li>
         <li>INRP2P does not collect or store your wallet private key or seed phrase.</li>
       </ul>
 

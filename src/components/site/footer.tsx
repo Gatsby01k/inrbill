@@ -25,7 +25,7 @@ export function SiteFooter() {
           </div></div>
         </div>
         <div className="fin-footer-bottom">
-          <p>INRP2P does not hold, transmit, convert, exchange or custody the funds exchanged in an introduced transaction and is not a party to that transaction. A separately agreed partner operating reserve may be collected through a third-party USDT payment provider; it is not customer money, escrow or transaction settlement. INRP2P does not guarantee liquidity or completion. Counterparties transact directly and remain responsible for their own licensing, KYC, AML, tax and legal obligations.</p>
+          <p>INRP2P does not hold, transmit, convert, exchange or custody the funds exchanged in an introduced transaction and is not a party to that transaction. A separately agreed partner operating reserve may be sent to the official company USDT-TRC20 wallet shown in the authenticated workspace; it is not customer money, escrow or transaction settlement. INRP2P does not guarantee liquidity or completion. Counterparties transact directly and remain responsible for their own licensing, KYC, AML, tax and legal obligations.</p>
           <div><span>© 2026 INRP2P</span><span>Private by design</span><span>India · Global counterparties</span></div>
         </div>
       </div>

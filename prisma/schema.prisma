@@ -627,9 +627,9 @@ model Incident {
   @@index([partnerId])
 }
 
-// USDT operating-reserve deposits. Funds are collected by the configured
-// payment provider; INRP2P stores only the immutable commercial ledger and
-// provider references — never wallet private keys.
+// USDT operating-reserve deposits. The destination address is snapshotted
+// from configuration when an intent is created; private keys never enter the
+// application. A partner submits the on-chain TXID and an operator verifies it.
 model PartnerDeposit {
   id String @id @default(cuid())
   reference String @unique
@@ -640,7 +640,8 @@ model PartnerDeposit {
   currency Currency @default(USDT)
   network String @default("TRC20")
   status DepositStatus @default(AWAITING_PAYMENT)
-  provider String @default("NOWPAYMENTS")
+  provider String @default("DIRECT_TRC20")
+  destinationAddress String?
   providerInvoiceId String? @unique
   providerInvoiceUrl String?
   providerPaymentId String?

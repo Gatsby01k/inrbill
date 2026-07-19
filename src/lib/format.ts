@@ -91,10 +91,10 @@ export function auditLabel(action: string, meta?: unknown): string {
       return "Note added";
     case "document.added":
       return "Document added";
-    case "deposit.invoice_created":
-      return "USDT reserve invoice created";
-    case "deposit.confirmed_via_nowpayments":
-      return "USDT reserve confirmed by payment provider";
+    case "deposit.intent_created":
+      return "USDT reserve instructions created";
+    case "deposit.transaction_submitted":
+      return "USDT reserve transaction submitted";
     case "deposit.manually_confirmed":
       return "USDT reserve confirmed by operator";
     case "deposit.provider_status_changed":

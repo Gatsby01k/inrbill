@@ -1,14 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
-import { providerDepositStatus } from "@/lib/deposit-policy";
 import { logError } from "@/lib/error-log";
 import { verifyNowPaymentsSignature } from "@/lib/nowpayments";
-import { notify } from "@/lib/notify";
 
-// NOWPayments calls this whenever an INRP2P fee invoice or an explicitly
-// created partner-reserve invoice changes status. It never handles the
-// underlying company ↔ partner transaction leg.
+// NOWPayments calls this only for optional INRP2P service-fee invoices.
+// Partner reserves use the configured company USDT-TRC20 address.
 //
 // Setup in the NOWPayments dashboard: Store/Payment Settings → set the IPN
 // callback URL to https://<your-domain>/api/webhooks/nowpayments, generate
@@ -26,81 +23,6 @@ type NowPaymentsIpnPayload = {
   actually_paid?: number;
   pay_currency?: string;
 };
-
-async function handleDepositIpn(payload: NowPaymentsIpnPayload, depositId: string) {
-  const deposit = await db.partnerDeposit.findUnique({ where: { id: depositId }, include: { partner: true } });
-  if (!deposit) {
-    await logError({
-      error: `NOWPayments IPN: no PartnerDeposit matches order_id deposit:${depositId}`,
-      source: "route:/api/webhooks/nowpayments",
-      severity: "ERROR",
-    });
-    return { ok: true, missingDeposit: true };
-  }
-
-  const providerStatus = (payload.payment_status ?? "unknown").toLowerCase();
-  const paid = Number(payload.actually_paid ?? 0);
-  const expected = Number(deposit.amount);
-  const status = providerDepositStatus({ current: deposit.status, providerStatus, paid, expected, payCurrency: payload.pay_currency ?? "" });
-
-  if (providerStatus === "finished" && status !== "CONFIRMED") {
-    await logError({
-      error: `NOWPayments deposit mismatch for ${deposit.reference} — not crediting reserve`,
-      source: "route:/api/webhooks/nowpayments",
-      severity: "ERROR",
-      meta: { depositId, expected, actuallyPaid: paid, payCurrency: payload.pay_currency ?? null },
-    });
-  }
-  let becameConfirmed = false;
-  const becameFinalFailure = ["REJECTED", "EXPIRED"].includes(status) && deposit.status !== status;
-  const commonData = {
-    providerStatus,
-    providerPaymentId: payload.payment_id ? String(payload.payment_id) : deposit.providerPaymentId,
-    actualAmount: paid > 0 ? paid : deposit.actualAmount,
-  };
-  if (status === "CONFIRMED") {
-    const result = await db.partnerDeposit.updateMany({
-      where: { id: deposit.id, status: { notIn: ["CONFIRMED", "REFUNDED"] } },
-      data: { ...commonData, status: "CONFIRMED", confirmedAt: new Date() },
-    });
-    becameConfirmed = result.count === 1;
-    if (!becameConfirmed) await db.partnerDeposit.update({ where: { id: deposit.id }, data: commonData });
-  } else {
-    await db.partnerDeposit.update({
-      where: { id: deposit.id },
-      data: { ...commonData, status, refundedAt: status === "REFUNDED" && !deposit.refundedAt ? new Date() : deposit.refundedAt },
-    });
-  }
-
-  if (becameConfirmed || (status !== "CONFIRMED" && status !== deposit.status)) {
-    await audit({
-      action: status === "CONFIRMED" ? "deposit.confirmed_via_nowpayments" : "deposit.provider_status_changed",
-      entityType: "PartnerDeposit",
-      entityId: deposit.id,
-      actorId: null,
-      actorLabel: "NOWPayments webhook",
-      partnerId: deposit.partnerId,
-      meta: { from: deposit.status, to: status, providerStatus, paymentId: payload.payment_id ?? null, actuallyPaid: paid },
-    });
-  }
-
-  if (becameConfirmed) {
-    await notify(deposit.partner.userId, {
-      title: "USDT reserve confirmed",
-      body: `${paid.toFixed(2)} USDT has been credited to your operating reserve.`,
-      telegramHtml: `✅ <b>USDT reserve confirmed</b>\n${paid.toFixed(2)} USDT credited.`,
-      link: "/partner/deposit",
-    });
-  } else if (becameFinalFailure) {
-    await notify(deposit.partner.userId, {
-      title: status === "EXPIRED" ? "Deposit invoice expired" : "Deposit failed",
-      body: `Deposit ${deposit.reference} was not credited. Create a new invoice before sending funds.`,
-      telegramHtml: `⚠️ <b>${status === "EXPIRED" ? "Deposit invoice expired" : "Deposit failed"}</b>\n${deposit.reference}`,
-      link: "/partner/deposit",
-    });
-  }
-  return { ok: true, depositId: deposit.id, status };
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,9 +46,6 @@ export async function POST(req: NextRequest) {
     }
 
     const orderId = payload.order_id;
-    if (orderId?.startsWith("deposit:")) {
-      return NextResponse.json(await handleDepositIpn(payload, orderId.slice("deposit:".length)));
-    }
 
     // Only "finished" means NOWPayments itself considers the invoice fully
     // paid. "confirming", "confirmed", "sending" are still in flight, and

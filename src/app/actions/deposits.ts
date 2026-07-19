@@ -6,11 +6,10 @@ import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { isValidDepositAmount, normalizeDepositTxHash } from "@/lib/deposit-policy";
+import { companyUsdtTrc20Address } from "@/lib/deposit-wallet";
 import { db } from "@/lib/db";
-import { createCryptoInvoice } from "@/lib/nowpayments";
 import { notify } from "@/lib/notify";
 import { createReference } from "@/lib/secure-token";
-import { SITE_URL } from "@/lib/site";
 
 const DEPOSIT_PATH = "/partner/deposit";
 const ADMIN_PATH = "/admin/deposits";
@@ -29,7 +28,17 @@ function decimalAmount(raw: string): Prisma.Decimal | null {
   return isValidDepositAmount(raw) ? new Prisma.Decimal(raw) : null;
 }
 
-/** Create a hosted USDT-TRC20 reserve invoice owned by the signed-in partner. */
+async function notifyOperators(title: string, body: string) {
+  const admins = await db.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  await Promise.all(admins.map((admin) => notify(admin.id, {
+    title,
+    body,
+    telegramHtml: `🔔 <b>${title}</b>\n${body}`,
+    link: ADMIN_PATH,
+  })));
+}
+
+/** Create a reserve intent against the configured company USDT-TRC20 address. */
 export async function createPartnerDeposit(fd: FormData) {
   const user = await requireRole("PARTNER");
   if (!user.partner) redirect("/login");
@@ -39,16 +48,18 @@ export async function createPartnerDeposit(fd: FormData) {
 
   const amount = decimalAmount(text(fd, "amount"));
   if (!amount) finish(DEPOSIT_PATH, "error", "Enter a USDT amount from 10 to 1,000,000 with up to 6 decimals.");
+  const destinationAddress = companyUsdtTrc20Address();
+  if (!destinationAddress) finish(DEPOSIT_PATH, "error", "The company USDT-TRC20 wallet is not configured. Do not send funds yet.");
 
   await db.partnerDeposit.updateMany({
     where: { partnerId: user.partner.id, status: "AWAITING_PAYMENT", expiresAt: { lt: new Date() } },
     data: { status: "EXPIRED", providerStatus: "expired_locally" },
   });
-  const openInvoices = await db.partnerDeposit.count({
+  const openInstructions = await db.partnerDeposit.count({
     where: { partnerId: user.partner.id, status: { in: ["AWAITING_PAYMENT", "CONFIRMING"] } },
   });
-  if (openInvoices >= 3) {
-    finish(DEPOSIT_PATH, "error", "You already have three active deposit invoices. Complete or wait for one to expire.");
+  if (openInstructions >= 3) {
+    finish(DEPOSIT_PATH, "error", "You already have three active deposit instructions. Complete or wait for one to expire.");
   }
 
   const deposit = await db.partnerDeposit.create({
@@ -56,37 +67,76 @@ export async function createPartnerDeposit(fd: FormData) {
       reference: createReference("DEP"),
       partnerId: user.partner.id,
       amount,
-      submittedAt: new Date(),
+      provider: "DIRECT_TRC20",
+      providerStatus: "awaiting_transfer",
+      destinationAddress,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     },
   });
-
-  const invoice = await createCryptoInvoice({
-    amountUsdt: Number(amount),
-    description: `INRP2P partner operating reserve · ${user.partner.reference} · ${deposit.reference}`,
-    orderId: `deposit:${deposit.id}`,
-    successUrl: `${SITE_URL}${DEPOSIT_PATH}?notice=${encodeURIComponent("Payment submitted. Confirmation can take several minutes.")}`,
-  });
-
-  if (!invoice) {
-    await db.partnerDeposit.delete({ where: { id: deposit.id } });
-    finish(DEPOSIT_PATH, "error", "The USDT payment gateway is not ready. Contact operations before sending any funds.");
-  }
-
-  await db.partnerDeposit.update({
-    where: { id: deposit.id },
-    data: { providerInvoiceId: invoice.id, providerInvoiceUrl: invoice.invoiceUrl, providerStatus: "waiting" },
-  });
   await audit({
-    action: "deposit.invoice_created",
+    action: "deposit.intent_created",
     entityType: "PartnerDeposit",
     entityId: deposit.id,
     actorId: user.id,
     actorLabel: user.partner.displayName,
     partnerId: user.partner.id,
-    meta: { reference: deposit.reference, amount: amount.toString(), network: "TRC20", provider: "NOWPAYMENTS" },
+    meta: { reference: deposit.reference, amount: amount.toString(), network: "TRC20", provider: "DIRECT_TRC20", destinationAddress },
   });
-  finish(DEPOSIT_PATH, "notice", "Deposit invoice created. Pay it only through the secure checkout shown below.");
+  finish(DEPOSIT_PATH, "notice", "Deposit instructions created. Send the exact amount, then submit the transaction hash.");
+}
+
+/** Partner reports the immutable on-chain transaction for operator review. */
+export async function submitPartnerDepositTransaction(fd: FormData) {
+  const user = await requireRole("PARTNER");
+  if (!user.partner) redirect("/login");
+  const depositId = text(fd, "depositId");
+  const transactionHash = normalizeDepositTxHash(text(fd, "transactionHash"));
+  if (!transactionHash) finish(DEPOSIT_PATH, "error", "Enter a valid 64-character TRON transaction hash.");
+
+  const deposit = await db.partnerDeposit.findFirst({
+    where: { id: depositId, partnerId: user.partner.id },
+  });
+  if (!deposit) finish(DEPOSIT_PATH, "error", "Deposit instruction not found.");
+  if (!["AWAITING_PAYMENT", "CONFIRMING", "EXPIRED"].includes(deposit.status)) {
+    finish(DEPOSIT_PATH, "error", "This deposit is already final and cannot be changed.");
+  }
+  if (!deposit.destinationAddress) {
+    finish(DEPOSIT_PATH, "error", "This legacy deposit has no company wallet attached. Contact operations before sending funds.");
+  }
+  const duplicate = await db.partnerDeposit.findFirst({
+    where: { id: { not: deposit.id }, OR: [{ transactionHash }, { refundTransactionHash: transactionHash }] },
+    select: { id: true },
+  });
+  if (duplicate) finish(DEPOSIT_PATH, "error", "This transaction hash is already attached to another ledger entry.");
+
+  try {
+    const result = await db.partnerDeposit.updateMany({
+      where: { id: deposit.id, partnerId: user.partner.id, status: { in: ["AWAITING_PAYMENT", "CONFIRMING", "EXPIRED"] } },
+      data: { status: "CONFIRMING", transactionHash, submittedAt: new Date(), providerStatus: "tx_submitted" },
+    });
+    if (result.count !== 1) finish(DEPOSIT_PATH, "error", "This deposit changed while you were submitting it. Refresh and try again.");
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      finish(DEPOSIT_PATH, "error", "This transaction hash is already attached to another ledger entry.");
+    }
+    throw error;
+  }
+  await audit({
+    action: "deposit.transaction_submitted",
+    entityType: "PartnerDeposit",
+    entityId: deposit.id,
+    actorId: user.id,
+    actorLabel: user.partner.displayName,
+    partnerId: deposit.partnerId,
+    meta: { transactionHash, amount: deposit.amount.toString(), destinationAddress: deposit.destinationAddress },
+  });
+  await notifyOperators(
+    "USDT deposit awaiting review",
+    `${user.partner.displayName} submitted ${deposit.reference} for ${deposit.amount.toString()} USDT.`,
+  );
+  revalidatePath("/partner");
+  revalidatePath(ADMIN_PATH);
+  finish(DEPOSIT_PATH, "notice", "Transaction submitted. Operations will verify the address, token, amount and confirmations on TRON.");
 }
 
 /** Audited operator override for exceptional cases and full reserve refunds. */
@@ -108,13 +158,9 @@ export async function reviewPartnerDeposit(fd: FormData) {
   let actualAmount: Prisma.Decimal | undefined;
 
   if (decision === "confirm") {
-    if (deposit.status === "CONFIRMED" || deposit.status === "REFUNDED") {
-      finish(ADMIN_PATH, "error", "This deposit is already final.");
-    }
-    transactionHash = normalizeDepositTxHash(text(fd, "transactionHash")) ?? undefined;
-    if (!transactionHash) finish(ADMIN_PATH, "error", "A valid 64-character on-chain transaction hash is required for manual confirmation.");
-    const duplicate = await db.partnerDeposit.findFirst({ where: { id: { not: deposit.id }, OR: [{ transactionHash }, { refundTransactionHash: transactionHash }] }, select: { id: true } });
-    if (duplicate) finish(ADMIN_PATH, "error", "This transaction hash is already assigned to another deposit.");
+    if (deposit.status !== "CONFIRMING") finish(ADMIN_PATH, "error", "The partner must submit a transaction hash before confirmation.");
+    transactionHash = normalizeDepositTxHash(deposit.transactionHash ?? "") ?? undefined;
+    if (!transactionHash || !deposit.destinationAddress) finish(ADMIN_PATH, "error", "The submitted transfer record is incomplete and cannot be confirmed.");
     actualAmount = decimalAmount(text(fd, "actualAmount")) ?? undefined;
     if (!actualAmount) finish(ADMIN_PATH, "error", "Enter the amount actually received before confirming.");
     if (!note) finish(ADMIN_PATH, "error", "Explain the evidence used for this manual confirmation.");
@@ -135,20 +181,21 @@ export async function reviewPartnerDeposit(fd: FormData) {
     finish(ADMIN_PATH, "error", "Invalid deposit decision.");
   }
 
-  await db.partnerDeposit.update({
-    where: { id: deposit.id },
+  const result = await db.partnerDeposit.updateMany({
+    where: { id: deposit.id, status: deposit.status },
     data: {
       status: nextStatus,
       actualAmount,
       transactionHash,
       refundTransactionHash,
-      providerStatus: decision === "confirm" ? "manual_confirmed" : deposit.providerStatus,
+      providerStatus: decision === "confirm" ? "operator_confirmed" : decision === "refund" ? "operator_refunded" : "operator_rejected",
       reviewedById: admin.id,
       reviewNote: note,
       confirmedAt: decision === "confirm" ? now : deposit.confirmedAt,
       refundedAt: decision === "refund" ? now : deposit.refundedAt,
     },
   });
+  if (result.count !== 1) finish(ADMIN_PATH, "error", "This deposit changed while you were reviewing it. Refresh before taking another action.");
   await audit({
     action: `deposit.${decision === "confirm" ? "manually_confirmed" : decision === "refund" ? "refunded" : "rejected"}`,
     entityType: "PartnerDeposit",
@@ -165,6 +212,7 @@ export async function reviewPartnerDeposit(fd: FormData) {
     link: DEPOSIT_PATH,
   });
   revalidatePath(DEPOSIT_PATH);
+  revalidatePath("/partner");
   revalidatePath(`/admin/partners/${deposit.partnerId}`);
   finish(ADMIN_PATH, "notice", `Deposit ${deposit.reference} updated to ${nextStatus.toLowerCase().replaceAll("_", " ")}.`);
 }

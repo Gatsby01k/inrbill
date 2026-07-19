@@ -91,7 +91,9 @@ export default function TermsPage() {
         transaction. The applicable partner agreement must state the amount, purpose, duration,
         refund conditions and any lawful deductions. Creating or funding a reserve does not
         guarantee verification, work, traffic, income, transaction volume or continued access.
-        Never send a reserve to an address supplied through chat or outside the authenticated invoice.
+        The workspace records the company wallet address, instructed amount and submitted transaction
+        hash. Credit is not automatic: an operator must verify the on-chain transfer first. Never send
+        a reserve to an address supplied through chat or outside the authenticated deposit instruction.
       </p>
 
       <h2>8. Confidentiality</h2>

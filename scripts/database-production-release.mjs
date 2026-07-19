@@ -10,9 +10,14 @@ if (process.env.VERCEL_GIT_COMMIT_REF !== "main") {
   throw new Error("Production database release is restricted to the main branch.");
 }
 
-if (!process.env.DATABASE_URL || !process.env.DATABASE_URL_UNPOOLED) {
+const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+const hasDirectDatabaseUrl = Boolean(process.env.DATABASE_URL_UNPOOLED);
+if (!hasDatabaseUrl && !hasDirectDatabaseUrl) {
   console.log("Prisma migration deploy skipped: this Vercel project has no complete migration connection pair.");
   process.exit(0);
+}
+if (!hasDatabaseUrl || !hasDirectDatabaseUrl) {
+  throw new Error("Production database migration requires both DATABASE_URL and DATABASE_URL_UNPOOLED; refusing to deploy an application against an unmigrated schema.");
 }
 
 const executable = path.join(

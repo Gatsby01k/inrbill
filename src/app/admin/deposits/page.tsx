@@ -5,10 +5,13 @@ import { reviewPartnerDeposit } from "@/app/actions/deposits";
 import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, Field, PageHeader, SectionTitle, Stat, StatusBadge } from "@/components/ui";
 import { Flash } from "@/components/workspace/flash";
+import { tronAddressUrl, tronTransactionUrl } from "@/lib/deposit-wallet";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/error-log";
 import { cn, fmtDateTime, statusLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "USDT deposits" };
+type DepositWithPartner = Prisma.PartnerDepositGetPayload<{ include: { partner: true } }>;
 
 const STATUSES = ["AWAITING_PAYMENT", "CONFIRMING", "CONFIRMED", "REJECTED", "REFUNDED", "EXPIRED"] as const;
 
@@ -32,21 +35,33 @@ export default async function AdminDepositsPage({
     ...(query.q ? { OR: [
       { reference: { contains: query.q, mode: "insensitive" } },
       { providerInvoiceId: { contains: query.q, mode: "insensitive" } },
+      { transactionHash: { contains: query.q, mode: "insensitive" } },
+      { destinationAddress: { contains: query.q, mode: "insensitive" } },
       { partner: { displayName: { contains: query.q, mode: "insensitive" } } },
       { partner: { reference: { contains: query.q, mode: "insensitive" } } },
     ] } : {}),
   };
-  const [deposits, allConfirmed, pendingCount] = await Promise.all([
-    db.partnerDeposit.findMany({ where, include: { partner: true }, orderBy: { createdAt: "desc" }, take: 200 }),
-    db.partnerDeposit.findMany({ where: { status: "CONFIRMED" }, select: { amount: true, actualAmount: true } }),
-    db.partnerDeposit.count({ where: { status: { in: ["AWAITING_PAYMENT", "CONFIRMING"] } } }),
-  ]);
+  let deposits: DepositWithPartner[] = [];
+  let allConfirmed: Array<{ amount: Prisma.Decimal; actualAmount: Prisma.Decimal | null }> = [];
+  let pendingCount = 0;
+  let ledgerUnavailable = false;
+  try {
+    [deposits, allConfirmed, pendingCount] = await Promise.all([
+      db.partnerDeposit.findMany({ where, include: { partner: true }, orderBy: { createdAt: "desc" }, take: 200 }),
+      db.partnerDeposit.findMany({ where: { status: "CONFIRMED" }, select: { amount: true, actualAmount: true } }),
+      db.partnerDeposit.count({ where: { status: { in: ["AWAITING_PAYMENT", "CONFIRMING"] } } }),
+    ]);
+  } catch (error) {
+    ledgerUnavailable = true;
+    await logError({ error, source: "page:/admin/deposits", severity: "FATAL", url: "/admin/deposits" });
+  }
   const heldReserve = allConfirmed.reduce((sum, item) => sum + number(item.actualAmount ?? item.amount), 0);
 
   return (
     <>
-      <PageHeader title="USDT deposits" sub="Partner operating reserves, provider confirmations, manual exceptions and refunds." />
+      <PageHeader title="USDT deposits" sub="Company-wallet transfers, partner-submitted TXIDs, operator confirmation and refunds." />
       <Flash notice={query.notice} error={query.error} />
+      {ledgerUnavailable ? <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">Deposit ledger unavailable. The real database error has been captured in Errors and Vercel logs.</div> : null}
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <Stat label="Confirmed reserve" value={`${usdt(heldReserve)} USDT`} tone="emerald" />
@@ -59,7 +74,7 @@ export default async function AdminDepositsPage({
         {STATUSES.map((item) => <Link key={item} href={`/admin/deposits?status=${item}`} className={cn("pill", status === item && "pill-active")}>{statusLabel(item)}</Link>)}
         <form action="/admin/deposits" className="mt-1 flex w-full gap-2 sm:ml-auto sm:mt-0 sm:w-auto">
           {status ? <input type="hidden" name="status" value={status} /> : null}
-          <input className="input h-10 w-full py-0 sm:h-9 sm:w-72" name="q" defaultValue={query.q ?? ""} placeholder="Search partner, deposit or invoice…" />
+          <input className="input h-10 w-full py-0 sm:h-9 sm:w-72" name="q" defaultValue={query.q ?? ""} placeholder="Search partner, deposit or TXID…" />
         </form>
       </div>
 
@@ -81,32 +96,40 @@ export default async function AdminDepositsPage({
                 </div>
                 <div>
                   <p className="text-2xl font-semibold tabular-nums text-slate-900">{usdt(displayedAmount)} <span className="text-sm text-slate-400">USDT</span></p>
-                  <p className="mt-1 break-all text-[11px] text-slate-400">Provider: {item.providerStatus ?? "waiting"}{item.providerPaymentId ? ` · ${item.providerPaymentId}` : ""}</p>
+                  <p className="mt-1 break-all text-[11px] text-slate-400">{item.submittedAt ? `TX submitted ${fmtDateTime(item.submittedAt)}` : "Waiting for partner transfer"}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
-                  {item.providerInvoiceUrl ? <a className="btn btn-ghost btn-sm" href={item.providerInvoiceUrl} target="_blank" rel="noreferrer">Open invoice</a> : null}
+                  {item.destinationAddress ? <a className="btn btn-ghost btn-sm" href={tronAddressUrl(item.destinationAddress)} target="_blank" rel="noreferrer">Company wallet</a> : null}
+                  {item.transactionHash ? <a className="btn btn-ghost btn-sm" href={tronTransactionUrl(item.transactionHash)} target="_blank" rel="noreferrer">Verify TXID</a> : null}
                   <details className="group relative w-full lg:w-auto">
                     <summary className="btn btn-ghost btn-sm cursor-pointer list-none">Operator action</summary>
                     <div className="mt-3 rounded-xl border border-black/[0.08] bg-[#FBF8F2] p-4 lg:absolute lg:right-0 lg:z-20 lg:w-[440px] lg:shadow-xl">
-                      {pending ? <form action={reviewPartnerDeposit} className="space-y-3">
+                      {item.status === "CONFIRMING" ? <form action={reviewPartnerDeposit} className="space-y-3">
                         <input type="hidden" name="depositId" value={item.id} />
-                        <SectionTitle title="Manual exception" />
-                        <p className="text-[11px] leading-relaxed text-slate-500">Use only after independently checking the transaction on-chain. Normal deposits confirm through the signed provider webhook.</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <Field label="Actually received"><input className="input h-10" name="actualAmount" type="number" min="10" max="1000000" step="0.000001" defaultValue={item.amount.toString()} /></Field>
-                          <Field label="Transaction hash"><input className="input h-10 font-mono text-xs" name="transactionHash" placeholder="64-character TXID" /></Field>
+                        <SectionTitle title="Verify on-chain transfer" />
+                        <p className="text-[11px] leading-relaxed text-slate-500">Before confirming, open the TXID and verify: successful USDT token transfer, TRC20 network, exact destination wallet, received amount and sufficient confirmations.</p>
+                        <div className="rounded-lg border border-black/[0.06] bg-white/80 p-3 text-[11px] leading-relaxed text-slate-500">
+                          <p><strong className="text-slate-700">TXID:</strong> <span className="break-all font-mono">{item.transactionHash}</span></p>
+                          <p className="mt-1"><strong className="text-slate-700">Destination:</strong> <span className="break-all font-mono">{item.destinationAddress}</span></p>
                         </div>
-                        <Field label="Operator note"><textarea className="input min-h-20" name="note" placeholder="Evidence checked or rejection reason" /></Field>
+                        <Field label="Actually received"><input className="input h-10" name="actualAmount" type="number" min="10" max="1000000" step="0.000001" defaultValue={item.amount.toString()} required /></Field>
+                        <Field label="Operator note"><textarea className="input min-h-20" name="note" placeholder="What you verified on-chain" required /></Field>
                         <div className="grid grid-cols-2 gap-2">
                           <SubmitButton className="btn btn-gold btn-sm" name="decision" value="confirm" pendingLabel="Saving…">Confirm manually</SubmitButton>
                           <SubmitButton className="btn btn-ghost btn-sm" name="decision" value="reject" pendingLabel="Saving…">Reject</SubmitButton>
                         </div>
+                      </form> : pending ? <form action={reviewPartnerDeposit} className="space-y-3">
+                        <input type="hidden" name="depositId" value={item.id} />
+                        <SectionTitle title="No TXID submitted" />
+                        <p className="text-[11px] leading-relaxed text-slate-500">This intent cannot be confirmed until the partner submits a transaction hash.</p>
+                        <Field label="Rejection note"><textarea className="input min-h-20" name="note" placeholder="Reason for closing this instruction" required /></Field>
+                        <SubmitButton className="btn btn-ghost btn-sm w-full" name="decision" value="reject" pendingLabel="Closing…">Reject instruction</SubmitButton>
                       </form> : item.status === "CONFIRMED" ? <form action={reviewPartnerDeposit} className="space-y-3">
                         <input type="hidden" name="depositId" value={item.id} />
                         <SectionTitle title="Record full refund" />
                         <p className="text-[11px] leading-relaxed text-slate-500">Send the refund outside this application, verify it on-chain, then record the immutable TXID here.</p>
                         <Field label="Refund transaction hash"><input className="input h-10 font-mono text-xs" name="refundTransactionHash" placeholder="64-character TXID" /></Field>
-                        <Field label="Refund note"><textarea className="input min-h-20" name="note" placeholder="Reason and recipient verification" /></Field>
+                        <Field label="Refund note"><textarea className="input min-h-20" name="note" placeholder="Reason and recipient verification" required /></Field>
                         <SubmitButton className="btn btn-ghost btn-sm w-full" name="decision" value="refund" pendingLabel="Recording…">Mark fully refunded</SubmitButton>
                       </form> : <div><SectionTitle title="Final ledger entry" /><p className="text-xs leading-relaxed text-slate-500">No further action is available for this status.</p></div>}
                     </div>
@@ -117,7 +140,7 @@ export default async function AdminDepositsPage({
             </article>
           );
         })}
-      </div> : <div className="card p-5"><EmptyState title="No deposits found" body={status || query.q ? "Clear the filters or search for another partner." : "Partner reserve invoices will appear here as soon as they are created."} /></div>}
+      </div> : <div className="card p-5"><EmptyState title="No deposits found" body={status || query.q ? "Clear the filters or search for another partner." : "Partner reserve instructions will appear here as soon as they are created."} /></div>}
     </>
   );
 }

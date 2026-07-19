@@ -49,13 +49,15 @@ export default function DisclaimerPage() {
       <h2>Partner operating-reserve deposits</h2>
       <p>
         Where separately agreed with an eligible partner, INRP2P may request an operating-reserve
-        deposit through an authenticated USDT invoice issued by a third-party payment provider.
+        deposit to the official company USDT-TRC20 address displayed inside the authenticated
+        partner workspace. The partner reports the transaction hash and an operator verifies the
+        token, destination, amount and on-chain status before crediting the internal reserve ledger.
         That reserve is separate from customer money and from the funds used in any introduced
         transaction. It is not escrow, an investment product, a guarantee of income, a guarantee
         of volume or consideration for a particular trade. The amount, purpose, duration, return
         conditions and any lawful deductions must be set out in the applicable partner agreement.
-        A partner must never send a reserve to an address supplied in chat or outside the authenticated
-        deposit workflow.
+        The company wallet address may change; a partner must use only the address attached to the
+        specific deposit instruction and never an address supplied in chat.
       </p>
 
       <h2>No guarantee of liquidity or completion</h2>

@@ -8,8 +8,10 @@ an auditable incident and verification record.
 The product is a coordination and introduction layer. It does not hold or
 execute the underlying counterparty transaction, run an order book, guarantee
 liquidity or replace a party's licensing, KYC/AML, tax or legal obligations.
-Separately agreed partner operating-reserve deposits are processed through a
-third-party USDT payment provider and recorded in an audited ledger.
+Separately agreed partner operating-reserve deposits are sent to the configured
+company USDT-TRC20 address and recorded in an audited, human-confirmed ledger.
+The application stores the public address and transaction references, never a
+wallet seed phrase or private key.
 
 ## What is implemented
 
@@ -97,6 +99,7 @@ The minimum launch configuration is:
 - Cloudflare Turnstile public and secret keys.
 - A high-entropy `CRON_SECRET` if the scheduled maintenance route is enabled.
 - Private S3 + KMS credentials before collecting verification evidence.
+- A checksum-valid public `USDT_TRC20_DEPOSIT_ADDRESS` before enabling partner reserves.
 - Real operator credentials stored in a password manager, not in source control.
 
 See `.env.example` for every supported integration and [DEPLOYMENT.md](DEPLOYMENT.md)

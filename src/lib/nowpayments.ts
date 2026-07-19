@@ -1,8 +1,6 @@
-// NOWPayments — USDT-TRC20 collection for INRP2P invoices. It is used for
-// the platform's own service fees and for an explicitly created partner
-// operating-reserve deposit. It is never used for the underlying company ↔
-// partner settlement leg. The application stores provider references only;
-// wallet private keys never enter INRP2P.
+// NOWPayments — optional USDT-TRC20 collection for INRP2P service-fee
+// invoices only. Partner reserves use the configured company wallet and
+// never pass through this integration.
 //
 // Setup: create a NOWPayments account, add a payout wallet, generate an API
 // key and an IPN secret key in the dashboard (Store/Payment Settings) →

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { PartnerDeposit } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addDocument, addNote, updatePartnerStatus } from "@/app/actions/admin";
@@ -14,6 +15,7 @@ import {
 import { Timeline } from "@/components/workspace/timeline";
 import { TrackRecordCard } from "@/components/workspace/track-record";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/error-log";
 import { auditLabel, directionLabel, fmtDate, statusLabel } from "@/lib/format";
 import { COMPLIANCE_FLAG_OPTIONS, PARTNER_STATUSES } from "@/lib/options";
 import { getPartnerTrackRecord } from "@/lib/reputation";
@@ -50,10 +52,18 @@ export default async function AdminPartnerDetailPage({
         take: 1,
         select: { id: true, reference: true, status: true, expiresAt: true },
       },
-      deposits: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!partner) notFound();
+
+  let deposits: PartnerDeposit[] = [];
+  let depositLedgerUnavailable = false;
+  try {
+    deposits = await db.partnerDeposit.findMany({ where: { partnerId: partner.id }, orderBy: { createdAt: "desc" } });
+  } catch (depositError) {
+    depositLedgerUnavailable = true;
+    await logError({ error: depositError, source: "page:/admin/partners/[id]:deposit-summary", severity: "FATAL", url: `/admin/partners/${partner.id}` });
+  }
 
   const [timeline, trackRecord] = await Promise.all([
     db.auditLog.findMany({
@@ -65,10 +75,10 @@ export default async function AdminPartnerDetailPage({
   ]);
 
   const back = `/admin/partners/${id}`;
-  const confirmedReserve = partner.deposits
+  const confirmedReserve = deposits
     .filter((deposit) => deposit.status === "CONFIRMED")
     .reduce((sum, deposit) => sum + Number((deposit.actualAmount ?? deposit.amount).toString()), 0);
-  const pendingDeposits = partner.deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
+  const pendingDeposits = deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
 
   return (
     <>
@@ -280,7 +290,7 @@ export default async function AdminPartnerDetailPage({
           <div className="card p-5">
             <SectionTitle title="USDT operating reserve" action={<StatusBadge status={pendingDeposits ? "CONFIRMING" : confirmedReserve > 0 ? "CONFIRMED" : "AWAITING_PAYMENT"} />} />
             <p className="text-2xl font-semibold tabular-nums text-slate-900">{confirmedReserve.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span className="text-sm text-slate-400">USDT</span></p>
-            <p className="mt-1 text-xs text-slate-500">{pendingDeposits} awaiting confirmation · {partner.deposits.length} ledger entries</p>
+            <p className="mt-1 text-xs text-slate-500">{depositLedgerUnavailable ? "Reserve ledger temporarily unavailable" : `${pendingDeposits} awaiting review · ${deposits.length} ledger entries`}</p>
             <Link href={`/admin/deposits?q=${encodeURIComponent(partner.reference)}`} className="btn btn-ghost btn-sm mt-4 w-full">Open deposit control</Link>
           </div>
 
