@@ -11,6 +11,8 @@ import { logError } from "@/lib/error-log";
 import { cn, fmtDateTime, statusLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "USDT deposits" };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 type DepositWithPartner = Prisma.PartnerDepositGetPayload<{ include: { partner: true } }>;
 
 const STATUSES = ["AWAITING_PAYMENT", "CONFIRMING", "CONFIRMED", "REJECTED", "REFUNDED", "EXPIRED"] as const;
