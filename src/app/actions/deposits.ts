@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth";
 import { isValidDepositAmount, normalizeDepositTxHash } from "@/lib/deposit-policy";
 import { companyUsdtTrc20Address } from "@/lib/deposit-wallet";
+import { ensurePartnerDepositLedger } from "@/lib/deposit-ledger";
 import { db } from "@/lib/db";
 import { notify } from "@/lib/notify";
 import { createReference } from "@/lib/secure-token";
@@ -51,6 +52,8 @@ export async function createPartnerDeposit(fd: FormData) {
   const destinationAddress = companyUsdtTrc20Address();
   if (!destinationAddress) finish(DEPOSIT_PATH, "error", "The company USDT-TRC20 wallet is not configured. Do not send funds yet.");
 
+  await ensurePartnerDepositLedger();
+
   await db.partnerDeposit.updateMany({
     where: { partnerId: user.partner.id, status: "AWAITING_PAYMENT", expiresAt: { lt: new Date() } },
     data: { status: "EXPIRED", providerStatus: "expired_locally" },
@@ -92,6 +95,8 @@ export async function submitPartnerDepositTransaction(fd: FormData) {
   const depositId = text(fd, "depositId");
   const transactionHash = normalizeDepositTxHash(text(fd, "transactionHash"));
   if (!transactionHash) finish(DEPOSIT_PATH, "error", "Enter a valid 64-character TRON transaction hash.");
+
+  await ensurePartnerDepositLedger();
 
   const deposit = await db.partnerDeposit.findFirst({
     where: { id: depositId, partnerId: user.partner.id },
@@ -142,6 +147,7 @@ export async function submitPartnerDepositTransaction(fd: FormData) {
 /** Audited operator override for exceptional cases and full reserve refunds. */
 export async function reviewPartnerDeposit(fd: FormData) {
   const admin = await requireRole("ADMIN");
+  await ensurePartnerDepositLedger();
   const depositId = text(fd, "depositId");
   const decision = text(fd, "decision");
   const note = text(fd, "note");

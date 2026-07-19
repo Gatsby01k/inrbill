@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { EmptyState, Field, PageHeader, SectionTitle, Stat, StatusBadge } from "@/components/ui";
 import { Flash } from "@/components/workspace/flash";
 import { tronAddressUrl, tronTransactionUrl } from "@/lib/deposit-wallet";
+import { ensurePartnerDepositLedger } from "@/lib/deposit-ledger";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/error-log";
 import { cn, fmtDateTime, statusLabel } from "@/lib/format";
@@ -48,6 +49,7 @@ export default async function AdminDepositsPage({
   let pendingCount = 0;
   let ledgerUnavailable = false;
   try {
+    await ensurePartnerDepositLedger();
     [deposits, allConfirmed, pendingCount] = await Promise.all([
       db.partnerDeposit.findMany({ where, include: { partner: true }, orderBy: { createdAt: "desc" }, take: 200 }),
       db.partnerDeposit.findMany({ where: { status: "CONFIRMED" }, select: { amount: true, actualAmount: true } }),

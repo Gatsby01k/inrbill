@@ -8,6 +8,7 @@ import { CopyWalletAddress } from "@/components/workspace/copy-wallet-address";
 import { Flash } from "@/components/workspace/flash";
 import { requireRole } from "@/lib/auth";
 import { companyUsdtTrc20Address, tronAddressUrl, tronTransactionUrl } from "@/lib/deposit-wallet";
+import { ensurePartnerDepositLedger } from "@/lib/deposit-ledger";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/error-log";
 import { fmtDateTime } from "@/lib/format";
@@ -88,6 +89,7 @@ export default async function PartnerDepositPage({
   let deposits: PartnerDeposit[] = [];
   let ledgerUnavailable = false;
   try {
+    await ensurePartnerDepositLedger();
     deposits = await db.partnerDeposit.findMany({ where: { partnerId: user.partner.id }, orderBy: { createdAt: "desc" } });
   } catch (error) {
     ledgerUnavailable = true;
@@ -151,20 +153,22 @@ export default async function PartnerDepositPage({
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">We lock the exact amount and official wallet into a unique audit record before you pay.</p>
                 </div>
               </div>
-              <form action={createPartnerDeposit} className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                <Field label="Amount" hint="10–1,000,000 USDT · up to 6 decimals">
+              <form action={createPartnerDeposit} className="mt-5">
+                <label className="lbl" htmlFor="deposit-amount">Amount</label>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_230px] sm:items-stretch">
                   <div className="relative">
-                    <input className="input min-h-11 pr-16 text-base tabular-nums" name="amount" type="number" min="10" max="1000000" step="0.000001" defaultValue="300" required />
+                    <input id="deposit-amount" className="input h-12 pr-16 text-base tabular-nums" name="amount" type="number" min="10" max="1000000" step="0.000001" defaultValue="300" required />
                     <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">USDT</span>
                   </div>
-                </Field>
-                <SubmitButton
-                  className="btn min-h-11 w-full rounded-xl border border-[#07152e] bg-[#07152e] px-5 text-white hover:bg-[#10284c] sm:w-auto"
-                  pendingLabel="Creating…"
-                  disabled={!walletAddress || ledgerUnavailable}
-                >
-                  Create instruction →
-                </SubmitButton>
+                  <SubmitButton
+                    className="btn h-12 w-full rounded-xl border border-[#07152e] bg-[#07152e] px-5 text-white shadow-[0_12px_24px_-16px_rgba(7,21,46,.75)] hover:-translate-y-px hover:bg-[#10284c]"
+                    pendingLabel="Creating…"
+                    disabled={!walletAddress}
+                  >
+                    Create instruction →
+                  </SubmitButton>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500">10–1,000,000 USDT · up to 6 decimals</p>
               </form>
               {!walletAddress ? (
                 <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">Deposits are unavailable until the official company wallet is configured.</p>
