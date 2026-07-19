@@ -26,6 +26,7 @@ export default async function AdminLayout({
           { href: "/admin/analytics", label: "Analytics" },
           { href: "/admin/requests", label: "Requests" },
           { href: "/admin/partners", label: "Partners" },
+          { href: "/admin/deposits", label: "Deposits" },
           { href: "/admin/matches", label: "Matches" },
           { href: "/admin/revenue", label: "Revenue" },
           { href: "/admin/risk", label: "Risk radar" },

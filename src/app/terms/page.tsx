@@ -15,7 +15,7 @@ export default function TermsPage() {
       eyebrow="Legal"
       title="Terms of Service"
       sub="The agreement between you and INRP2P when you submit a request, apply as a partner, or otherwise use the network."
-      updated="8 July 2026"
+      updated="19 July 2026"
     >
       <p>
         These terms govern access to and use of INRP2P (the &quot;network&quot;, &quot;service&quot;). By
@@ -83,7 +83,18 @@ export default function TermsPage() {
         suspect unauthorised access.
       </p>
 
-      <h2>7. Confidentiality</h2>
+      <h2>7. Partner operating reserves</h2>
+      <p>
+        If INRP2P and an eligible partner separately agree to an operating reserve, the partner
+        may fund it only through the authenticated deposit workflow in its workspace. The reserve
+        is not a fee, investment, customer fund, escrow balance or part of any introduced
+        transaction. The applicable partner agreement must state the amount, purpose, duration,
+        refund conditions and any lawful deductions. Creating or funding a reserve does not
+        guarantee verification, work, traffic, income, transaction volume or continued access.
+        Never send a reserve to an address supplied through chat or outside the authenticated invoice.
+      </p>
+
+      <h2>8. Confidentiality</h2>
       <p>
         Request and partner details are visible to network operations and are only shared with
         a specific counterparty once an introduction is explicitly released. You agree not to
@@ -92,14 +103,14 @@ export default function TermsPage() {
         relationship.
       </p>
 
-      <h2>8. Intellectual property</h2>
+      <h2>9. Intellectual property</h2>
       <p>
         The INRP2P name, mark, site design and underlying software are owned by INRP2P or its
         licensors. Nothing in these terms grants you rights in that material beyond ordinary use
         of the service.
       </p>
 
-      <h2>9. Disclaimers of warranties</h2>
+      <h2>10. Disclaimers of warranties</h2>
       <p>
         The service is provided &quot;as is&quot; and &quot;as available&quot;. To the fullest extent permitted by
         law, INRP2P disclaims all warranties, express or implied, including fitness for a
@@ -107,7 +118,7 @@ export default function TermsPage() {
         or error-free operation.
       </p>
 
-      <h2>10. Limitation of liability</h2>
+      <h2>11. Limitation of liability</h2>
       <p>
         To the fullest extent permitted by law, INRP2P&apos;s aggregate liability arising from or
         relating to the service or these terms is limited to the fees you have paid INRP2P in
@@ -116,35 +127,35 @@ export default function TermsPage() {
         or dispute between introduced counterparties.
       </p>
 
-      <h2>11. Indemnification</h2>
+      <h2>12. Indemnification</h2>
       <p>
         You agree to indemnify and hold INRP2P harmless from claims arising from your breach of
         these terms, your submissions to the network, or your conduct with an introduced
         counterparty.
       </p>
 
-      <h2>12. Term, suspension and termination</h2>
+      <h2>13. Term, suspension and termination</h2>
       <p>
         INRP2P may suspend or terminate access at any time, with or without notice, where
         conduct breaches these terms, the <Link href="/prohibited-use">Prohibited Use Policy</Link>,
         or otherwise poses a risk to the network. You may stop using the service at any time.
       </p>
 
-      <h2>13. Governing law and disputes</h2>
+      <h2>14. Governing law and disputes</h2>
       <p>
         The governing law and dispute-resolution forum for these terms will be specified prior
         to general availability and confirmed with counsel; until then this section is a
         placeholder and not a binding choice of law.
       </p>
 
-      <h2>14. Changes to these terms</h2>
+      <h2>15. Changes to these terms</h2>
       <p>
         We may update these terms as the service evolves. Material changes will be reflected by
         an updated &quot;last updated&quot; date on this page; continued use after a change constitutes
         acceptance.
       </p>
 
-      <h2>15. Contact</h2>
+      <h2>16. Contact</h2>
       <p>
         Questions about these terms: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>

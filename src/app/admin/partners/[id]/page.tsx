@@ -50,6 +50,7 @@ export default async function AdminPartnerDetailPage({
         take: 1,
         select: { id: true, reference: true, status: true, expiresAt: true },
       },
+      deposits: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!partner) notFound();
@@ -64,6 +65,10 @@ export default async function AdminPartnerDetailPage({
   ]);
 
   const back = `/admin/partners/${id}`;
+  const confirmedReserve = partner.deposits
+    .filter((deposit) => deposit.status === "CONFIRMED")
+    .reduce((sum, deposit) => sum + Number((deposit.actualAmount ?? deposit.amount).toString()), 0);
+  const pendingDeposits = partner.deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
 
   return (
     <>
@@ -271,6 +276,13 @@ export default async function AdminPartnerDetailPage({
             initialNote={partner.aiTriageNote}
             initialFlagged={partner.aiFlagged}
           />
+
+          <div className="card p-5">
+            <SectionTitle title="USDT operating reserve" action={<StatusBadge status={pendingDeposits ? "CONFIRMING" : confirmedReserve > 0 ? "CONFIRMED" : "AWAITING_PAYMENT"} />} />
+            <p className="text-2xl font-semibold tabular-nums text-slate-900">{confirmedReserve.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span className="text-sm text-slate-400">USDT</span></p>
+            <p className="mt-1 text-xs text-slate-500">{pendingDeposits} awaiting confirmation · {partner.deposits.length} ledger entries</p>
+            <Link href={`/admin/deposits?q=${encodeURIComponent(partner.reference)}`} className="btn btn-ghost btn-sm mt-4 w-full">Open deposit control</Link>
+          </div>
 
           <div className="card p-5">
             <TrackRecordCard record={trackRecord} title="Track record" />

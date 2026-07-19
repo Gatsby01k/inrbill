@@ -2,7 +2,7 @@
   "name": "inrp2p",
   "version": "1.0.0",
   "private": true,
-  "description": "INRP2P — private INR liquidity network. Manual review, matching and qualified introductions. No custody, no execution.",
+  "description": "INRP2P — private INR liquidity network. Manual review, matching and qualified introductions. No custody or execution of deal funds.",
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate && node scripts/database-release.mjs",

@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "Request an INR liquidity partner",
   description:
-    "Submit your INR liquidity requirement — direction, daily and monthly volume, banks, rails, speed and jurisdiction. Reviewed manually within 24–48 hours. Introductions only, never custody.",
+    "Submit your INR liquidity requirement — direction, daily and monthly volume, banks, rails, speed and jurisdiction. Reviewed manually within 24–48 hours. INRP2P never custodies the transaction funds.",
   alternates: { canonical: "/request" },
 };
 

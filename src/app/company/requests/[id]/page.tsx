@@ -249,7 +249,7 @@ export default async function CompanyRequestDetailPage({
           <div className="card p-5">
             <SectionTitle title="How introductions work" />
             <p className="text-[13px] leading-relaxed text-slate-500">
-              INRP2P never holds or moves funds. We review, match and introduce.
+              INRP2P never holds or moves the transaction funds. We review, match and introduce.
               Once a partner is released here, expect a direct introduction from
               operations — from that point you deal with the partner bilaterally,
               under your own agreements and compliance checks.

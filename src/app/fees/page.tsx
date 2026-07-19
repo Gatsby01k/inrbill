@@ -52,7 +52,7 @@ export default function FeesPage() {
       <h2>What we do not charge for</h2>
       <ul>
         <li>INRP2P does not take a spread, markup or share of transaction volume.</li>
-        <li>INRP2P does not charge on funds that pass between introduced parties — no funds pass through INRP2P at all.</li>
+        <li>INRP2P does not charge on or route the funds exchanged between introduced parties.</li>
         <li>Fees are never a condition attached to the pricing or terms two introduced parties agree between themselves.</li>
       </ul>
 
@@ -65,6 +65,11 @@ export default function FeesPage() {
         convenient. This applies only to INRP2P&apos;s own fees. INRP2P never processes, holds
         or routes the funds exchanged between introduced parties themselves — that settlement
         always happens directly between you and the other party, entirely outside the platform.
+      </p>
+      <p>
+        A separately agreed partner operating-reserve deposit is not a service fee and is not
+        part of an introduced transaction. Its amount and return conditions are governed by the
+        applicable written partner agreement and the <Link href="/disclaimer">Disclaimer</Link>.
       </p>
 
       <h2>Changes to fees</h2>

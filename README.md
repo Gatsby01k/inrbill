@@ -5,9 +5,11 @@ It lets a company maintain an approved partner network, collect current capacity
 route a requirement deterministically, exchange offers, manage evidence and keep
 an auditable incident and verification record.
 
-The product is a coordination and introduction layer. It does not hold funds,
-execute a trade, run an order book, guarantee liquidity or replace a party's
-licensing, KYC/AML, tax or legal obligations.
+The product is a coordination and introduction layer. It does not hold or
+execute the underlying counterparty transaction, run an order book, guarantee
+liquidity or replace a party's licensing, KYC/AML, tax or legal obligations.
+Separately agreed partner operating-reserve deposits are processed through a
+third-party USDT payment provider and recorded in an audited ledger.
 
 ## What is implemented
 

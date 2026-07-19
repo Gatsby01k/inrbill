@@ -7,7 +7,9 @@ export function SubmitButton({
   className = "btn btn-gold",
   pendingLabel = "Working…",
   formAction,
-}: {
+  disabled,
+  ...buttonProps
+}: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "formAction"> & {
   children: React.ReactNode;
   className?: string;
   pendingLabel?: string;
@@ -18,7 +20,7 @@ export function SubmitButton({
 }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={className} formAction={formAction}>
+    <button {...buttonProps} type="submit" disabled={pending || disabled} className={className} formAction={formAction}>
       {pending ? pendingLabel : children}
     </button>
   );

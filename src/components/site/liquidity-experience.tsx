@@ -247,7 +247,7 @@ export function NetworkConsole() {
 
       <div className="v3-console-foot">
         <span>Every decision is explainable</span>
-        <span>No custody</span>
+        <span>No custody of deal funds</span>
         <span>No execution</span>
       </div>
     </div>

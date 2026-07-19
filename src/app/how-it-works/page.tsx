@@ -5,7 +5,7 @@ import { CorePositions, LegalShell } from "@/components/site/legal-shell";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "The full INRP2P process: intake, manual review, requirements-based matching, and qualified introduction. No custody, no execution.",
+    "The full INRP2P process: intake, manual review, requirements-based matching, and qualified introduction. No custody or execution of the underlying transaction.",
   alternates: { canonical: "/how-it-works" },
 };
 

@@ -143,7 +143,7 @@ export default async function CompanyHomePage() {
         </p>
         <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-slate-500">
           INRP2P reviews your request and, if it fits the network, introduces you to a
-          verified partner. INRP2P does not custody funds, does not execute payments or
+          verified partner. INRP2P does not custody deal funds, does not execute payments or
           payouts, does not operate an exchange, and does not guarantee liquidity, a match,
           or that any transaction completes. Once introduced, you deal with the partner
           directly, and remain responsible for your own KYC, AML, tax and legal obligations.

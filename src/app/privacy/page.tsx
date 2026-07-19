@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       eyebrow="Legal"
       title="Privacy Policy"
       sub="What we collect through requests, applications and workspaces, and how it is used."
-      updated="8 July 2026"
+      updated="19 July 2026"
     >
       <p>
         This policy explains how INRP2P handles information submitted by companies and
@@ -47,6 +47,12 @@ export default function PrivacyPage() {
         <li>Session cookies required to keep you signed in to your workspace.</li>
         <li>Basic technical logs (timestamps, IP, user agent) used for security and abuse prevention.</li>
       </ul>
+      <h3>Deposit and payment records</h3>
+      <ul>
+        <li>Deposit reference, invoice identifier, USDT amount, network and payment status.</li>
+        <li>Transaction hashes and provider references used for reconciliation, audit and refunds.</li>
+        <li>INRP2P does not collect or store your wallet private key or seed phrase.</li>
+      </ul>
 
       <h2>2. How we use information</h2>
       <ul>
@@ -66,7 +72,7 @@ export default function PrivacyPage() {
         only once an admin explicitly releases that introduction. We may also share information:
       </p>
       <ul>
-        <li>With infrastructure, email and verification providers under confidentiality and data-protection obligations.</li>
+        <li>With infrastructure, email, verification and payment providers under confidentiality and data-protection obligations.</li>
         <li>Where required by law, regulation, legal process, or to protect the rights and safety of the network.</li>
         <li>In connection with a merger, acquisition or asset transfer, with continuity of this policy&apos;s protections.</li>
       </ul>

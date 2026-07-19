@@ -176,7 +176,7 @@ export default function HomePage() {
           <div className="v3-final-mark"><BrandMark size={72} /></div>
           <p className="v3-kicker"><span /> Private access</p>
           <h2>Put verified ground beneath<br />every INR relationship.</h2>
-          <p>Manual review. Current capacity. Controlled introductions. No custody. No execution.</p>
+          <p>Manual review. Current capacity. Controlled introductions. No custody or execution of deal funds.</p>
           <div className="v3-actions">
             <Link href="/request" className="v3-button v3-button-primary">Request access <Arrow /></Link>
             <Link href="/how-it-works" className="v3-button v3-button-quiet">See how it works</Link>

@@ -8,7 +8,7 @@ export const SITE_NAME = "INRP2P";
 export const SITE_TAGLINE = "India's Liquidity, Reviewed";
 
 export const SITE_DESCRIPTION =
-  "Private INR partner network OS for verification, live capacity, explainable routing and controlled introductions. No custody or platform execution.";
+  "Private INR partner network OS for verification, live capacity, explainable routing and controlled introductions. No custody or platform execution of deal funds.";
 
 /**
  * Build/version marker shown in the operator UI so a screenshot or bug report

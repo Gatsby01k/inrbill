@@ -58,7 +58,7 @@ export default function OpengraphImage() {
           Reviewed INR liquidity partners. Qualified introductions.
         </div>
         <div style={{ marginTop: 28, fontSize: 28, color: "#5B6472", maxWidth: 860 }}>
-          INR → USDT · USDT → INR · INR payouts. Manual review. No custody, ever.
+          INR → USDT · USDT → INR · INR payouts. Manual review. Deal funds stay between counterparties.
         </div>
         <div
           style={{

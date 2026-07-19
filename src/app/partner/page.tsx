@@ -64,11 +64,16 @@ export default async function PartnerOverviewPage({
       },
       notesList: { where: { visibility: "PARTNER" }, orderBy: { createdAt: "desc" } },
       documents: { where: { visibility: "PARTNER" }, orderBy: { createdAt: "desc" } },
+      deposits: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!partner) redirect("/login");
 
   const trackRecord = await getPartnerTrackRecord(partner.id);
+  const confirmedReserve = partner.deposits
+    .filter((deposit) => deposit.status === "CONFIRMED")
+    .reduce((sum, deposit) => sum + Number((deposit.actualAmount ?? deposit.amount).toString()), 0);
+  const pendingDeposits = partner.deposits.filter((deposit) => ["AWAITING_PAYMENT", "CONFIRMING"].includes(deposit.status)).length;
 
   const referredRows: ReferredAccountRow[] = partner.referralCode
     ? (await listReferredPartners(partner.referralCode)).map((p) => ({
@@ -247,13 +252,19 @@ export default async function PartnerOverviewPage({
             <TrackRecordCard record={trackRecord} title="Your track record" />
           </div>
           <div className="card p-5">
+            <SectionTitle title="USDT operating reserve" action={<StatusBadge status={pendingDeposits ? "CONFIRMING" : confirmedReserve > 0 ? "CONFIRMED" : "AWAITING_PAYMENT"} />} />
+            <p className="text-2xl font-semibold tabular-nums text-slate-900">{confirmedReserve.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} <span className="text-sm text-slate-400">USDT</span></p>
+            <p className="mt-1 text-xs text-slate-500">{pendingDeposits ? `${pendingDeposits} deposit${pendingDeposits === 1 ? "" : "s"} confirming` : "No transfer currently confirming"}</p>
+            <Link href="/partner/deposit" className="btn btn-gold btn-sm mt-4 w-full">Open USDT reserve</Link>
+          </div>
+          <div className="card p-5">
             <SectionTitle title="Declared coverage" />
             <dl className="space-y-3">
               <KV label="Directions">
                 {partner.directions.map((d) => directionLabel(d)).join(", ")}
               </KV>
               <KV label="Daily capacity">{partner.dailyCapacityBand}</KV>
-              <KV label="Reserve">{partner.reserveBand}</KV>
+              <KV label="Declared reserve capacity">{partner.reserveBand}</KV>
               <KV label="Working hours">{partner.workingHours}</KV>
               <KV label="Coverage">{partner.jurisdictions}</KV>
               <KV label="Banks">{partner.banks.join(", ")}</KV>

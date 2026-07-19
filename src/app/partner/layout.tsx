@@ -22,6 +22,7 @@ export default async function PartnerLayout({
         { href: "/partner/offers", label: "Offers" },
         { href: "/partner/network", label: "Company networks" },
         { href: "/partner/verification", label: "Trust Passport" },
+        { href: "/partner/deposit", label: "USDT reserve" },
         { href: "/account/security", label: "Security" },
       ]}
     >

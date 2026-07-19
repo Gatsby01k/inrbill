@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/options";
 export const metadata: Metadata = {
   title: "Disclaimer",
   description:
-    "INRP2P's legal disclaimer: a coordination-only service with no custody, no execution, no exchange and no guarantees over liquidity, completion or introductions.",
+    "INRP2P's legal disclaimer: a coordination service with no custody or execution of counterparty transaction funds and no guarantees over liquidity, completion or introductions.",
   alternates: { canonical: "/disclaimer" },
 };
 
@@ -15,7 +15,7 @@ export default function DisclaimerPage() {
       eyebrow="Legal"
       title="Disclaimer"
       sub="A plain statement of what INRP2P is, what it is not, and where responsibility sits."
-      updated="8 July 2026"
+      updated="19 July 2026"
     >
       <p>
         This disclaimer applies to every page, form and workspace on INRP2P. It exists so
@@ -35,15 +35,27 @@ export default function DisclaimerPage() {
         seeking to hold any such license or registration.
       </p>
 
-      <h2>No custody, no execution, no exchange</h2>
+      <h2>No custody or execution of the underlying transaction</h2>
       <p>
-        INRP2P never takes possession of funds, tokens or payment instructions belonging to a
-        company or a partner. There is no wallet, no pooled account, no escrow and no
-        settlement rail anywhere in the product. INRP2P does not execute payments, payouts,
-        conversions or trades on behalf of any party, and does not operate an exchange, OTC
-        desk or matching engine for pricing. Every transaction that follows an introduction is
-        arranged, priced and settled directly between the introduced parties, under their own
-        agreement.
+        INRP2P never takes possession of the funds, tokens or payment instructions exchanged
+        between a company and partner in an introduced transaction. There is no pooled deal
+        account, transaction escrow or settlement rail in the matching product. INRP2P does
+        not execute payments, payouts, conversions or trades on behalf of either counterparty,
+        and does not operate an exchange, OTC desk or pricing venue. Every transaction that
+        follows an introduction is arranged, priced and settled directly between the introduced
+        parties under their own agreement.
+      </p>
+
+      <h2>Partner operating-reserve deposits</h2>
+      <p>
+        Where separately agreed with an eligible partner, INRP2P may request an operating-reserve
+        deposit through an authenticated USDT invoice issued by a third-party payment provider.
+        That reserve is separate from customer money and from the funds used in any introduced
+        transaction. It is not escrow, an investment product, a guarantee of income, a guarantee
+        of volume or consideration for a particular trade. The amount, purpose, duration, return
+        conditions and any lawful deductions must be set out in the applicable partner agreement.
+        A partner must never send a reserve to an address supplied in chat or outside the authenticated
+        deposit workflow.
       </p>
 
       <h2>No guarantee of liquidity or completion</h2>

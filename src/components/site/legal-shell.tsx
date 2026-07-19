@@ -48,7 +48,8 @@ export function LegalShell({
 }
 
 const CORE_POSITIONS = [
-  "INRP2P does not custody funds at any point, in any currency.",
+  "INRP2P does not custody or execute the underlying funds exchanged between introduced counterparties.",
+  "A partner operating-reserve deposit is separate from transaction funds and exists only where expressly agreed.",
   "INRP2P does not execute payments, payouts or settlement of any kind.",
   "INRP2P does not operate an exchange, OTC desk or trading venue.",
   "INRP2P does not guarantee liquidity, capacity or pricing from any partner.",

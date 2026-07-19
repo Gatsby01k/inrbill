@@ -91,6 +91,18 @@ export function auditLabel(action: string, meta?: unknown): string {
       return "Note added";
     case "document.added":
       return "Document added";
+    case "deposit.invoice_created":
+      return "USDT reserve invoice created";
+    case "deposit.confirmed_via_nowpayments":
+      return "USDT reserve confirmed by payment provider";
+    case "deposit.manually_confirmed":
+      return "USDT reserve confirmed by operator";
+    case "deposit.provider_status_changed":
+      return `Deposit ${from} → ${to}`;
+    case "deposit.refunded":
+      return "USDT reserve refunded";
+    case "deposit.rejected":
+      return "USDT reserve deposit rejected";
     default:
       return statusLabel(action.replace(/\./g, "_"));
   }

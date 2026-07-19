@@ -1,9 +1,8 @@
-// NOWPayments — non-custodial USDT collection for INRP2P's own service fee
-// (RevenueRecord: introduction fees, success fees, retainers, etc.) when
-// the payer settles in USDT-TRC20 instead of INR. This is the same
-// boundary as Razorpay: only ever INRP2P's own commission for coordination
-// work — never the underlying P2P trade funds between company and partner,
-// and never anything resembling holding or converting a client's crypto.
+// NOWPayments — USDT-TRC20 collection for INRP2P invoices. It is used for
+// the platform's own service fees and for an explicitly created partner
+// operating-reserve deposit. It is never used for the underlying company ↔
+// partner settlement leg. The application stores provider references only;
+// wallet private keys never enter INRP2P.
 //
 // Setup: create a NOWPayments account, add a payout wallet, generate an API
 // key and an IPN secret key in the dashboard (Store/Payment Settings) →
@@ -39,6 +38,8 @@ export type CreateCryptoInvoiceInput = {
   /** Passed through as order_id — we use the RevenueRecord's own id so the
       webhook can match the record directly, no separate lookup table needed. */
   orderId: string;
+  /** Optional hosted-checkout return URL. */
+  successUrl?: string;
 };
 
 export type CryptoInvoiceResult = {
@@ -47,10 +48,8 @@ export type CryptoInvoiceResult = {
 };
 
 /**
- * Creates a NOWPayments hosted invoice for one of INRP2P's own USDT-priced
- * RevenueRecords. Never throws — returns null and logs on any failure, so a
- * gateway outage or missing config degrades to "link not available yet"
- * instead of crashing the admin action that calls it.
+ * Creates a NOWPayments hosted USDT-TRC20 invoice. Never throws — returns
+ * null and logs on failure so callers can roll back their local draft.
  */
 export async function createCryptoInvoice(
   input: CreateCryptoInvoiceInput,
@@ -72,7 +71,7 @@ export async function createCryptoInvoice(
     order_id: input.orderId.slice(0, 100),
     order_description: input.description.slice(0, 2000),
     ipn_callback_url: `${SITE_URL}/api/webhooks/nowpayments`,
-    success_url: SITE_URL,
+    success_url: input.successUrl ?? SITE_URL,
   };
 
   try {

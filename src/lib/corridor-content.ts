@@ -37,7 +37,7 @@ export const CORRIDOR_CONTENT: Record<CorridorSlug, CorridorContent> = {
       },
       {
         q: "Does INRP2P hold funds or execute the trade?",
-        a: "No. INRP2P never custodies funds, never executes a trade or transfer, and does not guarantee a match or an outcome. Its role ends at a reviewed introduction — everything after that is agreed and settled directly between you and the partner.",
+        a: "No. INRP2P never custodies the funds exchanged in the transaction, never executes a trade or transfer, and does not guarantee a match or an outcome. Its role ends at a reviewed introduction — everything after that is agreed and settled directly between you and the partner.",
       },
     ],
   },
@@ -63,7 +63,7 @@ export const CORRIDOR_CONTENT: Record<CorridorSlug, CorridorContent> = {
       },
       {
         q: "Does INRP2P hold funds or execute the transfer?",
-        a: "No. INRP2P never custodies funds, never executes a trade or transfer, and does not guarantee a match or outcome. Its role ends at a reviewed introduction.",
+        a: "No. INRP2P never custodies the funds exchanged in the transaction, never executes a trade or transfer, and does not guarantee a match or outcome. Its role ends at a reviewed introduction.",
       },
     ],
   },
@@ -89,7 +89,7 @@ export const CORRIDOR_CONTENT: Record<CorridorSlug, CorridorContent> = {
       },
       {
         q: "Does INRP2P execute the payout itself?",
-        a: "No. INRP2P never custodies funds and never executes a payout — its role ends at a reviewed introduction to a partner with the right coverage. Execution and settlement happen directly between you and the partner.",
+        a: "No. INRP2P never custodies payout funds and never executes a payout — its role ends at a reviewed introduction to a partner with the right coverage. Execution and settlement happen directly between you and the partner.",
       },
     ],
   },

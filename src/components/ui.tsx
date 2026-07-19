@@ -57,6 +57,12 @@ const STATUS_TONE: Record<string, keyof typeof TONE_CLASS> = {
   CANCELLED: "rose",
   LOST: "rose",
   WAIVED: "slate",
+  // Partner reserve deposits
+  AWAITING_PAYMENT: "gold",
+  CONFIRMING: "blue",
+  CONFIRMED: "emerald",
+  REFUNDED: "slate",
+  EXPIRED: "rose",
   // Error monitoring
   WARNING: "gold",
   ERROR: "rose",
