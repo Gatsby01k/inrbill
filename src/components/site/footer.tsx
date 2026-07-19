@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandMark, Wordmark } from "@/components/brand";
 import { CONTACT_EMAIL, CONTACT_LINKEDIN, CONTACT_TELEGRAM, CONTACT_TELEGRAM_CHANNEL } from "@/lib/options";
 
-const network = [["/request", "Request a partner"], ["/apply", "Apply as a partner"], ["/inr-p2p-index", "Liquidity index"], ["/corridors", "Corridors"], ["/how-it-works", "How it works"], ["/login", "Log in"]];
+const network = [["/request", "Request a partner"], ["/apply", "Apply as a partner"], ["/inr-p2p-index", "Liquidity index"], ["/corridors", "Corridors"], ["/how-it-works", "How it works"], ["/careers", "Careers"], ["/login", "Log in"]];
 const legal = [["/partner-review", "Partner review"], ["/fees", "Fees"], ["/disclaimer", "Disclaimer"], ["/prohibited-use", "Prohibited use"], ["/privacy", "Privacy"], ["/terms", "Terms"]];
 
 export function SiteFooter() {

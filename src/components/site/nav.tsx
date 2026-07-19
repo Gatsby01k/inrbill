@@ -17,6 +17,7 @@ export async function SiteNav() {
           <Link href="/#operating-model">Operating model</Link>
           <Link href="/#controls">Controls</Link>
           <Link href="/how-it-works">How it works</Link>
+          <Link href="/careers">Careers</Link>
         </nav>
         <div className="fin-nav-actions">
           {session ? (

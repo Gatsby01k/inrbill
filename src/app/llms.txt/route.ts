@@ -23,6 +23,7 @@ export async function GET() {
 - [Submit a request](${SITE_URL}/request): for companies needing an INR liquidity or payout partner.
 - [Apply for trader review](${SITE_URL}/apply): for liquidity partners, payout operators and trading teams applying to join the network.
 - [How it works](${SITE_URL}/how-it-works): the submission → review → matching → introduction pipeline.
+- [Careers](${SITE_URL}/careers): open roles across INR liquidity trading, network operations, counterparty risk and institutional partnerships.
 - [Partner review framework](${SITE_URL}/partner-review): what is verified before a partner is eligible for introductions.
 - [Fees](${SITE_URL}/fees), [Disclaimer](${SITE_URL}/disclaimer), [Terms](${SITE_URL}/terms), [Privacy](${SITE_URL}/privacy).
 
