@@ -54,7 +54,12 @@ async function schemaState(): Promise<LedgerSchemaState> {
 
 async function repairLedgerSchema() {
   await db.$transaction(async (tx) => {
-    await tx.$queryRawUnsafe("SELECT pg_advisory_xact_lock(492020260719)");
+    // The lock function returns PostgreSQL `void`, which Prisma cannot
+    // deserialize. Select a supported scalar while still invoking the
+    // transaction-scoped lock in the FROM clause.
+    await tx.$queryRawUnsafe(
+      'SELECT 1::int AS "lockAcquired" FROM pg_advisory_xact_lock(492020260719)',
+    );
     await tx.$executeRawUnsafe(`
       DO $block$
       BEGIN
