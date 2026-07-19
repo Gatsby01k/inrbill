@@ -26,13 +26,44 @@ const executable = path.join(
   ".bin",
   process.platform === "win32" ? "prisma.cmd" : "prisma",
 );
-const result = spawnSync(executable, ["migrate", "deploy"], {
-  env: process.env,
-  stdio: "inherit",
-});
 
-if (result.status !== 0) {
-  throw new Error("Production database migration failed.");
+function migrate(label, env) {
+  console.log(`Production database migration: ${label}.`);
+  const result = spawnSync(executable, ["migrate", "deploy"], { env, stdio: "inherit" });
+  if (result.status !== 0) throw new Error(`Production database migration failed for ${label}.`);
 }
 
-console.log("Production database release completed.");
+migrate("direct connection", process.env);
+
+const { PrismaClient } = await import("@prisma/client");
+const runtimeDb = new PrismaClient();
+async function runtimeSchemaReady() {
+  const rows = await runtimeDb.$queryRawUnsafe(`
+    SELECT
+      to_regclass('public."PartnerDeposit"') IS NOT NULL AS "tableReady",
+      EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'PartnerDeposit'
+          AND column_name = 'destinationAddress'
+      ) AS "walletColumnReady"
+  `);
+  return rows[0]?.tableReady === true && rows[0]?.walletColumnReady === true;
+}
+
+try {
+  if (!(await runtimeSchemaReady())) {
+    console.warn("Runtime database is behind the direct migration target; applying migrations to DATABASE_URL.");
+    migrate("runtime connection", {
+      ...process.env,
+      DATABASE_URL_UNPOOLED: process.env.DATABASE_URL,
+    });
+  }
+  if (!(await runtimeSchemaReady())) {
+    throw new Error("Production database migration verification failed: PartnerDeposit schema is still missing from the runtime database.");
+  }
+} finally {
+  await runtimeDb.$disconnect();
+}
+
+console.log("Production database release completed and verified against runtime.");
