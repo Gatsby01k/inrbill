@@ -23,7 +23,7 @@ export function CustomerOtpForm({ quoteId }: { quoteId?: string }) {
     return (
       <form action={requestAction} className="move-auth-form">
         {quoteId ? <input type="hidden" name="quote" value={quoteId} /> : null}
-        <Field label="Email">
+        <Field label="Email address">
           <input
             name="email"
             type="email"
@@ -37,7 +37,7 @@ export function CustomerOtpForm({ quoteId }: { quoteId?: string }) {
         </Field>
         <FormError message={requestState.error} />
         <SubmitButton className="move-primary-button" pendingLabel="Sending code…">
-          Continue securely
+          Send OTP
         </SubmitButton>
         <p className="move-auth-note">
           No password. We send one short-lived code and return you to the same move.
@@ -49,9 +49,10 @@ export function CustomerOtpForm({ quoteId }: { quoteId?: string }) {
   return (
     <form action={verifyAction} className="move-auth-form">
       <input type="hidden" name="challengeToken" value={requestState.challengeToken} />
-      <p className="move-auth-sent">
-        Code sent to <strong>{requestState.email}</strong>
-      </p>
+      <div className="move-auth-code-head">
+        <span>Enter OTP</span>
+        <p>Code sent to <strong>{requestState.email}</strong></p>
+      </div>
       {requestState.devCode ? (
         <p className="move-dev-code">Development code: {requestState.devCode}</p>
       ) : null}
@@ -77,6 +78,9 @@ export function CustomerOtpForm({ quoteId }: { quoteId?: string }) {
       <SubmitButton className="move-primary-button" pendingLabel="Checking…">
         Confirm and continue
       </SubmitButton>
+      <p className="move-auth-note">
+        The code is single-use and expires automatically.
+      </p>
     </form>
   );
 }

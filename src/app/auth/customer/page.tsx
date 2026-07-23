@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { BrandLockup } from "@/components/brand";
 import { CustomerOtpForm } from "@/components/forms/customer-otp-form";
 import { getSession } from "@/lib/auth";
+import { formatCurrencyAmount } from "@/lib/amount";
 import { pendingQuoteClaim } from "@/lib/pending-quote";
 
 export const metadata: Metadata = {
@@ -27,20 +28,42 @@ export default async function CustomerAuthPage({
   return (
     <main className="move-auth-page">
       <header className="move-auth-header">
-        <Link href="/" aria-label="INRP2P home">
-          <BrandLockup markSize={28} />
-        </Link>
+        <BrandLockup href="/" markSize={28} />
         <Link href="/" className="move-text-link">
           Back
         </Link>
       </header>
       <section className="move-auth-card">
+        <div className="move-auth-step"><span>02</span><p>Sign in</p></div>
         <p className="move-eyebrow">Secure continuation</p>
-        <h1>Your amount stays exactly where you left it.</h1>
+        <h1>Sign in. Your move stays here.</h1>
         <p>
-          Confirm your email only after seeing the quote. Member and operator access remains
-          separate.
+          We use a short-lived email code until a production SMS provider is configured.
+          Member and operator access remains separate.
         </p>
+        {pending ? (
+          <div className="move-auth-quote" aria-label="Pending quote">
+            <div>
+              <span>You send</span>
+              <strong>
+                {formatCurrencyAmount(
+                  pending.sendAmount.toString(),
+                  pending.sendCurrency as "INR" | "USDT",
+                )}
+              </strong>
+            </div>
+            <i aria-hidden>→</i>
+            <div>
+              <span>You receive</span>
+              <strong>
+                {formatCurrencyAmount(
+                  pending.receiveAmount.toString(),
+                  pending.receiveCurrency as "INR" | "USDT",
+                )}
+              </strong>
+            </div>
+          </div>
+        ) : null}
         <CustomerOtpForm quoteId={pending?.id} />
         <div className="move-auth-divider">
           <span>Member workspace?</span>

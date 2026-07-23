@@ -31,13 +31,23 @@ export type RepeatMove = {
   destinationMasked: string;
 };
 
+export type SavedMoveMethod = {
+  label: string;
+  maskedLabel: string;
+  status: string;
+  type: string;
+  purpose: string;
+  isDefaultSend: boolean;
+  isDefaultReceive: boolean;
+};
+
 type ActiveOrder = { reference: string; status: string } | null;
 
 const INR_PRESETS = [
+  { label: "₹10K", value: "10000" },
   { label: "₹25k", value: "25000" },
   { label: "₹50k", value: "50000" },
-  { label: "₹1 lakh", value: "100000" },
-  { label: "₹5 lakh", value: "500000" },
+  { label: "₹1L", value: "100000" },
 ];
 const USDT_PRESETS = [
   { label: "250", value: "250" },
@@ -59,6 +69,24 @@ function statusLabel(status: string) {
     .join(" ");
 }
 
+function methodStatusLabel(status?: string) {
+  if (!status) return "Add after sign in";
+  if (status === "OWNERSHIP_VERIFIED") return "Ownership verified";
+  if (status === "FORMAT_VALIDATED") return "Address valid";
+  if (status === "VERIFIED") return "Verified";
+  if (status === "PENDING_VERIFICATION") return "Verification pending";
+  return "Saved method";
+}
+
+function groupAmountInput(value: string, currency: "INR" | "USDT") {
+  const parsed = parseIndianAmount(value, {
+    decimals: currency === "INR" ? 2 : 6,
+    maximum: currency === "INR" ? 100_000_000 : 1_000_000,
+  });
+  if (!parsed.ok) return value;
+  return formatIndianNumber(parsed.value, currency === "INR" ? 2 : 6);
+}
+
 export function QuoteWorkspace({
   authenticated,
   maximumInr,
@@ -74,6 +102,7 @@ export function QuoteWorkspace({
   amountLocked = false,
   receiveToken,
   recipientLabel,
+  savedMethods = [],
 }: {
   authenticated: boolean;
   maximumInr?: string;
@@ -89,11 +118,23 @@ export function QuoteWorkspace({
   amountLocked?: boolean;
   receiveToken?: string;
   recipientLabel?: string;
+  savedMethods?: SavedMoveMethod[];
 }) {
   const router = useRouter();
   const [direction, setDirection] = useState<Direction>(initialDirection);
   const [exactSide, setExactSide] = useState<ExactSide>(initialExactSide);
-  const [amount, setAmount] = useState(initialAmount);
+  const [amount, setAmount] = useState(() =>
+    groupAmountInput(
+      initialAmount,
+      initialExactSide === "SEND"
+        ? initialDirection === "INR_TO_USDT"
+          ? "INR"
+          : "USDT"
+        : initialDirection === "INR_TO_USDT"
+          ? "USDT"
+          : "INR",
+    ),
+  );
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(initialNotice ?? null);
   const [loading, setLoading] = useState(false);
@@ -107,6 +148,44 @@ export function QuoteWorkspace({
   const inputCurrency = exactSide === "SEND" ? sendCurrency : receiveCurrency;
   const maximum = inputCurrency === "INR" ? maximumInr : maximumUsdt;
   const presets = inputCurrency === "INR" ? INR_PRESETS : USDT_PRESETS;
+  const sourceMethod = useMemo(() => {
+    const acceptedTypes =
+      direction === "INR_TO_USDT"
+        ? new Set(["UPI_HANDLE", "BANK_ACCOUNT"])
+        : new Set(["USDT_WALLET"]);
+    return (
+      savedMethods.find(
+        (method) =>
+          acceptedTypes.has(method.type) &&
+          (method.purpose === "SEND" || method.purpose === "BOTH") &&
+          method.isDefaultSend,
+      ) ??
+      savedMethods.find(
+        (method) =>
+          acceptedTypes.has(method.type) &&
+          (method.purpose === "SEND" || method.purpose === "BOTH"),
+      )
+    );
+  }, [direction, savedMethods]);
+  const destinationMethod = useMemo(() => {
+    const acceptedTypes =
+      direction === "INR_TO_USDT"
+        ? new Set(["USDT_WALLET"])
+        : new Set(["UPI_HANDLE", "BANK_ACCOUNT"]);
+    return (
+      savedMethods.find(
+        (method) =>
+          acceptedTypes.has(method.type) &&
+          (method.purpose === "RECEIVE" || method.purpose === "BOTH") &&
+          method.isDefaultReceive,
+      ) ??
+      savedMethods.find(
+        (method) =>
+          acceptedTypes.has(method.type) &&
+          (method.purpose === "RECEIVE" || method.purpose === "BOTH"),
+      )
+    );
+  }, [direction, savedMethods]);
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem("inrp2p-move-draft");
@@ -117,7 +196,17 @@ export function QuoteWorkspace({
         direction?: Direction;
         exactSide?: ExactSide;
       };
-      if (!amountLocked && draft.amount) setAmount(draft.amount);
+      if (!amountLocked && draft.amount) {
+        const draftCurrency =
+          (draft.exactSide ?? initialExactSide) === "SEND"
+            ? (draft.direction ?? initialDirection) === "INR_TO_USDT"
+              ? "INR"
+              : "USDT"
+            : (draft.direction ?? initialDirection) === "INR_TO_USDT"
+              ? "USDT"
+              : "INR";
+        setAmount(groupAmountInput(draft.amount, draftCurrency));
+      }
       if (
         !fixedDirection &&
         (draft.direction === "INR_TO_USDT" || draft.direction === "USDT_TO_INR")
@@ -133,7 +222,7 @@ export function QuoteWorkspace({
     } catch {
       window.sessionStorage.removeItem("inrp2p-move-draft");
     }
-  }, [amountLocked, fixedDirection]);
+  }, [amountLocked, fixedDirection, initialDirection, initialExactSide]);
 
   useEffect(() => {
     if (amountLocked) return;
@@ -234,6 +323,12 @@ export function QuoteWorkspace({
 
   function swap() {
     if (fixedDirection) return;
+    if (quote) {
+      const nextInputCurrency =
+        exactSide === "SEND" ? quote.receiveCurrency : quote.sendCurrency;
+      const nextAmount = exactSide === "SEND" ? quote.receiveAmount : quote.sendAmount;
+      setAmount(groupAmountInput(nextAmount, nextInputCurrency));
+    }
     setDirection((current) =>
       current === "INR_TO_USDT" ? "USDT_TO_INR" : "INR_TO_USDT",
     );
@@ -245,7 +340,12 @@ export function QuoteWorkspace({
     if (!repeatMove) return;
     setDirection(repeatMove.direction);
     setExactSide("SEND");
-    setAmount(repeatMove.sendAmount);
+    setAmount(
+      groupAmountInput(
+        repeatMove.sendAmount,
+        repeatMove.direction === "INR_TO_USDT" ? "INR" : "USDT",
+      ),
+    );
     setRepeatReference(repeatMove.reference);
     setQuote(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -262,103 +362,60 @@ export function QuoteWorkspace({
     router.push(destination);
   }
 
-  const primaryResult = quote
+  const computedResult = quote
     ? exactSide === "SEND"
       ? formatCurrencyAmount(quote.receiveAmount, quote.receiveCurrency)
       : formatCurrencyAmount(quote.sendAmount, quote.sendCurrency)
     : "—";
-
-  return (
-    <div className="move-home-grid">
-      <section className="move-quote-card" aria-labelledby="move-title">
-        <div className="move-card-head">
-          <div>
-            <p className="move-eyebrow">{recipientHandle ? `Pay ${recipientHandle}@inrp2p` : recipientLabel ?? "New move"}</p>
-            <h1 id="move-title">Move INR and USDT.</h1>
-          </div>
-          <span className="move-server-truth">
-            <i aria-hidden />
-            Server quote
-          </span>
-        </div>
-
-        <div className="move-direction">
-          <div>
-            <span>From</span>
-            <strong>{sendCurrency}</strong>
-          </div>
-          <button
-            type="button"
-            onClick={swap}
-            aria-label={fixedDirection ? "Currency direction is set by the recipient" : "Swap currencies"}
-            disabled={fixedDirection}
-          >
-            <span aria-hidden>⇄</span>
-          </button>
-          <div>
-            <span>To</span>
-            <strong>{receiveCurrency}</strong>
-          </div>
-        </div>
-
-        <div className="move-exact-toggle" aria-label="Amount mode">
-          <button
-            type="button"
-            className={exactSide === "SEND" ? "is-active" : ""}
-            onClick={() => {
-              if (!amountLocked) setExactSide("SEND");
+  const expiryLabel = quote
+    ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+    : "—";
+  const sourceLabel = sourceMethod?.maskedLabel ?? (authenticated ? "Add payment source" : "Choose after sign in");
+  const destinationLabel =
+    destinationMethod?.maskedLabel ?? (authenticated ? "Add receive destination" : "Choose after sign in");
+  const amountEditor = (
+    <div className="move-money-entry">
+      <label className="move-amount-field">
+        <span>{exactSide === "SEND" ? "You send" : "You receive exactly"}</span>
+        <div>
+          <b aria-hidden>{inputCurrency === "INR" ? "₹" : ""}</b>
+          <input
+            value={amount}
+            onChange={(event) => {
+              if (!amountLocked) {
+                setAmount(event.target.value);
+                setRepeatReference(null);
+              }
             }}
-            aria-pressed={exactSide === "SEND"}
-            disabled={amountLocked}
-          >
-            I send exactly
-          </button>
-          <button
-            type="button"
-            className={exactSide === "RECEIVE" ? "is-active" : ""}
-            onClick={() => {
-              if (!amountLocked) setExactSide("RECEIVE");
+            onBlur={() => {
+              if (!amountLocked) setAmount((current) => groupAmountInput(current, inputCurrency));
             }}
-            aria-pressed={exactSide === "RECEIVE"}
-            disabled={amountLocked}
-          >
-            I receive exactly
-          </button>
+            onFocus={(event) => event.currentTarget.select()}
+            inputMode="decimal"
+            autoComplete="off"
+            autoFocus
+            spellCheck={false}
+            aria-describedby="amount-help"
+            aria-invalid={!parsed.ok && amount.length > 0}
+            readOnly={amountLocked}
+          />
+          <em>{inputCurrency}</em>
         </div>
+        <small id="amount-help">
+          {amountLocked
+            ? "This payment request fixes the receive amount."
+            : "Understands 50k, 1l, 2.5 lakh, 1cr and max."}
+        </small>
+      </label>
 
-        <label className="move-amount-field">
-          <span>{exactSide === "SEND" ? "Amount you send" : "Amount you receive"}</span>
-          <div>
-            <b aria-hidden>{inputCurrency === "INR" ? "₹" : "₮"}</b>
-            <input
-              value={amount}
-              onChange={(event) => {
-                if (!amountLocked) {
-                  setAmount(event.target.value);
-                  setRepeatReference(null);
-                }
-              }}
-              onFocus={(event) => event.currentTarget.select()}
-              inputMode="decimal"
-              autoComplete="off"
-              autoFocus
-              spellCheck={false}
-              aria-describedby="amount-help"
-              aria-invalid={!parsed.ok && amount.length > 0}
-              readOnly={amountLocked}
-            />
-            <em>{inputCurrency}</em>
-          </div>
-          <small id="amount-help">
-            {amountLocked
-              ? "This payment request fixes the receive amount."
-              : "Try 50k, 1l, 2.5 lakh, 1cr or max."}
-          </small>
-        </label>
-
-        {!amountLocked ? <div className="move-presets" aria-label="Quick amounts">
+      {!amountLocked ? (
+        <div className="move-presets" aria-label="Quick amounts">
           {presets.map((preset) => (
-            <button key={preset.value} type="button" onClick={() => setAmount(preset.value)}>
+            <button
+              key={preset.value}
+              type="button"
+              onClick={() => setAmount(groupAmountInput(preset.value, inputCurrency))}
+            >
               {preset.label}
             </button>
           ))}
@@ -367,121 +424,234 @@ export function QuoteWorkspace({
               Max
             </button>
           ) : null}
-        </div> : null}
-
-        <div className="move-result" aria-live="polite" aria-busy={loading}>
-          <span>{exactSide === "SEND" ? "You receive" : "You send"}</span>
-          <strong className={loading ? "is-loading" : ""}>{primaryResult}</strong>
         </div>
+      ) : null}
+    </div>
+  );
 
-        <dl className="move-quote-meta">
-          <div>
-            <dt>Rate</dt>
-            <dd>{quote ? `₹${formatIndianNumber(quote.rate, 4)} / USDT` : "—"}</dd>
-          </div>
-          <div>
-            <dt>Fee</dt>
-            <dd>{quote ? formatCurrencyAmount(quote.feeAmount, quote.feeCurrency) : "—"}</dd>
-          </div>
-          <div>
-            <dt>ETA</dt>
-            <dd>{quote?.etaMinutes ? `~${quote.etaMinutes} min` : "Not quoted"}</dd>
-          </div>
-          <div>
-            <dt>Quote expiry</dt>
-            <dd className="tnum">{quote ? `${seconds}s` : "—"}</dd>
-          </div>
-        </dl>
+  return (
+    <div className="move-workspace" id="move-quote">
+      <header className="move-product-heading">
+        <div>
+          <p className="move-eyebrow">
+            {recipientHandle ? `Pay ${recipientHandle}@inrp2p` : recipientLabel ?? "One clear transaction"}
+          </p>
+          <h1 id="move-title">Move INR <span aria-hidden>↔</span> USDT</h1>
+          <p>One quote. One payment. One tracked result.</p>
+        </div>
+        <span className="move-product-trust">
+          <i aria-hidden />
+          Server-priced
+        </span>
+      </header>
 
-        {error ? (
-          <div className="move-inline-error" role="status">
-            <span aria-hidden>!</span>
-            <p>{error}</p>
-            <button type="button" onClick={() => void requestQuote()}>
-              Retry
+      <div className="move-home-grid">
+        <section className="move-quote-card" aria-labelledby="move-title">
+          <div className="move-card-head">
+            <p className="move-eyebrow">Set your amount</p>
+            <span className="move-server-truth">
+              <i aria-hidden />
+              Live quote
+            </span>
+          </div>
+
+          <div className="move-exact-toggle" aria-label="Amount mode">
+            <button
+              type="button"
+              className={exactSide === "SEND" ? "is-active" : ""}
+              onClick={() => {
+                if (!amountLocked) {
+                  setExactSide("SEND");
+                  if (quote) {
+                    setAmount(groupAmountInput(quote.sendAmount, quote.sendCurrency));
+                  }
+                  setRepeatReference(null);
+                }
+              }}
+              aria-pressed={exactSide === "SEND"}
+              disabled={amountLocked}
+            >
+              I send exactly
+            </button>
+            <button
+              type="button"
+              className={exactSide === "RECEIVE" ? "is-active" : ""}
+              onClick={() => {
+                if (!amountLocked) {
+                  setExactSide("RECEIVE");
+                  if (quote) {
+                    setAmount(groupAmountInput(quote.receiveAmount, quote.receiveCurrency));
+                  }
+                  setRepeatReference(null);
+                }
+              }}
+              aria-pressed={exactSide === "RECEIVE"}
+              disabled={amountLocked}
+            >
+              I receive exactly
             </button>
           </div>
-        ) : null}
 
-        <button
-          type="button"
-          className="move-primary-button move-continue"
-          onClick={continueMove}
-          disabled={!quote || loading}
-        >
-          {loading ? "Updating quote…" : authenticated ? "Continue" : "Continue securely"}
-          <span aria-hidden>→</span>
-        </button>
-        <p className="move-quote-foot">
-          Authentication comes next. Rate, fee, destination and final amount stay visible before
-          confirmation.
-        </p>
-      </section>
-
-      <aside className="move-home-aside">
-        {activeOrder ? (
-          <button
-            type="button"
-            className="move-active-order"
-            onClick={() => router.push(`/orders/${activeOrder.reference}`)}
-          >
-            <span>Active move</span>
-            <strong>{activeOrder.reference}</strong>
-            <small>
-              {statusLabel(activeOrder.status)} <b aria-hidden>→</b>
-            </small>
-          </button>
-        ) : null}
-
-        {repeatMove ? (
-          <div className="move-repeat-card">
-            <div className="move-repeat-head">
-              <span>Repeat last move?</span>
-              <small>Fresh quote required</small>
+          <div className="move-money-stack">
+            <div
+              className={`move-money-row ${
+                exactSide === "SEND" ? "move-money-row-input" : "move-money-row-result"
+              }`}
+            >
+              <div className="move-currency-choice">
+                <span>From</span>
+                <strong><i aria-hidden>{sendCurrency === "INR" ? "🇮🇳" : "₮"}</i>{sendCurrency}</strong>
+              </div>
+              {exactSide === "SEND" ? (
+                amountEditor
+              ) : (
+                <div className="move-result" aria-live="polite" aria-busy={loading}>
+                  <span>You send</span>
+                  <strong className={loading ? "is-loading" : ""}>{computedResult}</strong>
+                </div>
+              )}
             </div>
-            <strong>{formatCurrencyAmount(repeatMove.sendAmount, repeatMove.direction === "INR_TO_USDT" ? "INR" : "USDT")}</strong>
-            <p>
-              {repeatMove.sourceMasked}
-              <span aria-hidden>→</span>
-              {repeatMove.destinationMasked}
-            </p>
-            <button type="button" onClick={repeat}>
-              Repeat <span aria-hidden>↗</span>
-            </button>
-          </div>
-        ) : null}
 
-        <div className="move-clarity-card">
-          <p className="move-eyebrow">What happens next</p>
-          <ol>
-            <li>
-              <span>1</span>
+            <div className="move-swap-line" aria-hidden={fixedDirection}>
+              <span />
+              <button
+                type="button"
+                onClick={swap}
+                aria-label={fixedDirection ? "Currency direction is set by the recipient" : "Swap currencies"}
+                disabled={fixedDirection}
+              >
+                <span aria-hidden>⇅</span>
+              </button>
+              <span />
+            </div>
+
+            <div
+              className={`move-money-row ${
+                exactSide === "RECEIVE" ? "move-money-row-input" : "move-money-row-result"
+              }`}
+            >
+              <div className="move-currency-choice">
+                <span>To</span>
+                <strong><i aria-hidden>{receiveCurrency === "INR" ? "🇮🇳" : "₮"}</i>{receiveCurrency}</strong>
+              </div>
+              {exactSide === "RECEIVE" ? (
+                amountEditor
+              ) : (
+                <div className="move-result" aria-live="polite" aria-busy={loading}>
+                  <span>You receive</span>
+                  <strong className={loading ? "is-loading" : ""}>{computedResult}</strong>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="move-saved-route">
+            <div>
+              <span className="move-route-icon" data-kind={sendCurrency}>{sendCurrency === "INR" ? "₹" : "₮"}</span>
+              <p><small>Pay with</small><strong>{sourceLabel}</strong></p>
+              <em>{methodStatusLabel(sourceMethod?.status)}</em>
+            </div>
+            <div>
+              <span className="move-route-icon" data-kind={receiveCurrency}>{receiveCurrency === "INR" ? "₹" : "₮"}</span>
+              <p><small>Receive to</small><strong>{destinationLabel}</strong></p>
+              <em>{methodStatusLabel(destinationMethod?.status)}</em>
+            </div>
+          </div>
+
+          {error ? (
+            <div className="move-inline-error" role="status">
+              <span aria-hidden>!</span>
+              <p>{error}</p>
+              <button type="button" onClick={() => void requestQuote()}>
+                Retry
+              </button>
+            </div>
+          ) : null}
+        </section>
+
+        <aside className="move-home-aside">
+          <section className="move-final-quote" aria-label="Final quote">
+            <p className="move-final-kicker">Final quote</p>
+            <span>You receive</span>
+            <strong className={loading ? "is-loading" : ""}>
+              {quote ? formatCurrencyAmount(quote.receiveAmount, quote.receiveCurrency) : "—"}
+            </strong>
+            <dl>
+              <div><dt>Rate</dt><dd>{quote ? `₹${formatIndianNumber(quote.rate, 4)}` : "—"}</dd></div>
+              <div><dt>Fee</dt><dd>{quote ? formatCurrencyAmount(quote.feeAmount, quote.feeCurrency) : "—"}</dd></div>
+              <div><dt>Estimated</dt><dd>{quote?.etaMinutes ? `${quote.etaMinutes} min` : "—"}</dd></div>
+              <div><dt>Destination</dt><dd>{destinationMethod?.maskedLabel ?? receiveCurrency}</dd></div>
+              <div><dt>Quote expires</dt><dd className="tnum move-expiry">{expiryLabel}</dd></div>
+            </dl>
+            <button
+              type="button"
+              className="move-primary-button move-continue"
+              onClick={continueMove}
+              disabled={!quote || loading}
+            >
+              {loading ? "Updating quote…" : authenticated ? "Continue to confirm" : "Continue securely"}
+              <span aria-hidden>→</span>
+            </button>
+            <p>A fresh quote is checked again before confirmation.</p>
+          </section>
+
+          {activeOrder ? (
+            <button
+              type="button"
+              className="move-active-order"
+              onClick={() => router.push(`/orders/${activeOrder.reference}`)}
+            >
+              <span>Active move</span>
+              <strong>{activeOrder.reference}</strong>
+              <small>
+                {statusLabel(activeOrder.status)} <b aria-hidden>→</b>
+              </small>
+            </button>
+          ) : null}
+
+          {repeatMove ? (
+            <div className="move-repeat-card">
+              <div className="move-repeat-head">
+                <span>Repeat last move?</span>
+                <small>Fresh quote required</small>
+              </div>
+              <strong>
+                {formatCurrencyAmount(
+                  repeatMove.sendAmount,
+                  repeatMove.direction === "INR_TO_USDT" ? "INR" : "USDT",
+                )}{" "}
+                <span aria-hidden>→</span>{" "}
+                {formatCurrencyAmount(
+                  repeatMove.receiveAmount,
+                  repeatMove.direction === "INR_TO_USDT" ? "USDT" : "INR",
+                )}
+              </strong>
               <p>
-                <strong>Confirm identity</strong>
-                <small>Only after the quote.</small>
+                {repeatMove.sourceMasked}
+                <span aria-hidden>→</span>
+                {repeatMove.destinationMasked}
               </p>
-            </li>
-            <li>
-              <span>2</span>
-              <p>
-                <strong>Add required details</strong>
-                <small>Payment source and destination only.</small>
-              </p>
-            </li>
-            <li>
-              <span>3</span>
-              <p>
-                <strong>Hold to move</strong>
-                <small>Limits and capacity are checked again.</small>
-              </p>
-            </li>
-          </ol>
-        </div>
-        <p className="move-no-fabrication">
-          If executable pricing or liquidity is unavailable, INRP2P shows that state instead of an
-          estimate.
-        </p>
-      </aside>
+              <button type="button" onClick={repeat}>
+                Get fresh quote <span aria-hidden>↗</span>
+              </button>
+            </div>
+          ) : null}
+        </aside>
+      </div>
+
+      <ol className="move-flow-stepper" aria-label="Transaction steps">
+        {["Quote", "Details", "Confirm", "Pay", "Complete"].map((label, index) => (
+          <li key={label} data-current={index === 0}>
+            <span>{index + 1}</span>
+            <strong>{label}</strong>
+          </li>
+        ))}
+      </ol>
+
+      <p className="move-no-fabrication">
+        If executable pricing or capacity is unavailable, INRP2P shows that state instead of
+        inventing an estimate.
+      </p>
     </div>
   );
 }

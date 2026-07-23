@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandLockup } from "@/components/brand";
+import { Wordmark } from "@/components/brand";
 import { cn } from "@/lib/format";
 
 const items = [
@@ -12,15 +12,20 @@ const items = [
 export function CustomerNav({
   active = "Move",
   authenticated,
+  displayName,
 }: {
   active?: (typeof items)[number]["label"];
   authenticated: boolean;
+  displayName?: string | null;
 }) {
+  const firstName = displayName?.trim().split(/\s+/)[0] || "Account";
+  const initial = firstName.charAt(0).toUpperCase();
+
   return (
     <>
       <header className="move-topbar">
         <Link href="/" className="move-brand" aria-label="INRP2P">
-          <BrandLockup markSize={29} />
+          <Wordmark className="move-brand-wordmark" />
         </Link>
         <nav aria-label="Primary navigation" className="move-desktop-nav">
           {items.map((item) => (
@@ -34,7 +39,18 @@ export function CustomerNav({
             </Link>
           ))}
         </nav>
-        <span aria-hidden className="move-member-link" />
+        <div className="move-member-actions">
+          {authenticated ? (
+            <Link href="/account" className="move-account-link" aria-label={`Open ${firstName} account`}>
+              <span aria-hidden>{initial}</span>
+              <strong>{firstName}</strong>
+            </Link>
+          ) : (
+            <Link href="/auth/customer" className="move-sign-in-link">
+              Sign in
+            </Link>
+          )}
+        </div>
       </header>
       <nav aria-label="Mobile navigation" className="move-bottom-nav">
         {items.map((item) => (

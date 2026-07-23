@@ -21,6 +21,7 @@ type QuoteSummary = {
   rate: string;
   feeAmount: string;
   feeCurrency: "INR" | "USDT";
+  etaMinutes: number | null;
   expiresAt: string;
 };
 
@@ -233,6 +234,14 @@ export function MoveConfirmation({
 
   return (
     <section className="move-confirm-panel">
+      <div className="move-confirm-stage-head">
+        <span>06</span>
+        <div>
+          <p className="move-eyebrow">Confirm move</p>
+          <h2>Review the final route.</h2>
+        </div>
+      </div>
+
       <div className="move-confirm-methods">
         <fieldset>
           <legend>You send from</legend>
@@ -317,6 +326,10 @@ export function MoveConfirmation({
         <div>
           <dt>Fee</dt>
           <dd>{formatCurrencyAmount(quote.feeAmount, quote.feeCurrency)}</dd>
+        </div>
+        <div>
+          <dt>ETA</dt>
+          <dd>{quote.etaMinutes ? `${quote.etaMinutes} min` : "Not quoted"}</dd>
         </div>
         <div>
           <dt>Quote</dt>

@@ -21,6 +21,7 @@ import {
   refreshQuoteForCustomer,
 } from "@/lib/order-engine";
 import { pendingQuoteClaim } from "@/lib/pending-quote";
+import { quoteToPublicJson } from "@/lib/quote-engine";
 
 export const metadata: Metadata = {
   title: "Confirm move",
@@ -179,6 +180,15 @@ export default async function MovePage({
     verificationCase?.status === "APPROVED" &&
     Boolean(verificationCase.expiresAt && verificationCase.expiresAt > new Date());
   const back = `/move/${quote.id}`;
+  const quoteEtaMinutes = quoteToPublicJson(quote).etaMinutes;
+  const setupStage =
+    sourceMethods.length === 0
+      ? 0
+      : !recipientDestination && destinationMethods.length === 0
+        ? 1
+        : !complianceReady
+          ? 2
+          : 3;
 
   return (
     <CustomerShell active="Move">
@@ -194,6 +204,18 @@ export default async function MovePage({
       {flash.notice ? <div className="move-flash move-flash-ok">{flash.notice}</div> : null}
       {flash.error ? <div className="move-flash move-flash-error">{flash.error}</div> : null}
 
+      <ol className="move-setup-progress" aria-label="Move setup">
+        {["Payment", "Destination", "Checks", "Confirm"].map((label, index) => (
+          <li
+            key={label}
+            data-state={index < setupStage ? "done" : index === setupStage ? "current" : "next"}
+          >
+            <span>{index < setupStage ? "✓" : index + 1}</span>
+            <strong>{label}</strong>
+          </li>
+        ))}
+      </ol>
+
       <div className="move-setup-grid">
         <MoveConfirmation
           quote={{
@@ -205,6 +227,7 @@ export default async function MovePage({
             rate: quote.rate.toString(),
             feeAmount: quote.feeAmount.toString(),
             feeCurrency: quote.feeCurrency as "INR" | "USDT",
+            etaMinutes: quoteEtaMinutes,
             expiresAt: quote.expiresAt.toISOString(),
           }}
           sourceMethods={sourceMethods}

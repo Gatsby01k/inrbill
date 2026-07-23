@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { CustomerNav } from "@/components/move/customer-nav";
-import { QuoteWorkspace, type RepeatMove } from "@/components/move/quote-workspace";
+import {
+  QuoteWorkspace,
+  type RepeatMove,
+  type SavedMoveMethod,
+} from "@/components/move/quote-workspace";
+import { TransactionLanding } from "@/components/move/transaction-landing";
+import { SiteFooter } from "@/components/site/footer";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -22,8 +28,9 @@ export default async function HomePage({
 
   let repeatMove: RepeatMove | null = null;
   let activeOrder: { reference: string; status: string } | null = null;
+  let savedMethods: SavedMoveMethod[] = [];
   if (customer) {
-    const [lastCompleted, current] = await Promise.all([
+    const [lastCompleted, current, methods] = await Promise.all([
       db.order.findFirst({
         where: { customerId: customer.id, status: "COMPLETED" },
         orderBy: { completedAt: "desc" },
@@ -42,6 +49,26 @@ export default async function HomePage({
         orderBy: { updatedAt: "desc" },
         select: { reference: true, status: true },
       }),
+      db.paymentMethod.findMany({
+        where: {
+          customerId: customer.id,
+          status: { notIn: ["DISABLED", "REJECTED"] },
+        },
+        orderBy: [
+          { isDefaultSend: "desc" },
+          { isDefaultReceive: "desc" },
+          { createdAt: "asc" },
+        ],
+        select: {
+          label: true,
+          maskedLabel: true,
+          status: true,
+          type: true,
+          purpose: true,
+          isDefaultSend: true,
+          isDefaultReceive: true,
+        },
+      }),
     ]);
     if (lastCompleted) {
       repeatMove = {
@@ -54,11 +81,16 @@ export default async function HomePage({
       };
     }
     activeOrder = current;
+    savedMethods = methods;
   }
 
   return (
     <div className="move-app move-public-page">
-      <CustomerNav active="Move" authenticated={Boolean(customer)} />
+      <CustomerNav
+        active="Move"
+        authenticated={Boolean(customer)}
+        displayName={session?.user.name}
+      />
       <main className="move-home">
         <QuoteWorkspace
           authenticated={Boolean(customer)}
@@ -66,20 +98,14 @@ export default async function HomePage({
           maximumUsdt={customer?.usdtPerOrderLimit?.toString()}
           repeatMove={repeatMove}
           activeOrder={activeOrder}
+          savedMethods={savedMethods}
           initialNotice={
             quoteState === "expired" ? "That quote expired. A fresh quote is ready below." : undefined
           }
         />
       </main>
-      <footer className="move-minimal-footer">
-        <span>INRP2P</span>
-        <p>Rate, fee, network and final amount are confirmed before every move.</p>
-        <nav aria-label="Legal">
-          <a href="/terms">Terms</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/prohibited-use">Prohibited use</a>
-        </nav>
-      </footer>
+      <TransactionLanding />
+      <SiteFooter />
     </div>
   );
 }
