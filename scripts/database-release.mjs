@@ -5,6 +5,8 @@ import {
   BASELINE_MIGRATION,
   NETWORK_MIGRATION,
   NETWORK_TABLES,
+  TRANSACTION_MIGRATION,
+  TRANSACTION_TABLES,
   databaseReleasePlan,
 } from "./database-release-plan.mjs";
 
@@ -22,8 +24,9 @@ if (process.env.VERCEL_ENV !== "preview") {
   throw new Error("Database release guard only runs in a Vercel Preview deployment.");
 }
 
-if (process.env.VERCEL_GIT_COMMIT_REF !== "codex/inrp2p-v2") {
-  throw new Error("Database release guard is restricted to codex/inrp2p-v2.");
+const releaseBranch = process.env.DATABASE_RELEASE_BRANCH;
+if (!releaseBranch || process.env.VERCEL_GIT_COMMIT_REF !== releaseBranch) {
+  throw new Error("Database release guard requires DATABASE_RELEASE_BRANCH to match the preview branch.");
 }
 
 const db = new PrismaClient();
@@ -59,8 +62,8 @@ try {
   }));
 
   if (mode === "inspect") process.exit(0);
-  if (process.env.DATABASE_RELEASE_ACK !== NETWORK_MIGRATION) {
-    throw new Error(`DATABASE_RELEASE_ACK must equal ${NETWORK_MIGRATION}.`);
+  if (process.env.DATABASE_RELEASE_ACK !== TRANSACTION_MIGRATION) {
+    throw new Error(`DATABASE_RELEASE_ACK must equal ${TRANSACTION_MIGRATION}.`);
   }
 
   if (before.plan.action.startsWith("blocked-")) {
@@ -70,13 +73,13 @@ try {
   if (before.plan.action === "resolve-baseline-then-deploy") {
     prisma("migrate", "resolve", "--applied", BASELINE_MIGRATION);
     prisma("migrate", "deploy");
-  } else if (["fresh-deploy", "deploy-network"].includes(before.plan.action)) {
+  } else if (["fresh-deploy", "deploy-network", "deploy-transaction"].includes(before.plan.action)) {
     prisma("migrate", "deploy");
   }
 
   const after = await snapshot();
-  const missingTables = NETWORK_TABLES.filter((name) => !after.tables.includes(name));
-  if (missingTables.length || !after.migrations.includes(NETWORK_MIGRATION)) {
+  const missingTables = [...NETWORK_TABLES, ...TRANSACTION_TABLES].filter((name) => !after.tables.includes(name));
+  if (missingTables.length || !after.migrations.includes(NETWORK_MIGRATION) || !after.migrations.includes(TRANSACTION_MIGRATION)) {
     throw new Error(`Post-migration verification failed; missing ${missingTables.join(", ") || "migration record"}.`);
   }
   console.log("Database release completed and verified:", JSON.stringify({ tableCount: after.tables.length, plan: after.plan }));

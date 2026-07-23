@@ -1,21 +1,34 @@
 # INRP2P
 
-INRP2P is a private operating system for reviewed INR liquidity relationships.
-It lets a company maintain an approved partner network, collect current capacity,
-route a requirement deterministically, exchange offers, manage evidence and keep
-an auditable incident and verification record.
+INRP2P is a controlled INR ↔ USDT transaction system. A customer enters one
+amount, sees executable final terms, authenticates, adds only the required
+payment source and destination, confirms, pays, and tracks one server-enforced
+order.
 
-The product is a coordination and introduction layer. It does not hold or
-execute the underlying counterparty transaction, run an order book, guarantee
-liquidity or replace a party's licensing, KYC/AML, tax or legal obligations.
-Separately agreed partner operating-reserve deposits are sent to the configured
-company USDT-TRC20 address and recorded in an audited, human-confirmed ledger.
-The application stores the public address and transaction references, never a
-wallet seed phrase or private key.
+It is not a public exchange, order book, trader marketplace, or self-custody
+wallet. Pricing and settlement fail closed when real providers or
+operator-controlled execution terms are unavailable. The preserved private
+network workspaces handle verification, exact liquidity capacity, evidence,
+operations, reconciliation, and audit behind the customer interface. The
+application never requests a bank password, private key, or seed phrase.
 
 ## What is implemented
 
-- Three role-separated workspaces: operator, company and liquidity partner.
+- A public, server-priced INR ↔ USDT quote with Indian shorthand amount input.
+- Passwordless customer email OTP after quote, with quote context preserved.
+- Progressive customer verification and encrypted bank, UPI, and wallet methods.
+- One explicit order state machine; no arbitrary status update endpoint.
+- Transactional, idempotent liquidity reservation with separate declared,
+  available, reserved, pending, and settled balances.
+- UPI deep links and local QR, bank/IMPS instructions, USDT network validation,
+  payment submission, live order progress, receipts, and fresh-quote repeat.
+- Signed payment-matching and settlement webhooks with replay protection,
+  exact-amount checks, unique UTR/TXID/payout references, and conflict review.
+- Operator action queue, TOTP step-up, granular permissions, maker-checker
+  support, double-payment shield, safe reassignment, and immutable audit events.
+- Receive Profiles, ordered fallbacks, user-controlled INRP2P IDs, and
+  rate-limited payment-request pages with amount, memo, expiry, and usage limits.
+- Preserved role-separated operator, company, and liquidity-partner workspaces.
 - Email ownership verification, single-use password recovery and session revocation.
 - Database-backed abuse limiting plus Cloudflare Turnstile on public intake.
 - Private company-to-partner invitations with explicit acceptance and pause states.
@@ -27,7 +40,7 @@ wallet seed phrase or private key.
 - Incident tracking and audit events across material network operations.
 - Signed, replay-resistant inbound webhook handling for notification integrations.
 - Health endpoint, scheduled maintenance hook, security headers and CI quality gate.
-- Public landing page focused on the operating problem, controls and private-beta CTA.
+- An immediate quote interface on the logged-out landing route.
 
 ## Stack
 
@@ -47,8 +60,10 @@ npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`. New company and partner accounts must verify email
-and set their own password before accessing private workspace data.
+Open `http://localhost:3000`. Customer OTP requires working email delivery, or
+`CUSTOMER_OTP_DEV_CODE` outside production. A quote requires a configured
+execution provider or operator-controlled execution rate; unavailable services
+are shown as unavailable rather than simulated.
 
 Do not run the demo seed against production. For an isolated staging database:
 
@@ -70,7 +85,8 @@ lint, static types, deterministic unit tests and a production Next.js build.
 ## Database migrations
 
 Fresh databases can run `npm run db:deploy` directly. The repository contains a
-complete baseline followed by the private-network operating-system migration.
+complete baseline, private-network migrations, and the transaction-engine
+migration `20260723000100_transaction_engine`.
 
 For a database created by an older version of this application, first take a
 verified backup and compare its schema with the baseline. Mark the baseline as
@@ -86,16 +102,23 @@ perform the first upgrade in staging before the live database.
 
 ## Production requirements
 
-The application deliberately fails closed in production when Turnstile is not
-configured. Email must also be configured before onboarding users, because account
-ownership and password setup use single-use email links. Evidence uploads stay
-disabled until the encrypted object vault is configured.
+The application fails closed when a required financial integration or encryption
+key is missing. Email must be configured for customer OTP and member account
+ownership. Evidence uploads stay disabled until the encrypted object vault is
+configured.
 
 The minimum launch configuration is:
 
 - PostgreSQL with automated backups and point-in-time recovery.
 - `NEXT_PUBLIC_SITE_URL`, contact details and a release version.
 - Resend credentials and a verified sending domain.
+- A 32-byte financial-data encryption key and separate HMAC key.
+- An executable quote provider or a deliberately managed execution rate and fee.
+- A real payment-matching provider and/or controlled manual verification process.
+- A real settlement provider, or an operator process that records only transfers
+  that actually occurred externally.
+- Signed payment and settlement webhook secrets; a production blockchain
+  confirmation threshold.
 - Cloudflare Turnstile public and secret keys.
 - A high-entropy `CRON_SECRET` if the scheduled maintenance route is enabled.
 - Private S3 + KMS credentials before collecting verification evidence.
@@ -105,22 +128,31 @@ The minimum launch configuration is:
 See `.env.example` for every supported integration and [DEPLOYMENT.md](DEPLOYMENT.md)
 for the release runbook.
 
-## Core operating flow
+## Core transaction flow
 
-1. A company verifies its email and submits a structured requirement.
-2. The operator completes the company's verification review.
-3. Partners accept private network invitations and complete their own review.
-4. Partners publish direction-specific capacity with an expiry time.
-5. Routing includes only connected, approved, active and currently capable partners.
-6. The operator sends a time-bounded offer to selected partners.
-7. The partner accepts or declines; the operator controls any real-world introduction.
-8. Incidents, evidence decisions and state changes remain in the audit history.
+1. The server returns executable final terms for the amount and direction.
+2. The customer authenticates without losing the pending quote.
+3. Only corridor-required verification and payment methods are requested.
+4. Hold-to-confirm reruns quote, limit, method, compliance, and exact-capacity checks.
+5. One transaction reserves capacity and creates the order, leg, assignment,
+   payment instruction, reconciliation record, and audit event.
+6. A customer payment signal never confirms funds by itself. A signed provider
+   event or authorised operator confirms payment.
+7. Settlement release requires permission, TOTP, valid state, idempotency,
+   double-payment checks, and optional maker-checker separation.
+8. Final network or payout confirmation settles capacity, completes
+   reconciliation, and produces one customer receipt.
 
 ## Security boundary
 
 - Passwords are bcrypt hashes; opaque session and recovery tokens are stored as hashes.
 - All private reads and writes are re-authorized on the server.
 - State transitions are allow-listed; approval cannot be skipped by changing form data.
+- Sensitive financial fields use AES-256-GCM; equality checks use keyed HMAC
+  fingerprints and UI values are masked outside owner/operator views.
+- Capacity mutation, order creation, link use, and audit writes are transactional.
+- Webhooks validate the raw-body HMAC, exact amount/currency, unique references,
+  and immutable replay records before changing state.
 - Public automation is deterministic and eligibility-based. AI is optional operator
   assistance and never approves a party, routes money or makes a financial decision.
 - Object evidence is never proxied through a public route or rendered inline.

@@ -15,12 +15,12 @@ export default function PrivacyPage() {
       eyebrow="Legal"
       title="Privacy Policy"
       sub="What we collect through requests, applications and workspaces, and how it is used."
-      updated="19 July 2026"
+      updated="23 July 2026"
     >
       <p>
-        This policy explains how INRP2P handles information submitted by companies and
-        partners through the public forms, workspaces, and any direct communication with
-        network operations.
+        This policy explains how INRP2P handles information submitted by customers, companies
+        and partners through quote and transaction flows, public forms, workspaces, and direct
+        communication with network operations.
       </p>
 
       <h2>1. Information we collect</h2>
@@ -49,6 +49,9 @@ export default function PrivacyPage() {
       </ul>
       <h3>Deposit and payment records</h3>
       <ul>
+        <li>Customer quote, order, amount, rate, fee, expiry, payment rail and masked destination.</li>
+        <li>Encrypted bank account, UPI and wallet details saved by a customer.</li>
+        <li>Payment attempts, UTRs, blockchain transaction IDs, payout references, confirmations and reconciliation state.</li>
         <li>Deposit reference, public destination address, USDT amount, network and review status.</li>
         <li>Transaction hashes used for reconciliation, operator review, audit and refunds.</li>
         <li>INRP2P does not collect or store your wallet private key or seed phrase.</li>
@@ -56,6 +59,8 @@ export default function PrivacyPage() {
 
       <h2>2. How we use information</h2>
       <ul>
+        <li>To calculate quotes, enforce limits, issue payment instructions and operate customer orders.</li>
+        <li>To match incoming payment, release settlement, prevent duplicate payout and reconcile completed moves.</li>
         <li>To review your request or application and assess fit for the network.</li>
         <li>To match requests against verified partners on declared requirements.</li>
         <li>To communicate with you about status, review questions and introductions.</li>
@@ -67,9 +72,11 @@ export default function PrivacyPage() {
 
       <h2>3. How information is shared</h2>
       <p>
-        Request and partner details are visible internally to network operations only. A
-        specific company&apos;s request summary is shared with a specific partner — and vice versa —
-        only once an admin explicitly releases that introduction. We may also share information:
+        Transaction details are disclosed only to authorised operations users and the specific
+        reviewed party or configured provider required to complete that order. Full bank and
+        wallet details are not exposed through public INRP2P IDs or payment-request pages.
+        For the separate company network, a request summary is shared with a specific partner
+        only after an admin releases that introduction. We may also share information:
       </p>
       <ul>
         <li>With infrastructure, email, verification and payment providers under confidentiality and data-protection obligations.</li>
@@ -89,7 +96,9 @@ export default function PrivacyPage() {
         Passwords are hashed with bcrypt. Sessions use random, high-entropy tokens in httpOnly,
         SameSite cookies (secure in production). Restricted evidence is stored outside the
         application database in a private, KMS-encrypted object vault and is opened through
-        short-lived authorized links. No system is perfectly secure.
+        short-lived authorized links. Sensitive payment-method fields are encrypted with
+        authenticated encryption and UI values are masked outside authorised owner/operator
+        views. No system is perfectly secure.
       </p>
 
       <h2>6. Your rights</h2>

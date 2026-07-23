@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandMark, Wordmark } from "@/components/brand";
 import { CONTACT_EMAIL, CONTACT_LINKEDIN, CONTACT_TELEGRAM, CONTACT_TELEGRAM_CHANNEL } from "@/lib/options";
 
-const network = [["/request", "Request a partner"], ["/apply", "Apply as a partner"], ["/inr-p2p-index", "Liquidity index"], ["/corridors", "Corridors"], ["/how-it-works", "How it works"], ["/careers", "Careers"], ["/login", "Log in"]];
+const network = [["/", "Move"], ["/orders", "Orders"], ["/receive", "Receive"], ["/account", "Account"], ["/how-it-works", "How it works"]];
 const legal = [["/partner-review", "Partner review"], ["/fees", "Fees"], ["/disclaimer", "Disclaimer"], ["/prohibited-use", "Prohibited use"], ["/privacy", "Privacy"], ["/terms", "Terms"]];
 
 export function SiteFooter() {
@@ -11,8 +11,8 @@ export function SiteFooter() {
       <div className="fin-footer-inner">
         <div className="fin-footer-lead">
           <Link href="/" className="fin-footer-brand"><BrandMark size={38} /><Wordmark className="!text-[20px] text-white" /></Link>
-          <h2>India&apos;s private liquidity network, built for accountable introductions.</h2>
-          <p>Verification, live capacity and controlled routing. Deal funds stay between counterparties.</p>
+          <h2>Move INR and USDT with the final result visible first.</h2>
+          <p>Verified methods, controlled routing, independent payment confirmation and a complete audit trail.</p>
         </div>
         <div className="fin-footer-grid">
           <div><p className="fin-footer-label">Network</p><div className="fin-footer-links">{network.map(([href, label]) => <Link href={href} key={href}>{label}</Link>)}</div></div>
@@ -25,7 +25,7 @@ export function SiteFooter() {
           </div></div>
         </div>
         <div className="fin-footer-bottom">
-          <p>INRP2P does not hold, transmit, convert, exchange or custody the funds exchanged in an introduced transaction and is not a party to that transaction. A separately agreed partner operating reserve may be sent to the official company USDT-TRC20 wallet shown in the authenticated workspace; it is not customer money, escrow or transaction settlement. INRP2P does not guarantee liquidity or completion. Counterparties transact directly and remain responsible for their own licensing, KYC, AML, tax and legal obligations.</p>
+          <p>INRP2P is not a public exchange or order book. Customer orders use reviewed capacity and controlled external payment and settlement rails; a customer payment signal alone never confirms funds. INRP2P never requests bank passwords, private keys, or seed phrases and does not guarantee liquidity, pricing, regulatory status, or completion. Applicable licensing, KYC/AML, tax, and legal requirements must be established for the live operating model.</p>
           <div><span>© 2026 INRP2P</span><span>Private by design</span><span>India · Global counterparties</span></div>
         </div>
       </div>

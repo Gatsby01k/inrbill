@@ -95,10 +95,19 @@ export async function reviewVerificationCheck(fd: FormData) {
 }
 
 export async function runVerificationProviderCheck(fd: FormData) {
-  const admin = await requireRole("ADMIN"); const check = await db.verificationCheck.findUnique({ where: { id: value(fd, "checkId") }, include: { verificationCase: { include: { organization: { include: { companyProfile: true } }, partner: true } } } });
+  const admin = await requireRole("ADMIN"); const check = await db.verificationCheck.findUnique({ where: { id: value(fd, "checkId") }, include: { verificationCase: { include: { organization: { include: { companyProfile: true } }, partner: true, customer: true } } } });
   if (!check) fail(fd, "/admin/reviews", "Check not found.");
   const kind = check.type.includes("BANK") ? "BANK" : check.type.includes("WALLET") ? "WALLET" : check.type.includes("SANCTIONS") || check.type.includes("PEP") ? "AML" : "KYB";
-  const subject = check.verificationCase.partner ?? check.verificationCase.organization?.companyProfile; if (!subject) fail(fd, "/admin/reviews", "Subject not found.");
+  const subject =
+    check.verificationCase.partner ??
+    check.verificationCase.organization?.companyProfile ??
+    (check.verificationCase.customer
+      ? {
+          customerReference: check.verificationCase.reference,
+          complianceStatus: check.verificationCase.customer.complianceStatus,
+        }
+      : null);
+  if (!subject) fail(fd, "/admin/reviews", "Subject not found.");
   await db.verificationCheck.update({ where: { id: check.id }, data: { status: "RUNNING" } });
   const result = await runProviderCheck(kind, check.type, check.verificationCase.reference, JSON.parse(JSON.stringify(subject)) as Record<string, unknown>);
   await db.verificationCheck.update({ where: { id: check.id }, data: { provider: result.provider, providerReference: result.reference, status: result.status, summary: result.summary, result: JSON.parse(JSON.stringify(result.raw ?? {})) as Prisma.InputJsonValue, reviewedAt: new Date(), reviewedById: admin.id } });
@@ -114,7 +123,7 @@ export async function reviewEvidence(fd: FormData) {
 }
 
 export async function decideVerification(fd: FormData) {
-  const admin = await requireRole("ADMIN"); const decision = value(fd, "decision"); const item = await db.verificationCase.findUnique({ where: { id: value(fd, "caseId") }, include: { checks: true, evidence: true, partner: true } });
+  const admin = await requireRole("ADMIN"); const decision = value(fd, "decision"); const item = await db.verificationCase.findUnique({ where: { id: value(fd, "caseId") }, include: { checks: true, evidence: true, partner: true, customer: true } });
   if (!item || !['approve', 'reject'].includes(decision)) fail(fd, "/admin/reviews", "Case or decision is invalid.");
   const consolidatedReview = value(fd, "consolidatedReview") === "confirmed";
   let reviewedEvidenceIds: string[] = [];
@@ -123,8 +132,22 @@ export async function decideVerification(fd: FormData) {
     if (!consolidatedReview && item.checks.some((check) => !['PASSED', 'REVIEW', 'WAIVED'].includes(check.status))) fail(fd, `/admin/reviews/${item.id}`, "Complete every verification check, or use the consolidated human-review confirmation.");
     const reviewable = item.evidence.filter((evidence) => evidence.status !== "REJECTED" && evidence.status !== "EXPIRED" && !!evidence.checksumSha256);
     const choose = (kinds: string[]) => reviewable.find((evidence) => kinds.includes(evidence.kind));
-    const required = item.partnerId ? [choose(["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"]), choose(["BANK_PROOF"]), choose(["WALLET_REPORT"]), choose(["VIDEO_VERIFICATION"])] : [reviewable[0]];
-    if (required.some((evidence) => !evidence)) fail(fd, `/admin/reviews/${item.id}`, item.partnerId ? "A completed identity, bank, wallet and video upload is required." : "At least one completed evidence upload is required.");
+    const required = item.partnerId
+      ? [choose(["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"]), choose(["BANK_PROOF"]), choose(["WALLET_REPORT"]), choose(["VIDEO_VERIFICATION"])]
+      : item.customerId
+        ? [choose(["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"]), choose(["BANK_PROOF", "WALLET_REPORT", "SOURCE_OF_FUNDS"])]
+        : [reviewable[0]];
+    if (required.some((evidence) => !evidence)) {
+      fail(
+        fd,
+        `/admin/reviews/${item.id}`,
+        item.partnerId
+          ? "A completed identity, bank, wallet and video upload is required."
+          : item.customerId
+            ? "Identity plus bank, wallet or source-of-funds evidence is required."
+            : "At least one completed evidence upload is required.",
+      );
+    }
     reviewedEvidenceIds = required.flatMap((evidence) => evidence ? [evidence.id] : []);
     if (!consolidatedReview && required.some((evidence) => evidence?.status !== "ACCEPTED")) fail(fd, `/admin/reviews/${item.id}`, "Accept the required evidence, or explicitly confirm the consolidated human review below.");
   }
@@ -136,14 +159,35 @@ export async function decideVerification(fd: FormData) {
     }
     await tx.verificationCase.update({ where: { id: item.id }, data: { status, decisionNote: value(fd, "note") || null, decidedById: admin.id, decidedAt: new Date(), expiresAt } });
     if (item.partnerId) await tx.partnerProfile.update({ where: { id: item.partnerId }, data: decision === "approve" ? { status: "VERIFIED", tier: "VERIFIED", verifiedAt: new Date() } : { status: "REJECTED", tier: "RESTRICTED" } });
+    if (item.customerId) {
+      await tx.customerProfile.update({
+        where: { id: item.customerId },
+        data: {
+          complianceStatus: decision === "approve" ? "VERIFIED" : "REJECTED",
+          complianceReviewedAt: new Date(),
+        },
+      });
+    }
   });
-  await audit({ action: "verification.decided", entityType: "VerificationCase", entityId: item.id, actorId: admin.id, actorLabel: "Operator", partnerId: item.partnerId, meta: { decision, expiresAt } });
+  await audit({ action: "verification.decided", entityType: "VerificationCase", entityId: item.id, actorId: admin.id, actorLabel: "Operator", partnerId: item.partnerId, meta: { decision, expiresAt, customerId: item.customerId } });
   if (decision === "approve" && item.partner?.userId) {
     await notify(item.partner.userId, { title: "Verification approved", body: "Your Trust Passport is approved for 12 months and your partner profile is now Verified.", telegramHtml: "✅ <b>Verification approved</b>\nYour INRP2P Trust Passport is approved for 12 months and your partner profile is now Verified.", link: "/partner/verification" });
+  }
+  if (decision === "approve" && item.customer?.userId) {
+    await notify(item.customer.userId, {
+      title: "Verification approved",
+      body: "Your customer verification is approved. Fresh limits and availability are checked on every move.",
+      telegramHtml: "✅ <b>Customer verification approved</b>\nFresh limits and availability are checked on every move.",
+      link: "/account",
+    });
   }
   revalidatePath("/partner");
   revalidatePath("/partner/verification");
   if (item.partnerId) revalidatePath(`/admin/partners/${item.partnerId}`);
+  if (item.customerId) {
+    revalidatePath("/account");
+    revalidatePath("/");
+  }
   done(fd, `/admin/reviews/${item.id}`, `Verification ${decision === "approve" ? "approved" : "rejected"}.`);
 }
 

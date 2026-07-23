@@ -103,6 +103,50 @@ export function auditLabel(action: string, meta?: unknown): string {
       return "USDT reserve refunded";
     case "deposit.rejected":
       return "USDT reserve deposit rejected";
+    case "order.created":
+      return "Order created and capacity reserved";
+    case "order.payment_submitted":
+      return "Customer submitted payment";
+    case "order.payment_detected":
+      return "Payment detected";
+    case "order.payment_confirmed":
+      return "Payment confirmed";
+    case "order.ready_to_settle":
+      return "Order ready to settle";
+    case "order.settlement_released":
+      return "Settlement release started";
+    case "order.settlement_sent":
+    case "order.manual_settlement_sent":
+      return "Settlement sent";
+    case "order.settlement_confirming":
+    case "order.manual_settlement_recorded":
+      return "Settlement confirming";
+    case "order.completed":
+      return "Order completed and reconciled";
+    case "order.review_opened":
+      return "Order paused for review";
+    case "order.risk_review_resolved":
+      return "Exceptional review resolved";
+    case "order.risk_override_recorded":
+      return "Elevated review finding recorded";
+    case "order.payment_window_expired":
+      return "Payment window expired; capacity released";
+    case "order.payment_reference_conflict":
+      return "Duplicate payment reference blocked";
+    case "order.settlement_reference_conflict":
+      return "Duplicate settlement reference blocked";
+    case "order.settlement_provider_uncertain":
+      return "Settlement outcome requires review";
+    case "order.reassigned":
+      return "Liquidity assignment replaced safely";
+    case "liquidity.capacity_created":
+      return "Exact liquidity capacity declared";
+    case "liquidity.capacity_paused":
+      return "Liquidity capacity paused";
+    case "customer.receive_profile_updated":
+      return "Receive Profile updated";
+    case "customer.identity_updated":
+      return "INRP2P ID updated";
     default:
       return statusLabel(action.replace(/\./g, "_"));
   }

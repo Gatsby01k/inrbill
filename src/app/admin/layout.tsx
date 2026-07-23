@@ -22,7 +22,10 @@ export default async function AdminLayout({
         userLine={user.email}
         showBuildTag
         nav={[
-          { href: "/admin", label: "Dashboard", exact: true },
+          { href: "/admin", label: "Action queue", exact: true },
+          { href: "/admin/orders", label: "Orders" },
+          { href: "/admin/customer-methods", label: "Customer methods" },
+          { href: "/admin/liquidity", label: "Liquidity" },
           { href: "/admin/analytics", label: "Analytics" },
           { href: "/admin/requests", label: "Requests" },
           { href: "/admin/partners", label: "Partners" },

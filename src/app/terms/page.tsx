@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/options";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "The terms governing use of the INRP2P review, matching and introduction network.",
+  description: "The terms governing INRP2P customer transactions and private-network workflows.",
   alternates: { canonical: "/terms" },
 };
 
@@ -14,22 +14,23 @@ export default function TermsPage() {
     <LegalShell
       eyebrow="Legal"
       title="Terms of Service"
-      sub="The agreement between you and INRP2P when you submit a request, apply as a partner, or otherwise use the network."
-      updated="19 July 2026"
+      sub="The agreement between you and INRP2P when you request a quote, create an order, submit a request, apply as a partner, or otherwise use the service."
+      updated="23 July 2026"
     >
       <p>
         These terms govern access to and use of INRP2P (the &quot;network&quot;, &quot;service&quot;). By
-        submitting a company request, a partner application, or otherwise using any part of
-        the site or workspaces, you agree to these terms on behalf of yourself and the entity
-        you represent. If you do not agree, do not use the service.
+        requesting a quote, creating an order, submitting a company request, applying as a
+        partner, or otherwise using any part of the site or workspaces, you agree to these terms
+        on behalf of yourself and any entity you represent. If you do not agree, do not use the
+        service.
       </p>
 
       <h2>1. What the service is</h2>
       <p>
-        INRP2P provides intake, manual review, requirements-based matching and qualified
-        introductions between companies seeking INR liquidity (INR ↔ USDT, INR payouts) and
-        independent liquidity partners. See <Link href="/how-it-works">How it works</Link> for
-        the full process.
+        INRP2P provides controlled INR ↔ USDT transaction workflows: executable quotes,
+        progressive verification, payment instructions, payment matching, settlement operations,
+        reconciliation and receipts. It also provides separate private-network review, matching,
+        and introduction workflows for companies and independent liquidity partners.
       </p>
 
       <CorePositions />
@@ -59,20 +60,19 @@ export default function TermsPage() {
 
       <h2>4. Counterparty responsibility</h2>
       <p>
-        Once introduced, companies and partners deal with each other directly. INRP2P is not a
-        party to, and has no liability arising from, any agreement, transaction, payment or
-        dispute between introduced counterparties. Each party is solely responsible for its own
-        licensing, KYC/KYB, AML, tax and other legal obligations — see the{" "}
+        Reviewed partners and configured providers perform the underlying bank and blockchain
+        transfers. A customer instruction or payment-submitted button is not confirmation of
+        funds. Each party remains responsible for the licensing, KYC/KYB, AML, tax and other
+        legal obligations applicable to its role and jurisdiction — see the{" "}
         <Link href="/disclaimer">Disclaimer</Link> for the full position.
       </p>
 
       <h2>5. Fees</h2>
       <p>
-        INRP2P may charge review, partner access, introduction, success or retainer fees as
-        described on the <Link href="/fees">Fees</Link> page and as agreed in writing for your
-        specific engagement. Fees relate to the review, matching and introduction service only,
-        never to a share of settlement volume, and are never a condition INRP2P imposes on the
-        underlying transaction between counterparties.
+        Every customer transaction quote displays its applicable rate, fee, destination, network,
+        final amount and expiry before confirmation. Separate review, partner access,
+        introduction or retainer fees may apply only as described on the{" "}
+        <Link href="/fees">Fees</Link> page and agreed in writing.
       </p>
 
       <h2>6. Your account and workspace</h2>

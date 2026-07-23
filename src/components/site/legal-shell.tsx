@@ -48,17 +48,16 @@ export function LegalShell({
 }
 
 const CORE_POSITIONS = [
-  "INRP2P does not custody or execute the underlying funds exchanged between introduced counterparties.",
+  "INRP2P does not operate a public exchange, order book, OTC chat desk or trader-selection marketplace.",
+  "A customer order is created only from a server quote, approved compliance state, validated methods and transactionally reserved capacity.",
+  "A customer payment signal never confirms funds; payment requires independent provider, bank, network or authorised operator verification.",
+  "Settlement is performed by the assigned reviewed party or configured provider and remains subject to controlled release, evidence and reconciliation.",
+  "INRP2P does not request or store bank passwords, wallet private keys or seed phrases.",
   "A partner operating-reserve deposit is separate from transaction funds and exists only where expressly agreed.",
-  "INRP2P does not execute payments, payouts or settlement of any kind.",
-  "INRP2P does not operate an exchange, OTC desk or trading venue.",
-  "INRP2P does not guarantee liquidity, capacity or pricing from any partner.",
-  "INRP2P does not guarantee that any transaction between introduced parties will complete.",
-  "Every introduction is subject to manual review and is never guaranteed.",
-  "Counterparties are solely responsible for their own licensing, KYC, AML, tax and legal obligations.",
+  "No quote, capacity, rate, completion, licence or regulatory status is guaranteed or represented by the software.",
 ];
 
-/** The seven mandatory disclosures, rendered as a compact reference card. */
+/** The transaction product's mandatory operating boundaries. */
 export function CorePositions({ title = "What INRP2P is — and is not" }: { title?: string }) {
   return (
     <div className="not-prose rounded-xl border border-black/[0.08] bg-black/[0.02] p-5">

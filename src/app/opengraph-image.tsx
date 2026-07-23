@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "INRP2P — Private INR Liquidity Network";
+export const alt = "INRP2P — Move INR and USDT clearly";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -16,8 +16,6 @@ export default function OpengraphImage() {
           justifyContent: "center",
           padding: "80px",
           backgroundColor: "#FFFBF3",
-          backgroundImage:
-            "radial-gradient(800px 400px at 85% -10%, rgba(255,153,51,0.22), transparent 65%), radial-gradient(600px 320px at 0% 110%, rgba(23,138,56,0.1), transparent 60%)",
           fontFamily: "sans-serif",
         }}
       >
@@ -55,10 +53,10 @@ export default function OpengraphImage() {
             maxWidth: 900,
           }}
         >
-          Reviewed INR liquidity partners. Qualified introductions.
+          From amount to final result.
         </div>
         <div style={{ marginTop: 28, fontSize: 28, color: "#5B6472", maxWidth: 860 }}>
-          INR → USDT · USDT → INR · INR payouts. Manual review. Deal funds stay between counterparties.
+          INR ↔ USDT · Final rate and fee first · Controlled payment and settlement.
         </div>
         <div
           style={{
@@ -67,7 +65,7 @@ export default function OpengraphImage() {
             left: 0,
             right: 0,
             height: 10,
-            background: "linear-gradient(90deg, #FF9933 0%, #FF9933 46%, #FFFBF3 50%, #178A38 54%, #178A38 100%)",
+            background: "#EB7A0F",
           }}
         />
       </div>

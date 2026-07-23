@@ -24,10 +24,17 @@ Required for a real beta:
 - strong admin seed credentials;
 - a random `CRON_SECRET` for scheduled maintenance;
 - a private S3/KMS evidence vault before evidence collection.
+- a 32-byte `FINANCIAL_DATA_ENCRYPTION_KEY` and separate HMAC key;
+- executable pricing (`EXECUTION_QUOTE_PROVIDER_*` or a deliberately managed
+  `EXECUTION_RATE_INR_PER_USDT`) plus explicit fees and limits;
+- signed payment-matching and settlement webhook secrets;
+- a real settlement adapter or a controlled external-transfer procedure;
+- `ORDER_MAKER_CHECKER_REQUIRED=true` and a reviewed confirmation threshold.
 
-Provider, messaging, fee-collection and operator-AI integrations are optional.
-Unconfigured verification providers explicitly fall back to manual review. Core
-matching and routing are deterministic and do not need an AI key.
+Unconfigured verification providers explicitly fall back to accountable manual
+review. Missing quote, payment, or settlement providers never create fake rates,
+connections, detection, or transfers. Core matching and routing remain
+deterministic and do not need an AI key.
 
 ## 3. Validate the release
 
@@ -77,6 +84,16 @@ Deploy the immutable release, then verify:
 - expired capacity is excluded from routing;
 - evidence upload uses KMS headers and download is an attachment-only short URL;
 - webhook signatures fail when altered and duplicate events do not reprocess;
+- a logged-out visitor can quote, authenticate, resume the same quote, and add
+  only the methods required by the selected direction;
+- hold-to-confirm refuses expired terms, exceeded limits, unverified destination
+  ownership, unavailable compliance, or unavailable exact capacity;
+- the order payment page exposes only its bound instructions and a customer
+  payment signal does not mark payment confirmed;
+- duplicate UTR, payment TXID, settlement TXID, and payout references block and
+  enter controlled review;
+- settlement release requires TOTP and, when enabled, a different maker/checker;
+- completion moves pending capacity to settled and produces a customer receipt;
 - audit entries exist for every material state change.
 
 Do this first in staging with synthetic identities and files. Never use demo data as
@@ -102,6 +119,10 @@ health diagnostics publicly.
 - Capacity expiry and response-time expectations are agreed with each partner.
 - No marketing claim promises safety, licensing, liquidity, price or completion.
 - A human operator owns verification decisions and incident escalation.
+- Payment matching and settlement callbacks have contract-tested payloads,
+  key-rotation ownership, alerting, and replay-retention procedures.
+- Exact capacity is loaded only from genuinely verified partners and real
+  collection instructions.
 - Production access, provider keys and database permissions follow least privilege.
 - Rollback and database restore procedures have been rehearsed.
 

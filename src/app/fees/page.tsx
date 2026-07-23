@@ -5,83 +5,65 @@ import { CONTACT_EMAIL } from "@/lib/options";
 
 export const metadata: Metadata = {
   title: "Fees",
-  description: "How INRP2P is compensated for review, matching and introduction — and what it never charges for.",
+  description:
+    "How INRP2P displays transaction fees and separate private-network service fees.",
   alternates: { canonical: "/fees" },
 };
-
-const FEE_TYPES = [
-  { t: "Review fee", d: "A one-time fee that may apply to expedited or higher-complexity review, agreed before any work begins." },
-  { t: "Partner access fee", d: "A fee for partners to maintain active, matchable status on the network." },
-  { t: "Introduction fee", d: "A fee tied to a specific qualified introduction being made." },
-  { t: "Success fee", d: "A fee contingent on an introduced relationship converting into an ongoing commercial arrangement." },
-  { t: "Monthly retainer", d: "An ongoing fee for continuous sourcing, review and matching support, agreed with select companies or partners." },
-];
 
 export default function FeesPage() {
   return (
     <LegalShell
       eyebrow="Commercial terms"
-      title="Fees"
-      sub="How INRP2P is compensated for review, matching and introduction — nothing else."
-      updated="9 July 2026"
+      title="Fees are shown before you move."
+      sub="Every transaction quote separates the execution rate, INRP2P fee, final amount and expiry."
+      updated="23 July 2026"
     >
       <p>
-        INRP2P charges for the coordination work it does — review, matching and introduction —
-        not for the underlying transaction between introduced parties. There is no public price
-        list because fees are commercial and agreed per engagement; this page explains the
-        structure so there are no surprises.
+        A customer transaction is not created until the final terms have been shown and
+        confirmed. The server quote states the amount sent, amount received, execution rate,
+        INRP2P fee and fee currency. There is no hidden customer spread or later substitution of
+        an expired quote.
       </p>
 
-      <h2>How we&apos;re compensated</h2>
-      <ul>
-        {FEE_TYPES.map((f) => (
-          <li key={f.t}>
-            <strong>{f.t}.</strong> {f.d}
-          </li>
-        ))}
-      </ul>
-
-      <h2>Who pays, and when</h2>
+      <h2>Transaction fee</h2>
       <p>
-        Depending on the engagement, fees may be payable by the company, the partner, or split
-        between both — this is agreed in writing before it applies to you. No fee is charged
-        simply for submitting a request or a partner application; review and a first response
-        are free.
+        The transaction fee is calculated by the server and displayed as part of the quote.
+        Exact-send and exact-receive quotes both include the fee in their final calculation.
+        Pricing is unavailable when an executable rate and fee configuration are not available;
+        INRP2P does not replace them with an estimated or fabricated rate.
       </p>
 
-      <h2>What we do not charge for</h2>
-      <ul>
-        <li>INRP2P does not take a spread, markup or share of transaction volume.</li>
-        <li>INRP2P does not charge on or route the funds exchanged between introduced parties.</li>
-        <li>Fees are never a condition attached to the pricing or terms two introduced parties agree between themselves.</li>
-      </ul>
-
-      <h2>Billing today</h2>
+      <h2>External rail costs</h2>
       <p>
-        Revenue is tracked internally by network operations through a clear lifecycle
-        (potential, quoted, agreed, invoiced, paid). For INRP2P&apos;s own coordination fees
-        listed above, we may send a secure payment link — processed by a licensed third-party
-        payment gateway — or invoice you directly for bank transfer, whichever is more
-        convenient. This applies only to INRP2P&apos;s own fees. INRP2P never processes, holds
-        or routes the funds exchanged between introduced parties themselves — that settlement
-        always happens directly between you and the other party, entirely outside the platform.
-      </p>
-      <p>
-        A separately agreed partner operating-reserve deposit is not a service fee and is not
-        part of an introduced transaction. Its amount and return conditions are governed by the
-        applicable written partner agreement and the <Link href="/disclaimer">Disclaimer</Link>.
+        The displayed receive amount includes costs controlled by the selected INRP2P
+        transaction path. A customer sending USDT may also be charged a network or withdrawal
+        fee by their own wallet or exchange. That third-party fee is outside INRP2P&apos;s
+        control and must be shown by that provider before the customer sends. INRP2P never asks
+        for a wallet secret to pay it.
       </p>
 
-      <h2>Changes to fees</h2>
+      <h2>Expired or changed terms</h2>
       <p>
-        Any change to fees that apply to you will be agreed with you directly before it takes
-        effect — nothing here overrides a specific written agreement you have with INRP2P.
+        When a quote expires, or a destination, network, payment method or Receive Profile
+        fallback changes, INRP2P issues fresh terms. The customer must accept the updated final
+        amount, fee and timing before a new order can be created.
+      </p>
+
+      <h2>Separate private-network services</h2>
+      <p>
+        Review, partner access, qualified-introduction or retainer fees may apply to the
+        separate company and partner network only when agreed in writing. Those fees are not
+        silently added to a customer transaction quote. A separately agreed partner
+        operating-reserve deposit is not a service fee or customer transaction fund; its terms
+        are governed by the applicable written agreement and the{" "}
+        <Link href="/disclaimer">Disclaimer</Link>.
       </p>
 
       <h2>Questions</h2>
       <p>
-        For fee questions specific to your request or application, write to{" "}
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. See also the{" "}
+        For a fee or receipt question, write to{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and include the order reference,
+        not bank credentials or wallet secrets. See also the{" "}
         <Link href="/terms">Terms of Service</Link>.
       </p>
     </LegalShell>

@@ -25,7 +25,11 @@ async function ensureGuidedEvidenceKind(kind: string) {
 async function ownedCase(caseId: string) {
   const session = await getSession(); if (!session || !hasWorkspaceAccess(session.user)) return null;
   const item = await db.verificationCase.findUnique({ where: { id: caseId }, include: { organization: true } }); if (!item) return null;
-  const allowed = session.user.role === "ADMIN" || item.partnerId === session.user.partner?.id || item.organization?.companyProfileId === session.user.company?.id;
+  const allowed =
+    session.user.role === "ADMIN" ||
+    item.partnerId === session.user.partner?.id ||
+    item.customerId === session.user.customer?.id ||
+    item.organization?.companyProfileId === session.user.company?.id;
   return allowed ? { session, item } : null;
 }
 

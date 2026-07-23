@@ -10,11 +10,14 @@ export type AuditInput = {
   requestId?: string | null;
   partnerId?: string | null;
   matchId?: string | null;
+  orderId?: string | null;
   meta?: Record<string, unknown>;
 };
 
-export async function audit(input: AuditInput) {
-  await db.auditLog.create({
+type AuditClient = Pick<typeof db, "auditLog">;
+
+export async function auditWith(client: AuditClient, input: AuditInput) {
+  await client.auditLog.create({
     data: {
       action: input.action,
       entityType: input.entityType,
@@ -24,10 +27,15 @@ export async function audit(input: AuditInput) {
       requestId: input.requestId ?? null,
       partnerId: input.partnerId ?? null,
       matchId: input.matchId ?? null,
+      orderId: input.orderId ?? null,
       meta:
         input.meta === undefined ? undefined : (input.meta as Prisma.InputJsonValue),
     },
   });
+}
+
+export async function audit(input: AuditInput) {
+  await auditWith(db, input);
 }
 
 /** Sequential human references: REQ-0001, PTR-0001. */

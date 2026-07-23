@@ -8,26 +8,28 @@ export function Logo({ compact = false }: { compact?: boolean }) {
 
 export async function SiteNav() {
   const session = await getSession();
+  const customer = session?.user.role === "CUSTOMER";
+  const customerGate = customer ? "" : "/auth/customer";
+  const accountHref = session
+    ? roleHome(session.user.role)
+    : "/auth/customer";
+  const items = [
+    { href: "/", label: "Move" },
+    { href: customer ? "/orders" : customerGate, label: "Orders" },
+    { href: customer ? "/receive" : customerGate, label: "Receive" },
+    { href: accountHref, label: "Account" },
+  ];
   return (
     <header className="fin-nav">
       <div className="fin-nav-inner">
-        <div className="fin-nav-brand"><Logo /><span>Private network</span></div>
+        <div className="fin-nav-brand"><Logo /><span>INR ↔ USDT</span></div>
         <nav className="fin-nav-links" aria-label="Primary navigation">
-          <Link href="/#product">Product</Link>
-          <Link href="/#operating-model">Operating model</Link>
-          <Link href="/#controls">Controls</Link>
-          <Link href="/how-it-works">How it works</Link>
-          <Link href="/careers">Careers</Link>
+          {items.map((item) => (
+            <Link href={item.href} key={item.label}>{item.label}</Link>
+          ))}
         </nav>
         <div className="fin-nav-actions">
-          {session ? (
-            <Link href={roleHome(session.user.role)} className="fin-nav-login">
-              Open workspace
-            </Link>
-          ) : (
-            <Link href="/login" className="fin-nav-login">Log in</Link>
-          )}
-          <Link href="/request" className="fin-nav-cta">Request access</Link>
+          <Link href="/" className="fin-nav-cta">Move</Link>
         </div>
       </div>
     </header>

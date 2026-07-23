@@ -5,10 +5,12 @@ import {
   BASELINE_TABLES,
   NETWORK_MIGRATION,
   NETWORK_TABLES,
+  TRANSACTION_MIGRATION,
+  TRANSACTION_TABLES,
   databaseReleasePlan,
 } from "../scripts/database-release-plan.mjs";
 
-test("fresh databases deploy both migrations", () => {
+test("fresh databases deploy the full migration chain", () => {
   assert.equal(databaseReleasePlan([], []).action, "fresh-deploy");
 });
 
@@ -19,11 +21,21 @@ test("an existing legacy database resolves the baseline before deploy", () => {
 test("partial schemas always block automated migration", () => {
   assert.equal(databaseReleasePlan(BASELINE_TABLES.slice(0, 2), []).action, "blocked-partial-baseline");
   assert.equal(databaseReleasePlan([...BASELINE_TABLES, NETWORK_TABLES[0]], [BASELINE_MIGRATION]).action, "blocked-partial-network");
+  assert.equal(
+    databaseReleasePlan(
+      [...BASELINE_TABLES, ...NETWORK_TABLES, TRANSACTION_TABLES[0]],
+      [BASELINE_MIGRATION, NETWORK_MIGRATION],
+    ).action,
+    "blocked-partial-transaction",
+  );
 });
 
-test("a fully tracked network schema is already up to date", () => {
+test("a fully tracked transaction schema is already up to date", () => {
   assert.equal(
-    databaseReleasePlan([...BASELINE_TABLES, ...NETWORK_TABLES], [BASELINE_MIGRATION, NETWORK_MIGRATION]).action,
+    databaseReleasePlan(
+      [...BASELINE_TABLES, ...NETWORK_TABLES, ...TRANSACTION_TABLES],
+      [BASELINE_MIGRATION, NETWORK_MIGRATION, TRANSACTION_MIGRATION],
+    ).action,
     "up-to-date",
   );
 });

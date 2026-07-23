@@ -40,15 +40,29 @@ const runtimeDb = new PrismaClient();
 async function runtimeSchemaReady() {
   const rows = await runtimeDb.$queryRawUnsafe(`
     SELECT
-      to_regclass('public."PartnerDeposit"') IS NOT NULL AS "tableReady",
+      to_regclass('public."PartnerDeposit"') IS NOT NULL AS "depositTableReady",
+      to_regclass('public."Quote"') IS NOT NULL AS "quoteTableReady",
+      to_regclass('public."Order"') IS NOT NULL AS "orderTableReady",
       EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public'
           AND table_name = 'PartnerDeposit'
           AND column_name = 'destinationAddress'
-      ) AS "walletColumnReady"
+      ) AS "walletColumnReady",
+      EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'PaymentAttempt'
+          AND column_name = 'txid'
+      ) AS "paymentTxidReady"
   `);
-  return rows[0]?.tableReady === true && rows[0]?.walletColumnReady === true;
+  return (
+    rows[0]?.depositTableReady === true &&
+    rows[0]?.quoteTableReady === true &&
+    rows[0]?.orderTableReady === true &&
+    rows[0]?.walletColumnReady === true &&
+    rows[0]?.paymentTxidReady === true
+  );
 }
 
 try {
@@ -60,7 +74,7 @@ try {
     });
   }
   if (!(await runtimeSchemaReady())) {
-    throw new Error("Production database migration verification failed: PartnerDeposit schema is still missing from the runtime database.");
+    throw new Error("Production database migration verification failed: the reserve or transaction-engine schema is missing from the runtime database.");
   }
 } finally {
   await runtimeDb.$disconnect();
