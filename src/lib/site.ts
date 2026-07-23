@@ -5,10 +5,10 @@ export const SITE_URL = (
 
 export const SITE_NAME = "INRP2P";
 
-export const SITE_TAGLINE = "India's Liquidity, Reviewed";
+export const SITE_TAGLINE = "Move INR and USDT, clearly";
 
 export const SITE_DESCRIPTION =
-  "Private INR partner network OS for verification, live capacity, explainable routing and controlled introductions. No custody or platform execution of deal funds.";
+  "Enter one amount, see final INR ↔ USDT terms, confirm, pay, and track a server-enforced transaction.";
 
 /**
  * Build/version marker shown in the operator UI so a screenshot or bug report

@@ -21,8 +21,21 @@ async function main() {
 
   await db.user.upsert({
     where: { email },
-    update: { passwordHash, name, role: "ADMIN", emailVerifiedAt: new Date() },
-    create: { email, passwordHash, name, role: "ADMIN", emailVerifiedAt: new Date() },
+    update: {
+      passwordHash,
+      name,
+      role: "ADMIN",
+      emailVerifiedAt: new Date(),
+      adminPermissions: ["ORDER_OPERATIONS", "SETTLEMENT_RELEASE"],
+    },
+    create: {
+      email,
+      passwordHash,
+      name,
+      role: "ADMIN",
+      emailVerifiedAt: new Date(),
+      adminPermissions: ["ORDER_OPERATIONS", "SETTLEMENT_RELEASE"],
+    },
   });
 
   const line = "─".repeat(60);

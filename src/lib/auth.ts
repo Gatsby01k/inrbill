@@ -5,6 +5,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { db } from "./db";
+import { hashOpaqueToken, opaqueTokenCandidates } from "./secure-token";
 
 export const SESSION_COOKIE = "inrp2p_session";
 const SESSION_DAYS = 30;
@@ -66,12 +67,15 @@ export function generateAccessPassword() {
 export async function createSession(userId: string) {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await db.session.create({ data: { token, userId, expiresAt } });
+  await db.session.create({
+    data: { token: hashOpaqueToken(token), userId, expiresAt },
+  });
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    priority: "high",
     path: "/",
     expires: expiresAt,
   });
@@ -80,7 +84,11 @@ export async function createSession(userId: string) {
 export async function destroySession() {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
-  if (token) await db.session.deleteMany({ where: { token } });
+  if (token) {
+    await db.session.deleteMany({
+      where: { token: { in: opaqueTokenCandidates(token) } },
+    });
+  }
   jar.delete(SESSION_COOKIE);
 }
 
@@ -88,9 +96,9 @@ export const getSession = cache(async () => {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await db.session.findUnique({
-    where: { token },
-    include: { user: { include: { company: true, partner: true } } },
+  const session = await db.session.findFirst({
+    where: { token: { in: opaqueTokenCandidates(token) } },
+    include: { user: { include: { company: true, partner: true, customer: true } } },
   });
   if (!session || session.expiresAt < new Date()) return null;
   return session;
@@ -99,7 +107,10 @@ export const getSession = cache(async () => {
 export type SessionUser = NonNullable<Awaited<ReturnType<typeof getSession>>>["user"];
 
 export function roleHome(role: Role) {
-  return role === "ADMIN" ? "/admin" : role === "COMPANY" ? "/company" : "/partner";
+  if (role === "ADMIN") return "/admin";
+  if (role === "COMPANY") return "/company";
+  if (role === "PARTNER") return "/partner";
+  return "/";
 }
 
 export function hasWorkspaceAccess(user: { role: Role; emailVerifiedAt: Date | null }) {
@@ -122,7 +133,7 @@ export async function requireVerifiedRole(role: Role): Promise<SessionUser> {
 
 export function actorLabel(user: SessionUser) {
   if (user.role === "ADMIN") return "Operator";
-  return user.company?.companyName ?? user.partner?.displayName ?? user.name;
+  return user.company?.companyName ?? user.partner?.displayName ?? user.customer?.inrp2pId ?? user.name;
 }
 
 /**
@@ -134,13 +145,14 @@ export async function createTwoFactorChallenge(userId: string, next?: string) {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + CHALLENGE_MINUTES * 60 * 1000);
   await db.twoFactorChallenge.create({
-    data: { token, userId, next: next ?? null, expiresAt },
+    data: { token: hashOpaqueToken(token), userId, next: next ?? null, expiresAt },
   });
   const jar = await cookies();
   jar.set(CHALLENGE_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    priority: "high",
     path: "/",
     expires: expiresAt,
   });
@@ -151,7 +163,9 @@ export async function getTwoFactorChallenge() {
   const jar = await cookies();
   const token = jar.get(CHALLENGE_COOKIE)?.value;
   if (!token) return null;
-  const challenge = await db.twoFactorChallenge.findUnique({ where: { token } });
+  const challenge = await db.twoFactorChallenge.findFirst({
+    where: { token: { in: opaqueTokenCandidates(token) } },
+  });
   if (!challenge || challenge.expiresAt < new Date()) return null;
   if (challenge.attempts >= CHALLENGE_MAX_ATTEMPTS) return null;
   return challenge;
@@ -159,7 +173,7 @@ export async function getTwoFactorChallenge() {
 
 export async function bumpTwoFactorAttempts(token: string) {
   await db.twoFactorChallenge.updateMany({
-    where: { token },
+    where: { token: { in: opaqueTokenCandidates(token) } },
     data: { attempts: { increment: 1 } },
   });
 }
@@ -167,6 +181,10 @@ export async function bumpTwoFactorAttempts(token: string) {
 export async function clearTwoFactorChallenge() {
   const jar = await cookies();
   const token = jar.get(CHALLENGE_COOKIE)?.value;
-  if (token) await db.twoFactorChallenge.deleteMany({ where: { token } });
+  if (token) {
+    await db.twoFactorChallenge.deleteMany({
+      where: { token: { in: opaqueTokenCandidates(token) } },
+    });
+  }
   jar.delete(CHALLENGE_COOKIE);
 }

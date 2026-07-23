@@ -28,8 +28,21 @@ async function upsertUser(email: string, name: string, role: "ADMIN" | "COMPANY"
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
   return db.user.upsert({
     where: { email },
-    update: { name, role, passwordHash, emailVerifiedAt: new Date() },
-    create: { email, passwordHash, name, role, emailVerifiedAt: new Date() },
+    update: {
+      name,
+      role,
+      passwordHash,
+      emailVerifiedAt: new Date(),
+      adminPermissions: role === "ADMIN" ? ["ORDER_OPERATIONS", "SETTLEMENT_RELEASE"] : [],
+    },
+    create: {
+      email,
+      passwordHash,
+      name,
+      role,
+      emailVerifiedAt: new Date(),
+      adminPermissions: role === "ADMIN" ? ["ORDER_OPERATIONS", "SETTLEMENT_RELEASE"] : [],
+    },
   });
 }
 

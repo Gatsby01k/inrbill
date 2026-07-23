@@ -17,6 +17,7 @@ export default async function AdminReviewDetailPage({
     include: {
       partner: true,
       organization: true,
+      customer: { include: { user: { select: { email: true, name: true } } } },
       evidence: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -24,30 +25,40 @@ export default async function AdminReviewDetailPage({
 
   const completedUploads = item.evidence.filter((evidence) => !!evidence.checksumSha256);
   const presentKinds = new Set(completedUploads.filter((evidence) => !["REJECTED", "EXPIRED"].includes(evidence.status)).map((evidence) => evidence.kind));
+  const identityReady = completedUploads.some(
+    (evidence) =>
+      !["REJECTED", "EXPIRED"].includes(evidence.status) &&
+      ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind),
+  );
+  const customerFundingReady = completedUploads.some(
+    (evidence) =>
+      !["REJECTED", "EXPIRED"].includes(evidence.status) &&
+      ["BANK_PROOF", "WALLET_REPORT", "SOURCE_OF_FUNDS"].includes(evidence.kind),
+  );
+  const partnerEvidence = [
+        completedUploads.some((evidence) => !["REJECTED", "EXPIRED"].includes(evidence.status) && ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind)),
+        presentKinds.has("BANK_PROOF"),
+        presentKinds.has("WALLET_REPORT"),
+        presentKinds.has("VIDEO_VERIFICATION"),
+      ];
   const ready = item.partnerId
-    ? [
-        completedUploads.some((evidence) => !["REJECTED", "EXPIRED"].includes(evidence.status) && ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind)),
-        presentKinds.has("BANK_PROOF"),
-        presentKinds.has("WALLET_REPORT"),
-        presentKinds.has("VIDEO_VERIFICATION"),
-      ].every(Boolean)
-    : completedUploads.length > 0;
-  const requiredEvidenceCount = item.partnerId ? 4 : 1;
+    ? partnerEvidence.every(Boolean)
+    : item.customerId
+      ? identityReady && customerFundingReady
+      : completedUploads.length > 0;
+  const requiredEvidenceCount = item.partnerId ? 4 : item.customerId ? 2 : 1;
   const readyEvidenceCount = item.partnerId
-    ? [
-        completedUploads.some((evidence) => !["REJECTED", "EXPIRED"].includes(evidence.status) && ["IDENTITY_DOCUMENT", "PAN", "DIRECTOR_ID"].includes(evidence.kind)),
-        presentKinds.has("BANK_PROOF"),
-        presentKinds.has("WALLET_REPORT"),
-        presentKinds.has("VIDEO_VERIFICATION"),
-      ].filter(Boolean).length
-    : Math.min(completedUploads.length, 1);
+    ? partnerEvidence.filter(Boolean).length
+    : item.customerId
+      ? [identityReady, customerFundingReady].filter(Boolean).length
+      : Math.min(completedUploads.length, 1);
 
   return (
     <>
       <BackLink href="/admin/reviews" label="Verification queue" />
       <div className="mt-4">
         <PageHeader
-          title={item.partner?.displayName ?? item.organization?.name ?? item.reference}
+          title={item.partner?.displayName ?? item.organization?.name ?? item.customer?.user.email ?? item.reference}
           sub={item.reference}
         />
       </div>
@@ -104,7 +115,7 @@ export default async function AdminReviewDetailPage({
             <span className={ready ? "text-xs font-semibold text-leaf-700" : "text-xs font-semibold text-gold-700"}>{ready ? "Evidence ready" : "Evidence incomplete"}</span>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-slate-500">
-            Approval is never automatic. {item.partnerId ? "Open and review the four required files" : "Open and review the submitted evidence"}, then record your rationale. {item.partnerId ? "Approval updates the Trust Passport and partner status together." : "Approval completes the organization case."}
+            Approval is never automatic. {item.partnerId ? "Open and review the four required files" : item.customerId ? "Review identity plus bank, wallet, or source-of-funds evidence" : "Open and review the submitted evidence"}, then record your rationale. {item.partnerId ? "Approval updates the Trust Passport and partner status together." : item.customerId ? "Approval activates the customer compliance state for fresh transaction checks." : "Approval completes the organization case."}
           </p>
           <form action={decideVerification} className="mt-4 space-y-3">
             <input type="hidden" name="caseId" value={item.id} />

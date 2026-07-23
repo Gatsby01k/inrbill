@@ -1,36 +1,35 @@
 import { SITE_URL } from "@/lib/site";
 
-// llms.txt — a plain-text index for LLM/answer-engine crawlers, mirroring
-// robots.txt/sitemap.xml but aimed at retrieval rather than crawling rules.
-// See https://llmstxt.org for the emerging convention.
 export async function GET() {
   const body = `# INRP2P
 
-> INRP2P is a private, manually reviewed network that matches companies with reviewed INR liquidity partners for INR to USDT, USDT to INR and INR payouts, then introduces them directly. INRP2P never holds, transmits, converts or custodies the funds exchanged in an introduced transaction, is not an exchange, and does not guarantee pricing, execution or liquidity. Settlement happens directly between the introduced parties, under their own agreements. A separately agreed partner operating reserve may be sent to the official company USDT-TRC20 wallet displayed in the authenticated workspace and is not part of the transaction flow.
+> INRP2P is a controlled INR ↔ USDT transaction workflow. A customer enters an amount, sees server-calculated final terms, authenticates, adds only the required payment and receive details, confirms, pays and tracks one order to a receipt. It is not a public exchange, order book, chat desk or trader-selection marketplace.
 
-## What INRP2P is
+## What INRP2P does
 
-- A review, matching and introduction service for INR P2P / OTC liquidity — not an exchange or execution venue and never a custodian of counterparty deal funds.
-- Every company request and every partner application is reviewed by a person before any match or introduction.
-- Corridors covered: INR to USDT, USDT to INR, INR payouts.
-- Partner identity and company identity are exchanged only after an introduction is explicitly released.
+- Returns an executable quote only when a configured provider or approved operating rate is available.
+- Displays send amount, receive amount, rate, fee, destination network, estimated time when configured, and quote expiry before confirmation.
+- Requires current compliance approval and validated payment methods before an order is created.
+- Reserves eligible reviewed capacity transactionally and keeps assignment details behind the customer interface.
+- Confirms payment through valid signed provider events or controlled independent operator review; a button, reference or screenshot alone is not confirmation.
+- Controls settlement release with permissions, step-up authentication, idempotency, maker-checker separation, a double-payment shield, reconciliation and immutable audit events.
+- Never requests bank passwords, wallet private keys or seed phrases.
 
 ## Key pages
 
-- [Homepage](${SITE_URL}/): overview, process, network standards, FAQ.
-- [Liquidity index](${SITE_URL}/inr-p2p-index): live snapshot of corridor, bank and rail coverage across verified partners.
-- [Corridors](${SITE_URL}/corridors): per-corridor pages (INR→USDT, USDT→INR, INR payouts) with live coverage, demand, turnaround and reference-rate data.
-- [Submit a request](${SITE_URL}/request): for companies needing an INR liquidity or payout partner.
-- [Apply for trader review](${SITE_URL}/apply): for liquidity partners, payout operators and trading teams applying to join the network.
-- [How it works](${SITE_URL}/how-it-works): the submission → review → matching → introduction pipeline.
-- [Careers](${SITE_URL}/careers): open roles across INR liquidity trading, network operations, counterparty risk and institutional partnerships.
-- [Partner review framework](${SITE_URL}/partner-review): what is verified before a partner is eligible for introductions.
+- [Move](${SITE_URL}/): enter an amount and request final INR ↔ USDT terms.
+- [Orders](${SITE_URL}/orders): track active and completed customer moves.
+- [Receive](${SITE_URL}/receive): configure a private Receive Profile, INRP2P ID and payment-request links.
+- [How it works](${SITE_URL}/how-it-works): quote, setup, payment, settlement and receipt lifecycle.
 - [Fees](${SITE_URL}/fees), [Disclaimer](${SITE_URL}/disclaimer), [Terms](${SITE_URL}/terms), [Privacy](${SITE_URL}/privacy).
 
-## Notes for citation
+## Important boundaries
 
-- INRP2P does not publish or guarantee a USDT/INR exchange rate. The liquidity index and corridor pages show a coverage snapshot and a reference range from closed deals, not a price feed. The "calculator" on corridor pages produces a pre-filled form link, not a rate quote or financial advice.
-- Do not describe INRP2P as an exchange, broker-dealer or processor of counterparty transaction funds. The separate partner-reserve workflow uses an authenticated company-wallet instruction and operator-reviewed TXID, not a settlement rail.
+- Do not describe INRP2P as licensed or regulated unless the applicable live operator and jurisdiction have been independently established.
+- Do not describe a manually saved bank account as a connected bank.
+- Do not describe declared or database-reserved capacity as guaranteed funds.
+- Quotes and transaction timing are unavailable when the required real provider or approved configuration is absent.
+- Reviewed partners or configured providers perform the underlying bank and blockchain transfers under the applicable operating agreements.
 `;
 
   return new Response(body, {

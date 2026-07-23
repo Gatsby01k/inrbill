@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/options";
 export const metadata: Metadata = {
   title: "Disclaimer",
   description:
-    "INRP2P's legal disclaimer: a coordination service with no custody or execution of counterparty transaction funds and no guarantees over liquidity, completion or introductions.",
+    "INRP2P's product disclaimer: controlled external payment and settlement operations with no guarantee of liquidity, pricing, regulatory status, or completion.",
   alternates: { canonical: "/disclaimer" },
 };
 
@@ -15,7 +15,7 @@ export default function DisclaimerPage() {
       eyebrow="Legal"
       title="Disclaimer"
       sub="A plain statement of what INRP2P is, what it is not, and where responsibility sits."
-      updated="19 July 2026"
+      updated="23 July 2026"
     >
       <p>
         This disclaimer applies to every page, form and workspace on INRP2P. It exists so
@@ -27,23 +27,24 @@ export default function DisclaimerPage() {
 
       <h2>Nature of the service</h2>
       <p>
-        INRP2P is a coordination layer: intake, manual review, requirements-based matching
-        and qualified introductions between companies that need INR liquidity and independent
-        liquidity partners. That is the entire scope of the service. INRP2P is not a bank, an
-        electronic money institution, a payment service provider, a broker-dealer or a virtual
-        asset service provider, and nothing on this site should be read as INRP2P holding or
-        seeking to hold any such license or registration.
+        INRP2P provides a customer transaction interface and a separate operations layer for
+        executable quotes, payment instructions, reviewed liquidity capacity, payment matching,
+        settlement release, evidence, reconciliation and audit. It also retains private
+        partner-network and introduction workflows. The software does not itself establish that
+        INRP2P or any participating party holds a licence or registration. Live availability must
+        be limited to the operating model, providers and jurisdictions approved by qualified
+        counsel and the responsible regulated parties.
       </p>
 
-      <h2>No custody or execution of the underlying transaction</h2>
+      <h2>Payment, custody and settlement boundary</h2>
       <p>
-        INRP2P never takes possession of the funds, tokens or payment instructions exchanged
-        between a company and partner in an introduced transaction. There is no pooled deal
-        account, transaction escrow or settlement rail in the matching product. INRP2P does
-        not execute payments, payouts, conversions or trades on behalf of either counterparty,
-        and does not operate an exchange, OTC desk or pricing venue. Every transaction that
-        follows an introduction is arranged, priced and settled directly between the introduced
-        parties under their own agreement.
+        INRP2P does not request bank passwords, wallet private keys or seed phrases and does not
+        provide a pooled public order book. A confirmed customer order may instruct payment to
+        the assigned reviewed party and may release settlement through a configured external
+        provider or a controlled operator process. Those external parties perform the actual
+        bank or blockchain transfer. The application records instructions, references,
+        confirmations and audit events; it does not treat a screenshot or customer button as
+        proof that funds settled.
       </p>
 
       <h2>Partner operating-reserve deposits</h2>
@@ -62,11 +63,12 @@ export default function DisclaimerPage() {
 
       <h2>No guarantee of liquidity or completion</h2>
       <p>
-        Partner capacity, reserve depth and pricing are self-declared and reviewed periodically,
-        not verified in real time. INRP2P does not guarantee that a partner can fulfil a given
-        volume at a given moment, that terms will be agreeable to both sides, or that any
-        transaction introduced through the network will complete. Market conditions, banking
-        restrictions, compliance holds and counterparty decisions are outside INRP2P&apos;s control.
+        Capacity is declared by reviewed parties and reserved transactionally inside the
+        application, but a database reservation is not a guarantee that a bank, blockchain,
+        provider or counterparty will perform. Quotes expire and availability is rechecked before
+        confirmation. INRP2P does not guarantee a rate, capacity, time to completion or successful
+        outcome. Market conditions, banking restrictions, compliance holds and provider failures
+        may delay, review, cancel or fail a transaction.
       </p>
 
       <h2>No guarantee of introduction</h2>
